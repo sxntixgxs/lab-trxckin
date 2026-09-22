@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import ActingBanner from "@/components/acting-banner";
 import { UserSync } from "@/components/auth/UserSync";
+import { CommandPalette } from "@/components/command-palette/command-palette";
 import { EmpresaThemeVars } from "@/components/empresa-theme-vars";
 import Header from "@/components/ui/header";
 import Sidebar from "@/components/ui/sidebar";
@@ -18,6 +19,7 @@ export default function DefaultLayout({ children }: { children: React.ReactNode 
           <main className="grow">{children}</main>
         </Suspense>
         <ActingBanner />
+        <CommandPalette />
       </div>
     </div>
   );

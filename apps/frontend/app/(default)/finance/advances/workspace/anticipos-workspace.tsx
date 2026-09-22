@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useEmpresaFilter } from "@/hooks/useEmpresaFilter";
+import { DEEP_LINK_PARAMS, readDeepLinkParam } from "@/lib/command-palette/record-links";
 import { cn } from "@/lib/utils";
 import { AnticipoDetailDialog } from "../dashboard/components/AnticipoWorkflowParts";
 import type { AnticipoRoleConfig, AnticipoRow, UsuarioInfo } from "../dashboard/types";
@@ -337,6 +338,22 @@ export function AnticiposWorkspace({
       toast.error(error instanceof Error ? error.message : "No se pudo abrir el anticipo.");
     }
   }
+
+  // Deep link from the command palette: /finance/advances?anticipo=<id> opens the detail once.
+  const deepLinkHandledRef = useRef<string | null>(null);
+  const deepLinkAnticipo = searchParams.get(DEEP_LINK_PARAMS.anticipo);
+  useEffect(() => {
+    const { value, rest } = readDeepLinkParam(searchParams, DEEP_LINK_PARAMS.anticipo);
+    if (!value) {
+      deepLinkHandledRef.current = null;
+      return;
+    }
+    if (deepLinkHandledRef.current === value) return;
+    deepLinkHandledRef.current = value;
+    replaceWorkspaceSearch(rest);
+    void openDetailById(value);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once per linked id
+  }, [deepLinkAnticipo]);
 
   function handleAnticipoDetailChange(anticipo: AnticipoRow) {
     setDetail(anticipo);

@@ -4,6 +4,7 @@ import { Component, useEffect, useState, type ReactNode } from "react";
 import { useMutation, usePaginatedQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { Building2, Loader2, Pencil, Plus, Search } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
@@ -36,6 +37,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { DEEP_LINK_PARAMS, readDeepLinkParam } from "@/lib/command-palette/record-links";
 import { EMPRESAS_LIST, getEmpresaNombre } from "@/lib/empresas";
 
 type AppEmpresa = 1 | 2 | 3 | 4;
@@ -47,15 +50,6 @@ const EMPRESAS = EMPRESAS_LIST.filter((empresa): empresa is (typeof EMPRESAS_LIS
 
 function isAppEmpresa(value: number): value is AppEmpresa {
   return value === 1 || value === 2 || value === 3 || value === 4;
-}
-
-function useDebouncedValue(value: string, delayMs: number) {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const timeoutId = setTimeout(() => setDebounced(value), delayMs);
-    return () => clearTimeout(timeoutId);
-  }, [delayMs, value]);
-  return debounced;
 }
 
 function messageFrom(error: unknown) {
@@ -78,6 +72,21 @@ function CentroCostoPanel() {
   const [editing, setEditing] = useState<CentroCostoRow | null>(null);
   const [pendingId, setPendingId] = useState<Id<"centrosCosto"> | null>(null);
   const debouncedSearch = useDebouncedValue(search, 300);
+
+  // Deep link from the command palette: ?empresa=<n>&q=<codigo> seeds the filters, then is dropped.
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  useEffect(() => {
+    const empresaParam = readDeepLinkParam(searchParams, DEEP_LINK_PARAMS.empresa);
+    const qParam = readDeepLinkParam(empresaParam.rest, DEEP_LINK_PARAMS.q);
+    if (!empresaParam.value && !qParam.value) return;
+    const empresa = Number(empresaParam.value);
+    if (isAppEmpresa(empresa)) setAppEmpresa(empresa);
+    if (qParam.value) setSearch(qParam.value);
+    const qs = qParam.rest.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }, [searchParams, router, pathname]);
   const query = debouncedSearch.trim();
 
   const { results, status, loadMore } = usePaginatedQuery(

@@ -47,6 +47,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useEmpresaFilter } from "@/hooks/useEmpresaFilter";
+import { useInscripcionDeepLink } from "@/hooks/useInscripcionDeepLink";
 import { useUsuariosMap } from "@/hooks/useUsuariosMap";
 import { CIIU_ACTIVIDAD } from "@/lib/catalogs/ciiu";
 import type { FactorRisk } from "@/lib/onboarding/risk/compute";
@@ -903,6 +904,7 @@ export default function TableSeguimiento({ data, onDataChange }: { data: Seguimi
   const PAGE_SIZE = 20;
 
   const [detailId, setDetailId] = useState<Id<"onboardingClientes"> | null>(null);
+  useInscripcionDeepLink(inscripciones, setDetailId);
   const [anularId, setAnularId] = useState<Id<"onboardingClientes"> | null>(null);
   const [motivoAnulacion, setMotivoAnulacion] = useState("");
   const [anulando, setAnulando] = useState(false);
