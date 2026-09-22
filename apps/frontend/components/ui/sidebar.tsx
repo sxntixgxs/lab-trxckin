@@ -1,10 +1,16 @@
 "use client";
 
 import { Transition } from "@headlessui/react";
-import { ChevronDown, PanelLeftClose, X } from "lucide-react";
+import { Check, ChevronDown, PanelLeftClose, X } from "lucide-react";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useEmpresaFilter } from "@/hooks/useEmpresaFilter";
+import { TODAS_LAS_EMPRESAS_LABEL } from "@/lib/empresa-selector";
+import { getEmpresaVisualTheme } from "@/lib/empresa-theme";
+import type { EmpresaInfo } from "@/lib/empresas";
 import { NAV_ITEMS } from "@/lib/nav";
 import { useAppProvider } from "@/providers/app-provider";
 import Logo from "./logo";
@@ -19,9 +25,13 @@ export default function Sidebar() {
   const sidebar = useRef<HTMLDivElement>(null);
   const { sidebarOpen, setSidebarOpen, sidebarExpanded, setSidebarExpanded } = useAppProvider();
   const { hasAccessTo } = useCurrentUser();
+  const { empresaActiva, empresaActivaInfo, mostrarSelector, opcionesSelector, setEmpresaActiva } =
+    useEmpresaFilter();
   const [isDesktop, setIsDesktop] = useState(false);
   const [hoverExpanded, setHoverExpanded] = useState(false);
   const [openSection, setOpenSection] = useState<string | null>(null);
+  const [empresaDropdownOpen, setEmpresaDropdownOpen] = useState(false);
+  const empresaDropdownRef = useRef<HTMLDivElement>(null);
   const hoverCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pathname = usePathname();
 
@@ -62,6 +72,8 @@ export default function Sidebar() {
   const panelWide = effectiveExpanded;
   const applyRailLayout = isDesktop && !sidebarOpen && !effectiveExpanded && !isCollapsing;
   const showBrandIcon = isDesktop && !sidebarOpen && !effectiveExpanded;
+  // The company selector only renders while the panel is wide (desktop expanded or mobile drawer).
+  const showSidebarChrome = effectiveExpanded;
 
   const handleSidebarMouseEnter = () => {
     if (!isDesktop || sidebarExpanded || sidebarOpen) return;
@@ -102,6 +114,23 @@ export default function Sidebar() {
     setOpenSection(match?.id ?? null);
   }, [pathname]);
 
+  useEffect(() => {
+    const handler = (event: globalThis.MouseEvent) => {
+      if (!empresaDropdownRef.current) return;
+      if (!empresaDropdownRef.current.contains(event.target as Node)) {
+        setEmpresaDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  useEffect(() => {
+    if (isCollapsed) {
+      setEmpresaDropdownOpen(false);
+    }
+  }, [isCollapsed]);
+
   const closeMobileSidebar = () => setSidebarOpen(false);
 
   const visibleItems = NAV_ITEMS.filter((item) => {
@@ -111,8 +140,56 @@ export default function Sidebar() {
     return hasAccessTo(item.permission);
   });
 
+  // Reserve room for the absolutely positioned selector only when it is shown.
+  const navChromePadding = mostrarSelector
+    ? "pt-[5.25rem] lg:pt-0 lg:sidebar-expanded:pt-[4.75rem]"
+    : "pt-2 lg:pt-0 lg:sidebar-expanded:pt-2";
+  const sidebarTheme = getEmpresaVisualTheme(empresaActiva);
+  const sidebarThemeStyle = useMemo(
+    () =>
+      ({
+        "--sidebar-accent-rgb": sidebarTheme.accentRgb,
+        "--sidebar-bg-top": sidebarTheme.bgTop,
+        "--sidebar-bg-middle": sidebarTheme.bgMiddle,
+        "--sidebar-bg-bottom": sidebarTheme.bgBottom,
+        "--sidebar-accent-text": sidebarTheme.accentText,
+      }) as CSSProperties,
+    [sidebarTheme],
+  );
+
+  const renderEmpresaBadge = (info: EmpresaInfo | undefined, size: "sm" | "md" = "sm") => {
+    const dimension = size === "sm" ? 32 : 36;
+    const boxClass = size === "sm" ? "h-8 w-8" : "h-9 w-9";
+
+    if (!info) {
+      return (
+        <span
+          className={`inline-flex shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-xs font-bold text-indigo-200 ring-1 ring-white/[0.08] ${boxClass}`}
+        >
+          TX
+        </span>
+      );
+    }
+
+    return (
+      <span
+        className={`inline-flex shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white/[0.04] shadow-sm ring-1 ring-white/[0.08] ${boxClass}`}
+      >
+        <Image
+          src={info.icon}
+          alt={info.nombre}
+          width={dimension}
+          height={dimension}
+          className="h-full w-full object-contain"
+          unoptimized
+        />
+      </span>
+    );
+  };
+
   return (
     <div
+      style={sidebarThemeStyle}
       className={`
         sidebar-shell relative z-40 shrink-0 w-0 overflow-visible transition-[width] duration-[280ms] ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none
         ${panelWide ? "lg:w-64" : "lg:w-20"}
@@ -176,11 +253,80 @@ export default function Sidebar() {
               <X className="h-5 w-5" />
             </button>
           )}
-          <Logo sidebar />
+          <Logo sidebar empresa={empresaActivaInfo ?? null} />
         </div>
 
         <div className="sidebar-nav relative flex-1 min-h-0 px-2.5">
-          <div className="sidebar-nav-body pt-2">
+          {/* Selector: absolutely positioned so it reserves no space in the collapsed rail. */}
+          {showSidebarChrome && (
+            <div className="sidebar-top-chrome absolute inset-x-0 top-2 z-10 lg:top-0">
+              {mostrarSelector && (
+                <div className="relative mb-3 mx-2" ref={empresaDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setEmpresaDropdownOpen((value) => !value)}
+                    aria-haspopup="listbox"
+                    aria-expanded={empresaDropdownOpen}
+                    className="sidebar-company-selector w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.07] hover:border-white/[0.1] transition-all duration-200 cursor-pointer"
+                  >
+                    {renderEmpresaBadge(empresaActivaInfo)}
+                    <span className="text-xs font-medium text-slate-300 truncate flex-1 text-left lg:opacity-0 lg:sidebar-expanded:opacity-100 transition-opacity duration-200">
+                      {empresaActivaInfo?.nombre ?? TODAS_LAS_EMPRESAS_LABEL}
+                    </span>
+                    <span className="sidebar-company-dot w-1.5 h-1.5 rounded-full shrink-0 lg:opacity-0 lg:sidebar-expanded:opacity-100 transition-opacity duration-200" />
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 text-slate-500 shrink-0 transition-transform duration-200 lg:opacity-0 lg:sidebar-expanded:opacity-100 ${
+                        empresaDropdownOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {empresaDropdownOpen && (
+                    <div
+                      role="listbox"
+                      aria-label="Empresa activa"
+                      className="absolute left-0 right-0 mt-1.5 bg-[#121829]/95 backdrop-blur-md border border-white/[0.08] rounded-xl shadow-2xl shadow-black/40 z-50 py-1.5"
+                    >
+                      {opcionesSelector.map((opcion) => {
+                        const isSelected = empresaActiva === opcion.id;
+                        return (
+                          <button
+                            key={opcion.id ?? "todas"}
+                            type="button"
+                            role="option"
+                            aria-selected={isSelected}
+                            onClick={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              setEmpresaActiva(opcion.id);
+                              setEmpresaDropdownOpen(false);
+                            }}
+                            className={`w-full flex items-center justify-between gap-2 px-2.5 py-2 mx-0 text-xs transition-colors cursor-pointer rounded-lg ${
+                              isSelected
+                                ? "sidebar-company-option-selected font-medium"
+                                : "text-slate-300 hover:bg-white/[0.05]"
+                            }`}
+                          >
+                            <span className="flex items-center gap-2.5 min-w-0">
+                              {renderEmpresaBadge(opcion.info)}
+                              <span className="truncate">{opcion.nombre}</span>
+                            </span>
+                            {isSelected && (
+                              <Check className="sidebar-company-check w-3.5 h-3.5 shrink-0" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div
+            className={`sidebar-nav-body pt-0 transition-[padding-top] duration-[280ms] ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none ${navChromePadding}`}
+          >
             <ul className="sidebar-nav-list flex flex-col space-y-1">
               {visibleItems.map((item) => {
                 const Icon = item.icon;
