@@ -278,8 +278,13 @@ function ResponsablesOverflowPopover({
 
 export default function FacturacionFacturasPage() {
   const { status, hasAccess } = useFacturacionPage(RUTAS_SISTEMA.FACTURACION_FACTURAS);
-  const { empresaActiva, empresaActivaInfo, empresasParaFiltro, empresasDisponibles } =
-    useEmpresaFilter();
+  const {
+    empresaActiva,
+    empresaActivaInfo,
+    empresasParaFiltro,
+    empresasDisponibles,
+    initialized: empresasInitialized,
+  } = useEmpresaFilter();
   const convex = useConvex();
   const [exporting, setExporting] = useState(false);
   const [query, setQuery] = useState("");
@@ -702,7 +707,7 @@ export default function FacturacionFacturasPage() {
         </button>
       </div>
 
-      {activeTab === "tiempos" ? (
+      {activeTab === "tiempos" && empresasInitialized ? (
         <TiemposFacturasReport
           empresas={empresasParaFiltro.length > 0 ? empresasParaFiltro : empresasDisponibles}
         />

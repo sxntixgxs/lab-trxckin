@@ -77,17 +77,53 @@ export const DELEGADOS_TH_EMPRESAS_EXTERNAS: Record<number, number[]> = {
   3: [1],
 };
 
-export const ROL_OPERADOR = 4;
-export const ROLES_ADMIN = [1, 99];
-export const ROLES_GLOBAL_EMPRESA = [...ROLES_ADMIN, ROL_OPERADOR];
-
 export const COOKIE_EMPRESA_ACTIVA = "empresa-activa";
 
+/**
+ * Global scope ("Todas las empresas") is granted only by the explicit flag. Callers fold
+ * `hasFullAccess` (admin) into it: see `toBillingSession` and `resolveEmpresaAccess`.
+ * `_idRol` is kept for call-site compatibility; role ids no longer grant global scope.
+ */
 export function hasGlobalEmpresaAccess(
-  idRol: number,
+  _idRol: number,
   accesoTodasEmpresas?: boolean | null,
 ): boolean {
-  return ROLES_GLOBAL_EMPRESA.includes(idRol) || accesoTodasEmpresas === true;
+  return accesoTodasEmpresas === true;
+}
+
+export type EmpresaAccessInput = {
+  empresas?: number[] | null;
+  acceso_todas_empresas?: boolean | null;
+  hasFullAccess?: boolean | null;
+};
+
+export type EmpresaAccess = {
+  /** Companies the user may select. Every company when the user has global scope. */
+  empresas: number[];
+  /** May pick "Todas las empresas" and any company. */
+  canAccessAllEmpresas: boolean;
+  /** `hasFullAccess` (admin role). */
+  isAdmin: boolean;
+};
+
+/** Sorted, de-duplicated, positive-integer company ids. */
+export function normalizeEmpresaIds(ids: readonly number[] | null | undefined): number[] {
+  return [...new Set((ids ?? []).filter((id) => Number.isInteger(id) && id > 0))].sort(
+    (a, b) => a - b,
+  );
+}
+
+/** Resolves the company scope of a user as returned by Nest (`/api/me`, `toBillingSession`). */
+export function resolveEmpresaAccess(user: EmpresaAccessInput | null | undefined): EmpresaAccess {
+  const isAdmin = user?.hasFullAccess === true;
+  const canAccessAllEmpresas = isAdmin || user?.acceso_todas_empresas === true;
+  return {
+    empresas: canAccessAllEmpresas
+      ? EMPRESAS_LIST.map((empresa) => empresa.id)
+      : normalizeEmpresaIds(user?.empresas),
+    canAccessAllEmpresas,
+    isAdmin,
+  };
 }
 
 export function getEmpresaNombre(id: number): string {

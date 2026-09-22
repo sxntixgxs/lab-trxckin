@@ -1,110 +1,88 @@
 "use client";
 
-import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo } from "react";
+import { CURRENT_USER_QUERY_KEY, useCurrentUser } from "@/hooks/useCurrentUser";
 import {
-  COOKIE_EMPRESA_ACTIVA,
-  EMPRESAS_LIST,
-  EMPRESAS_MAP,
-  hasGlobalEmpresaAccess,
-  type EmpresaInfo,
-} from "@/lib/empresas";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
+  buildOpcionesSelector,
+  resolveEmpresasParaFiltro,
+  shouldMostrarSelector,
+} from "@/lib/empresa-selector";
+import { EMPRESAS_MAP, resolveEmpresaAccess } from "@/lib/empresas";
+import { useEmpresaStore } from "@/store/empresa-store";
 
-function readStoredEmpresa(): number | null {
-  if (typeof window === "undefined") return null;
-  const fromStorage = window.localStorage.getItem(COOKIE_EMPRESA_ACTIVA);
-  const parsed = Number(fromStorage);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
-}
+// Shared by every hook instance (sidebar, pages, dashboard hook): the first value observed
+// after the store is initialized becomes the baseline, so only a real switch triggers the
+// refresh, exactly once, instead of every instance firing on mount.
+let lastHandledEmpresa: number | null | undefined;
 
-function persistEmpresa(id: number | null) {
-  if (typeof window === "undefined") return;
-  if (id === null) {
-    window.localStorage.removeItem(COOKIE_EMPRESA_ACTIVA);
-    document.cookie = `${COOKIE_EMPRESA_ACTIVA}=;path=/;max-age=0;SameSite=Lax`;
-    return;
-  }
-  window.localStorage.setItem(COOKIE_EMPRESA_ACTIVA, String(id));
-  const isSecure = window.location?.protocol === "https:";
-  document.cookie = `${COOKIE_EMPRESA_ACTIVA}=${id};path=/;max-age=31536000;SameSite=Lax${
-    isSecure ? ";Secure" : ""
-  }`;
-}
-
-// Shared store so every hook instance sees the same value, and SSR/hydration
-// both render `null` (localStorage is only read after hydration).
-const listeners = new Set<() => void>();
-
-function notifyEmpresaListeners() {
-  for (const listener of listeners) listener();
-}
-
-function subscribeEmpresa(listener: () => void) {
-  listeners.add(listener);
-  const onStorage = (event: StorageEvent) => {
-    if (event.key === COOKIE_EMPRESA_ACTIVA) listener();
-  };
-  window.addEventListener("storage", onStorage);
-  return () => {
-    listeners.delete(listener);
-    window.removeEventListener("storage", onStorage);
-  };
-}
-
-function getServerEmpresa(): number | null {
-  return null;
-}
-
+/**
+ * Active-company filter (port of dev-pc `hooks/useEmpresaFilter.ts`). The allowed set comes
+ * from `/api/me`; the selection lives in `useEmpresaStore` (localStorage + cookie).
+ */
 export function useEmpresaFilter() {
   const { backendUser } = useCurrentUser();
-  const canAccessAllEmpresas = hasGlobalEmpresaAccess(
-    backendUser?.rol.id ?? 0,
-    backendUser?.hasFullAccess,
-  );
-  const empresasDisponibles = useMemo(
-    () => EMPRESAS_LIST.map((empresa) => empresa.id),
-    [],
-  );
-  const empresaActiva = useSyncExternalStore(
-    subscribeEmpresa,
-    readStoredEmpresa,
-    getServerEmpresa,
-  );
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const {
+    empresaActiva,
+    empresasDisponibles,
+    isAdmin,
+    canAccessAllEmpresas,
+    _initialized,
+    setEmpresaActiva: storeSetEmpresaActiva,
+    initialize,
+  } = useEmpresaStore();
 
-  const setEmpresaActiva = useCallback((id: number | null) => {
-    persistEmpresa(id);
-    notifyEmpresaListeners();
-  }, []);
+  // `backendUser` keeps its reference while the profile is unchanged (React Query structural
+  // sharing) and changes when impersonation swaps the effective user, which re-runs initialize.
+  const access = useMemo(() => resolveEmpresaAccess(backendUser), [backendUser]);
 
-  const empresasParaFiltro = useMemo(() => {
-    if (empresaActiva !== null) return [empresaActiva];
-    if (canAccessAllEmpresas) return [];
-    return empresasDisponibles;
-  }, [canAccessAllEmpresas, empresaActiva, empresasDisponibles]);
+  useEffect(() => {
+    if (!backendUser) return;
+    initialize({
+      empresas: access.empresas,
+      canAccessAllEmpresas: access.canAccessAllEmpresas,
+      isAdmin: access.isAdmin,
+    });
+  }, [backendUser, access, initialize]);
 
-  const mostrarSelector = canAccessAllEmpresas || empresasDisponibles.length > 1;
-
-  const opcionesSelector: {
-    id: number | null;
-    nombre: string;
-    info?: EmpresaInfo;
-  }[] = [];
-
-  if (canAccessAllEmpresas) {
-    opcionesSelector.push({ id: null, nombre: "Todas las empresas" });
-    for (const emp of EMPRESAS_LIST) {
-      opcionesSelector.push({ id: emp.id, nombre: emp.nombre, info: emp });
+  useEffect(() => {
+    if (!_initialized) return;
+    if (lastHandledEmpresa === undefined) {
+      lastHandledEmpresa = empresaActiva;
+      return;
     }
-  } else {
-    for (const empId of empresasDisponibles) {
-      const info = EMPRESAS_MAP[empId];
-      opcionesSelector.push({
-        id: empId,
-        nombre: info?.nombre ?? `Empresa ${empId}`,
-        info,
-      });
-    }
-  }
+    if (lastHandledEmpresa === empresaActiva) return;
+    lastHandledEmpresa = empresaActiva;
+    // BFF (REST) caches refetch with the new scope. Convex subscriptions re-run on their own
+    // because the company is a query arg. The profile query is excluded: the user's companies
+    // do not change because they picked one.
+    void queryClient.invalidateQueries({
+      predicate: (query) => query.queryKey[0] !== CURRENT_USER_QUERY_KEY[0],
+    });
+    router.refresh();
+  }, [empresaActiva, _initialized, router, queryClient]);
+
+  const setEmpresaActiva = useCallback(
+    (id: number | null) => {
+      storeSetEmpresaActiva(id);
+    },
+    [storeSetEmpresaActiva],
+  );
+
+  const empresasParaFiltro = useMemo(
+    () => resolveEmpresasParaFiltro(empresaActiva, canAccessAllEmpresas, empresasDisponibles),
+    [empresaActiva, canAccessAllEmpresas, empresasDisponibles],
+  );
+
+  const opcionesSelector = useMemo(
+    () => buildOpcionesSelector(canAccessAllEmpresas, empresasDisponibles),
+    [canAccessAllEmpresas, empresasDisponibles],
+  );
+
+  const mostrarSelector = shouldMostrarSelector(canAccessAllEmpresas, empresasDisponibles);
 
   const empresaActivaInfo =
     empresaActiva !== null ? EMPRESAS_MAP[empresaActiva] : undefined;
@@ -118,6 +96,7 @@ export function useEmpresaFilter() {
     mostrarSelector,
     opcionesSelector,
     empresaActivaInfo,
-    isAdmin: Boolean(backendUser?.hasFullAccess),
+    isAdmin,
+    initialized: _initialized,
   };
 }

@@ -252,6 +252,7 @@ apps/
     components/             UI (Radix-based) and feature components
     convex/                 Schema, queries/mutations/actions, crons, lib/ (auth, Graph, SLA, ...)
     lib/                    nav.ts, empresas.ts, fetch-backend.ts, impersonation, env helpers, onboarding/ (risk, documents, phases)
+    store/                  empresa-store.ts (active company: zustand + localStorage + cookie)
     proxy.ts                AuthKit middleware (public paths, redirect URI)
   backend/                  NestJS API
     src/                    auth/, usuarios/, roles/, permisos-roles/, procesos/, proveedores/, health/
