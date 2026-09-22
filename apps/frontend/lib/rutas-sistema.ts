@@ -9,6 +9,8 @@ export const RUTAS_SISTEMA = {
   FINANZAS_CAJAS_MENORES: "finance/petty-cash",
   FINANZAS_ANTICIPOS_DASHBOARD: "finance/advances",
   FINANZAS_ANTICIPOS_SOLICITAR: "finance/advances/request",
+  PROVEEDORES_ONBOARDING: "suppliers/onboarding",
+  CLIENTES_ONBOARDING: "customers/onboarding",
 } as const;
 
 export type RutaSistema = (typeof RUTAS_SISTEMA)[keyof typeof RUTAS_SISTEMA];

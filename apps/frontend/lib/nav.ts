@@ -1,4 +1,4 @@
-import { FileText, LayoutDashboard, Settings, Shield, UserRound, Wallet } from "lucide-react";
+import { FileText, Handshake, LayoutDashboard, Settings, Shield, Truck, UserRound, Wallet } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export type NavItem = {
@@ -54,6 +54,32 @@ export const NAV_ITEMS: NavItem[] = [
         label: "Request advance",
         href: "/finance/advances/request",
         permission: "finance/advances/request",
+      },
+    ],
+  },
+  {
+    id: "suppliers",
+    label: "Suppliers",
+    icon: Truck,
+    children: [
+      {
+        id: "suppliers-onboarding",
+        label: "Onboarding",
+        href: "/suppliers/onboarding",
+        permission: "suppliers/onboarding",
+      },
+    ],
+  },
+  {
+    id: "customers",
+    label: "Customers",
+    icon: Handshake,
+    children: [
+      {
+        id: "customers-onboarding",
+        label: "Onboarding",
+        href: "/customers/onboarding",
+        permission: "customers/onboarding",
       },
     ],
   },

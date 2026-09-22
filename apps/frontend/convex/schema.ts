@@ -20,6 +20,21 @@ import {
   anticiposRolesConfig,
   bolsasAnticipos,
 } from "./financiero/anticipos";
+import {
+  onboardingAccessTokens,
+  onboardingClientes,
+  onboardingClientesDocumentos,
+  onboardingClientesFases,
+  onboardingCorreoEventos,
+  onboardingCorreos,
+  onboardingProveedores,
+  onboardingProveedoresDocumentos,
+  onboardingProveedoresEvaluaciones,
+  onboardingProveedoresFases,
+  onboardingProveedoresTipos,
+  onboardingRoles,
+  onboardingWhitelist,
+} from "./onboarding/schema";
 import { cajaMenorContextoValidator } from "./lib/cajaMenorAuditoria";
 import { centrosCostoDistribucionValidator } from "./lib/centrosCostoDistribucion";
 import {
@@ -1688,4 +1703,17 @@ export default defineSchema({
   cajasMenoresReembolsoEventos,
   facturacionCajaMenorMovimientos,
   facturacionCajaMenorLegalizaciones,
+  onboardingProveedores,
+  onboardingProveedoresFases,
+  onboardingProveedoresDocumentos,
+  onboardingProveedoresTipos,
+  onboardingProveedoresEvaluaciones,
+  onboardingClientes,
+  onboardingClientesFases,
+  onboardingClientesDocumentos,
+  onboardingRoles,
+  onboardingWhitelist,
+  onboardingAccessTokens,
+  onboardingCorreos,
+  onboardingCorreoEventos,
 });

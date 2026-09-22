@@ -16,6 +16,8 @@ export const ALLOWED_RUTAS = [
   "finance/petty-cash",
   "finance/advances",
   "finance/advances/request",
+  "suppliers/onboarding",
+  "customers/onboarding",
 ] as const;
 
 export type AllowedRuta = (typeof ALLOWED_RUTAS)[number];

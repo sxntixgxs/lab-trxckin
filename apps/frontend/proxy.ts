@@ -12,6 +12,10 @@ export default authkitMiddleware({
       // Server-to-server email endpoints called by Convex. They have no WorkOS session
       // and authenticate with a shared secret / HMAC signature inside the route.
       "/api/notifications/:path*",
+      // Public onboarding forms for suppliers/customers (token-guarded Convex functions).
+      "/onboarding/:path*",
+      // Resend delivery webhooks (Svix-signed inside the route).
+      "/api/webhooks/:path*",
     ],
   },
   redirectUri:

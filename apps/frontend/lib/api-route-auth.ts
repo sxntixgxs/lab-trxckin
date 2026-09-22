@@ -98,6 +98,21 @@ export function requireInternalSecret(
   return { ok: true };
 }
 
+/**
+ * Accepts either an authenticated staff session or the shared internal secret
+ * (Convex → Next). Returns the session when present so callers can check permissions.
+ */
+export async function requireSessionOrInternalSecret(
+  request: Request,
+  options: InternalSecretOptions,
+): Promise<ApiSessionResult | { ok: true; session: null; user: null }> {
+  const secretResult = requireInternalSecret(request, options);
+  if (secretResult.ok) return { ok: true, session: null, user: null };
+  const sessionResult = await requireApiSession();
+  if (sessionResult.ok) return sessionResult;
+  return sessionResult;
+}
+
 export function requireAuthorizedEmpresa(
   session: BillingSession,
   requestedEmpresa: string | number | null | undefined,
