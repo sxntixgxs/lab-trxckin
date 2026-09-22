@@ -1,0 +1,28 @@
+{
+  "name": "lab-trxckin",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "packageManager": "pnpm@10.15.0",
+  "scripts": {
+    "dev": "concurrently --names \"BACKEND,FRONTEND,CONVEX\" --prefix-colors \"red,green,blue\" \"pnpm --filter backend start:dev\" \"pnpm --filter frontend dev\" \"pnpm --filter frontend convex\"",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "start": "turbo run start"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.3",
+    "turbo": "^2.10.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/engines",
+      "@swc/core",
+      "esbuild",
+      "prisma",
+      "unrs-resolver"
+    ]
+  }
+}
