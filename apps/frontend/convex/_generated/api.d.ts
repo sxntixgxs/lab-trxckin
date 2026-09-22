@@ -35,6 +35,7 @@ import type * as lib_ajustarAnticiposPorBaseCruce from "../lib/ajustarAnticiposP
 import type * as lib_anticiposDashboardProjection from "../lib/anticiposDashboardProjection.js";
 import type * as lib_anticiposLegalizacionReconciliacion from "../lib/anticiposLegalizacionReconciliacion.js";
 import type * as lib_anticiposNotifications from "../lib/anticiposNotifications.js";
+import type * as lib_anticiposVisibility from "../lib/anticiposVisibility.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_backgroundJobs from "../lib/backgroundJobs.js";
 import type * as lib_billingAuth from "../lib/billingAuth.js";
@@ -135,6 +136,7 @@ declare const fullApi: ApiFromModules<{
   "lib/anticiposDashboardProjection": typeof lib_anticiposDashboardProjection;
   "lib/anticiposLegalizacionReconciliacion": typeof lib_anticiposLegalizacionReconciliacion;
   "lib/anticiposNotifications": typeof lib_anticiposNotifications;
+  "lib/anticiposVisibility": typeof lib_anticiposVisibility;
   "lib/auth": typeof lib_auth;
   "lib/backgroundJobs": typeof lib_backgroundJobs;
   "lib/billingAuth": typeof lib_billingAuth;
