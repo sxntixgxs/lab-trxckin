@@ -39,7 +39,8 @@ export function shortRef(id: string): string {
 }
 
 /** Logo URL resolvable from the browser (react-pdf loads images through fetch). */
-export function absoluteLogoUrl(path: string): string {
+export function absoluteLogoUrl(path: string | undefined): string | undefined {
+  if (!path) return undefined;
   if (/^https?:\/\//.test(path)) return path;
   return typeof window !== "undefined" ? window.location.origin + path : path;
 }

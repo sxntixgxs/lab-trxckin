@@ -78,10 +78,10 @@ export type FormBranding = {
   nit: string;
   color: string;
   primaryHsl: string;
-  /** Logo para fondos oscuros (cabecera del formulario). */
-  logo: string;
-  /** Logo para PDF (fondo blanco). */
-  logoPdf: string;
+  /** Company mark (square SVG) shown next to the name in the public header. */
+  icon: string;
+  /** Raster logo for PDFs; react-pdf cannot draw SVG, so SVG logos are omitted and PDFs print the name. */
+  logoPdf?: string;
   web?: string;
   contactEmail?: string;
   emailProteccionDatos?: string;
@@ -89,6 +89,10 @@ export type FormBranding = {
 };
 
 const FALLBACK_EMPRESA_ID = 1;
+
+function isRasterImage(path: string): boolean {
+  return /\.(png|jpe?g)(\?.*)?$/i.test(path);
+}
 
 /** Branding neutro para formularios públicos, PDFs y correos de onboarding. */
 export function getFormBranding(empresaId: number | null | undefined): FormBranding {
@@ -102,8 +106,8 @@ export function getFormBranding(empresaId: number | null | undefined): FormBrand
     nit: info.nit,
     color: info.color,
     primaryHsl: hexToHsl(info.color),
-    logo: info.logoBlanco,
-    logoPdf: info.logo,
+    icon: info.icon,
+    logoPdf: isRasterImage(info.logo) ? info.logo : undefined,
     web: extra.web,
     contactEmail: extra.contactEmail,
     emailProteccionDatos: extra.emailProteccionDatos,

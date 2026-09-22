@@ -30,7 +30,12 @@ export function PublicHeader({
 }) {
   const hostname = branding.web ? branding.web.replace(/^https?:\/\//, "").split("/")[0] : null;
   const logo = (
-    <Image src={branding.logo} alt={branding.nombre} width={140} height={44} className="h-8 w-auto object-contain" unoptimized priority />
+    <span className="flex items-center gap-2.5">
+      <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl shadow-sm ring-1 ring-white/25">
+        <Image src={branding.icon} alt="" width={36} height={36} className="h-full w-full object-contain" unoptimized priority />
+      </span>
+      <span className="text-sm font-semibold tracking-wide text-white">{branding.nombreCorto}</span>
+    </span>
   );
   return (
     <header className="sticky top-0 z-50">
