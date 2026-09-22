@@ -1,8 +1,13 @@
 import { defineTable } from "convex/server";
 import { v } from "convex/values";
 import {
+  actividadEconomicaClienteValidator,
   ajusteRiesgoValidator,
   anulacionValidator,
+  cuentaPagoClienteValidator,
+  formaPagoClienteValidator,
+  infoTributariaClienteValidator,
+  radicacionFacturaValidator,
   certificacionValidator,
   compoAccionariaItemValidator,
   conflictoInteresesValidator,
@@ -276,103 +281,13 @@ export const onboardingClientes = defineTable({
     contadorEmail: v.optional(v.string()),
     contadorTelefono: v.optional(v.string()),
   }),
-  actividadEconomica_02: v.optional(
-    v.object({
-      codigoCiiu: v.string(),
-      actividadEconomica: v.optional(v.string()),
-      descripcionServicio: v.optional(v.string()),
-      cuentasExtranjero: v.optional(v.string()),
-      transaccionesVirtuales: v.optional(v.string()),
-      codigoCiiuSecundario: v.optional(v.string()),
-      actividadEconomicaSecundaria: v.optional(v.string()),
-    }),
-  ),
+  actividadEconomica_02: v.optional(actividadEconomicaClienteValidator),
   conflictoIntereses_03: v.optional(conflictoInteresesValidator),
-  /** Campos en su mayoría opcionales; las reglas condicionales se validan al enviar el formulario. */
-  infoTributaria_04: v.optional(
-    v.object({
-      impuestoRenta: v.optional(
-        v.object({
-          contribuyente: v.optional(v.boolean()),
-          calidadContribuyente: v.optional(
-            v.union(
-              v.literal("ORDINARIO"),
-              v.literal("ESPECIAL_SIN_ANIMO_LUCRO"),
-              v.literal("RST"),
-              v.literal("NO_CONTRIBUYENTE"),
-            ),
-          ),
-          regimenOrdinario: v.optional(v.boolean()),
-          regimenEspecial: v.optional(v.boolean()),
-          regimenSimple: v.optional(v.boolean()),
-          granContribuyente: v.optional(v.boolean()),
-          autorretenedorRenta: v.optional(v.boolean()),
-          resolucion: v.optional(v.string()),
-          fechaResolucion: v.optional(v.number()),
-          resolucionAutorretenedor: v.optional(v.string()),
-          tarifaRetencionFuente: v.optional(v.string()),
-          baseRetencionFuente: v.optional(v.string()),
-        }),
-      ),
-      impuestoVentas: v.optional(
-        v.object({
-          responsableIva: v.optional(v.boolean()),
-          retencionIva: v.optional(v.boolean()),
-          tarifaRetencionIva: v.optional(v.string()),
-        }),
-      ),
-      impuestoIndustriaYComercio: v.optional(
-        v.object({
-          responsableImpuesto: v.optional(v.boolean()),
-          municipios: v.optional(v.array(v.string())),
-          esGranContribuyenteIcaBogota: v.optional(v.boolean()),
-          resolucionGranContribuyenteIca: v.optional(v.string()),
-        }),
-      ),
-      basesReteFuente: v.optional(
-        v.object({
-          practicaReteFuente: v.optional(v.boolean()),
-          cualBase: v.optional(v.string()),
-          practicaReteIca: v.optional(v.boolean()),
-          whichBase: v.optional(v.string()),
-          municipiosRetIca: v.optional(v.array(v.string())),
-          tarifaRetencionIca: v.optional(v.string()),
-        }),
-      ),
-      correoFacturacionElectronica: v.optional(v.string()),
-      contactoCertificadosRetencion: v.optional(
-        v.object({
-          nombre: v.optional(v.string()),
-          correo: v.optional(v.string()),
-          telefono: v.optional(v.string()),
-        }),
-      ),
-    }),
-  ),
+  infoTributaria_04: v.optional(infoTributariaClienteValidator),
   compoAccionaria_05: v.optional(v.array(compoAccionariaItemValidator)),
   contactos_06: v.optional(v.array(contactoAdicionalValidator)),
-  radicacionFactura_07: v.optional(
-    v.object({
-      direccion: v.string(),
-      correoFacturacion: v.string(),
-      fechaMaximaRadicacion: v.number(),
-    }),
-  ),
-  datosCuentasPagos_08: v.optional(
-    v.array(
-      v.object({
-        tipoCuenta: v.union(v.literal("Ahorros"), v.literal("Corriente")),
-        entidad: v.string(),
-        numeroCuenta: v.string(),
-        titular: v.string(),
-        tipoDocumento: v.optional(tipoDocumentoValidator),
-        numeroDocumento: v.optional(v.string()),
-        email: v.optional(v.string()),
-        ciudad: v.optional(v.string()),
-        departamento: v.optional(v.string()),
-      }),
-    ),
-  ),
+  radicacionFactura_07: v.optional(radicacionFacturaValidator),
+  datosCuentasPagos_08: v.optional(v.array(cuentaPagoClienteValidator)),
   tipoEvaluacion: tipoEvaluacionValidator,
   documentos_09: v.optional(v.record(v.string(), v.id("_storage"))),
   firmaRepresentante_10: v.optional(v.string()),
@@ -380,7 +295,7 @@ export const onboardingClientes = defineTable({
   referenciasComerciales_11: v.optional(v.array(referenciaComercialValidator)),
   condicionesPago_12: v.optional(
     v.object({
-      formaPago: v.union(v.literal("Anticipado"), v.literal("Contado"), v.literal("Crédito")),
+      formaPago: formaPagoClienteValidator,
       plazo: plazoPagoValidator,
     }),
   ),
