@@ -66,6 +66,15 @@ import type * as lib_facturacionTiempos from "../lib/facturacionTiempos.js";
 import type * as lib_money from "../lib/money.js";
 import type * as lib_normalize from "../lib/normalize.js";
 import type * as lib_notaCreditoRelacion from "../lib/notaCreditoRelacion.js";
+import type * as lib_onboarding_access from "../lib/onboarding/access.js";
+import type * as lib_onboarding_correos from "../lib/onboarding/correos.js";
+import type * as lib_onboarding_notificar from "../lib/onboarding/notificar.js";
+import type * as lib_onboarding_phases from "../lib/onboarding/phases.js";
+import type * as lib_onboarding_refs from "../lib/onboarding/refs.js";
+import type * as lib_onboarding_storageScope from "../lib/onboarding/storageScope.js";
+import type * as lib_onboarding_suppliersDocs from "../lib/onboarding/suppliersDocs.js";
+import type * as lib_onboarding_suppliersMatrizRiesgoReporte from "../lib/onboarding/suppliersMatrizRiesgoReporte.js";
+import type * as lib_onboarding_tokens from "../lib/onboarding/tokens.js";
 import type * as lib_peajes from "../lib/peajes.js";
 import type * as lib_peajesCentroCosto from "../lib/peajesCentroCosto.js";
 import type * as lib_proveedorNit from "../lib/proveedorNit.js";
@@ -77,6 +86,16 @@ import type * as lib_valorLegalizableAnticipo from "../lib/valorLegalizableAntic
 import type * as notificacionesAnticipos from "../notificacionesAnticipos.js";
 import type * as notificacionesFacturacion from "../notificacionesFacturacion.js";
 import type * as notificationHttp from "../notificationHttp.js";
+import type * as onboarding_correos from "../onboarding/correos.js";
+import type * as onboarding_notificaciones from "../onboarding/notificaciones.js";
+import type * as onboarding_roles from "../onboarding/roles.js";
+import type * as onboarding_suppliers from "../onboarding/suppliers.js";
+import type * as onboarding_suppliersEvaluar from "../onboarding/suppliersEvaluar.js";
+import type * as onboarding_suppliersPublic from "../onboarding/suppliersPublic.js";
+import type * as onboarding_suppliersReportes from "../onboarding/suppliersReportes.js";
+import type * as onboarding_suppliersTipos from "../onboarding/suppliersTipos.js";
+import type * as onboarding_tokens from "../onboarding/tokens.js";
+import type * as onboarding_validators from "../onboarding/validators.js";
 import type * as users from "../users.js";
 
 import type {
@@ -144,6 +163,15 @@ declare const fullApi: ApiFromModules<{
   "lib/money": typeof lib_money;
   "lib/normalize": typeof lib_normalize;
   "lib/notaCreditoRelacion": typeof lib_notaCreditoRelacion;
+  "lib/onboarding/access": typeof lib_onboarding_access;
+  "lib/onboarding/correos": typeof lib_onboarding_correos;
+  "lib/onboarding/notificar": typeof lib_onboarding_notificar;
+  "lib/onboarding/phases": typeof lib_onboarding_phases;
+  "lib/onboarding/refs": typeof lib_onboarding_refs;
+  "lib/onboarding/storageScope": typeof lib_onboarding_storageScope;
+  "lib/onboarding/suppliersDocs": typeof lib_onboarding_suppliersDocs;
+  "lib/onboarding/suppliersMatrizRiesgoReporte": typeof lib_onboarding_suppliersMatrizRiesgoReporte;
+  "lib/onboarding/tokens": typeof lib_onboarding_tokens;
   "lib/peajes": typeof lib_peajes;
   "lib/peajesCentroCosto": typeof lib_peajesCentroCosto;
   "lib/proveedorNit": typeof lib_proveedorNit;
@@ -155,6 +183,16 @@ declare const fullApi: ApiFromModules<{
   notificacionesAnticipos: typeof notificacionesAnticipos;
   notificacionesFacturacion: typeof notificacionesFacturacion;
   notificationHttp: typeof notificationHttp;
+  "onboarding/correos": typeof onboarding_correos;
+  "onboarding/notificaciones": typeof onboarding_notificaciones;
+  "onboarding/roles": typeof onboarding_roles;
+  "onboarding/suppliers": typeof onboarding_suppliers;
+  "onboarding/suppliersEvaluar": typeof onboarding_suppliersEvaluar;
+  "onboarding/suppliersPublic": typeof onboarding_suppliersPublic;
+  "onboarding/suppliersReportes": typeof onboarding_suppliersReportes;
+  "onboarding/suppliersTipos": typeof onboarding_suppliersTipos;
+  "onboarding/tokens": typeof onboarding_tokens;
+  "onboarding/validators": typeof onboarding_validators;
   users: typeof users;
 }>;
 
