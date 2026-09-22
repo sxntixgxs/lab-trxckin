@@ -290,9 +290,12 @@ function DetailDialog({
     return [
       inscripcion.anulacion?.porUserId,
       inscripcion.matriz_00.responsableId,
+      inscripcion.rechazadoCumplimiento?.rechazadoPorUserId,
+      inscripcion.rechazadoCompras?.rechazadoPorUserId,
       ...(inscripcion.devolucionesFase ?? []).map((item) => item.devueltoPorUserId),
       ...(inscripcion.ajustesRiesgoCumplimiento ?? []).map((item) => item.ajustadoPorUserId),
       ...fasesOrdenadas.map((fase) => fase.completadoPor),
+      ...fasesOrdenadas.map((fase) => fase.asignadoA),
     ];
   }, [inscripcion, fasesOrdenadas]);
   const auditUsers = useUsuariosMap(auditUserIds);
