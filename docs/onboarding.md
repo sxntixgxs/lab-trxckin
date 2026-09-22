@@ -2,7 +2,9 @@
 
 Two workflows for registering third parties: **supplier onboarding** (`/suppliers/onboarding`) and **customer onboarding** (`/customers/onboarding`). Each one combines an internal, role-based approval board with a public form that the third party fills without an account, an electronic signature step, per-document compliance review, PDF/Excel reports and tracked email hand-offs.
 
-All companies, contacts, NITs and compliance links in this repo are fictional. Branding for the public pages, PDFs and emails comes from `lib/empresas.ts` plus the optional extras in `lib/onboarding/branding.ts`.
+Module guides with diagrams: [suppliers.md](suppliers.md) · [customers.md](customers.md). This page covers what both share.
+
+All companies, contacts, NITs and compliance links in this repo are fictional. Branding for the public pages, PDFs and emails comes from `lib/empresas.ts` plus the optional extras in `lib/onboarding/branding.ts`: the public header shows the company mark (`public/images/empresas/*-icon.svg`) and short name, and PDFs print the company name because react-pdf cannot draw SVG logos.
 
 ## Where the code lives
 
@@ -15,6 +17,8 @@ All companies, contacts, NITs and compliance links in this repo are fictional. B
 | Public pages | `app/(public)/onboarding/supplier`, `.../supplier/sign`, `.../customer`, `.../customer/sign` |
 | Email delivery | `lib/onboarding/email-service.tsx`, `lib/onboarding/email-route.ts`, `app/api/notifications/onboarding/{supplier,customer}/route.tsx`, `app/api/webhooks/resend/onboarding/route.ts`, `components/emails/onboarding/OnboardingEmail.tsx` |
 | RUT extraction (optional) | `app/api/extract-rut/route.ts` |
+| Global search (command palette) | `convex/lib/onboarding/searchText.ts` (normalized business name + NIT), the `search_text` index in `convex/onboarding/schema.ts`, backfill in `convex/onboarding/searchBackfill.ts` |
+| Demo data | `lib/onboarding/acme-demo.ts`: the "Completar con ACME" buttons in the start modals fill empty fields with a fictional lowest-risk company |
 
 ## Phases
 
@@ -35,7 +39,7 @@ flowchart LR
     V -. rechazo .-> R
 ```
 
-- **Start.** A user with the route permission starts the process from the board: uploads the RUT (optionally prefilled by AI extraction), enters contact and risk-matrix data and picks the supplier type. The risk and evaluation type are computed server-side; Fase I is auto-completed and the tracked `FASE_I_COMPLETADA` invitation goes out. If the NIT already exists in the Nest supplier catalog (`/api/proveedores/search`) the request becomes an **ACTUALIZACIÓN**.
+- **Start.** A user with the route permission starts the process from the board: uploads the RUT (optionally prefilled by AI extraction), enters contact and risk-matrix data and picks the supplier type. The risk and evaluation type are computed server-side; Fase I is auto-completed and the tracked `FASE_I_COMPLETADA` invitation goes out. The modal checks the Nest supplier catalog (`/api/proveedores/search`) to turn an existing NIT into an **ACTUALIZACIÓN**; it expects a `{ proveedores: [...] }` response, while this repo's Nest endpoint returns a plain array, so in this extraction the check finds no match and every request starts as an INSCRIPCIÓN.
 - **Fase II.** The supplier fills 11 sections with autosave, uploads every required document (by evaluation type, person type, PEP and supplier-type extras) and submits. The signature request (`PENDIENTE_FIRMA`) goes to the legal representative.
 - **Fase IIA.** The legal representative reviews the PDF and signs. Signing materializes the document review rows and opens both Fase III lanes.
 - **Fase III.** Cumplimiento and Compras review their documents in parallel; rejected documents are re-uploaded by the supplier (form link stays valid) or replaced by the responsable. Cumplimiento can raise PEP/listas, which recomputes the risk and adds missing documents. When both lanes are approved, Fase IV opens assigned to the Cumplimiento tier for the evaluation type.
@@ -57,10 +61,11 @@ flowchart LR
 ```
 
 - **Start.** The commercial responsable uploads the RUT, enters the customer, legal representative and risk data, sets the **payment terms** (`Anticipado` ⇔ plazo `NA`), optionally attaches a quotation and pre-loads documents, and picks INSCRIPCIÓN or ACTUALIZACIÓN manually.
-- **Fase II / IIA.** Same as suppliers with 10 sections; payment terms are read-only for the customer. Submitting requires the legal representative email; the tax questionnaire has conditional rules enforced on submit (`assertInfoTributariaClienteParaEnvio`).
+- **Fase II / IIA.** Same as suppliers with 10 sections; payment terms are read-only for the customer. Submitting requires the legal representative email; the tax questionnaire has conditional rules enforced on submit (`assertInfoTributariaClienteParaEnvio`). Unlike suppliers, customers can submit without every document: missing ones become `PENDIENTE` at signing and are uploaded during Fase III with the same form link.
 - **Fase III.** Single Cumplimiento lane. All approved → **Fase IIIA** assigned by evaluation tier (`APROBACION_CUMPLIMIENTO_ASIGNADA`).
 - **Fase IIIA.** Approve (→ Fase IV) or reject with customer-facing and internal motives.
 - **Fase IV.** Contabilidad confirms creation with optional closing notes; the browser posts the closing emails with the signed form PDF (customer, internal team) and the phase-time PDF (Financiero).
+- **Notifications.** Customers get fewer emails than suppliers: none after signing, none to Contabilidad when Fase IIIA is approved, and none to the customer on rejection (the public status page shows the external motive).
 
 Both modules support **devolver fase** (return the process to an earlier phase: later rows are deleted, signature/reviews/rejections are unwound, links are revoked and the right invitation is re-sent) and **anular** (terminal `ANULADA`, all links revoked, kept for audit).
 
@@ -90,9 +95,9 @@ Every phase mutation re-checks the actor with `requireActorEnFase` (admin, the a
 Public pages are reached only through links of the form `/onboarding/<supplier|customer>[/sign]?id=<inscripcionId>&t=<token>`.
 
 - Tokens are random 256-bit values; only their SHA-256 hash is stored (`onboardingAccessTokens`). Scopes: `FORM` (30 days) and `SIGN` (14 days); read-only viewer links used by staff last 2 hours.
-- Resending an invitation rotates the token; signing consumes the `SIGN` token; anulación and devolución revoke tokens; expiry is materialized by a scheduled mutation.
-- Before editing or uploading, the third party confirms the document type and number registered by the company; the same pair is sent with every public mutation and re-checked server-side.
-- Public queries return a projection (no risk scores, no internal motives, no accounting notes) and `null` for invalid links so pages can show "enlace inválido".
+- Resending an invitation rotates the token; signing consumes the `SIGN` token; anulación and devolución revoke tokens; expiry is materialized by a scheduled mutation. "Copiar enlace" on the board issues a new token without revoking earlier ones.
+- Before editing or uploading, the third party confirms the document type and number registered by the company. The pair is re-checked server-side on autosave, submission and document re-upload (`actualizarInscripcion`, `enviarFormulario`, `cargarDocumentoRevision`); generating an upload URL and signing only require the token.
+- Public queries return a projection (no risk inputs or score, no internal motives, no accounting notes) and `null` for invalid links so pages can show "enlace inválido". The projection does include the evaluation type, the PEP flag and the general data section, including the document pair.
 - File URLs for the public pages are issued only for storage ids owned by that inscription.
 
 ## Emails
@@ -116,6 +121,7 @@ Without `RESEND_API_KEY` the routes answer `{ sent: false, reason: "resend_not_c
 | Variable | Where | Purpose |
 | --- | --- | --- |
 | `NOTIFICATIONS_INTERNAL_KEY` | Next + Convex | Convex → Next notification calls |
+| `CONVEX_SERVER_SECRET` | Next + Convex | Next → Convex server calls (email send data, Resend webhook events) |
 | `RESEND_API_KEY`, `RESEND_FROM_EMAIL` | Next | Email delivery (optional) |
 | `RESEND_WEBHOOK_SECRET` | Next | Verifies Resend delivery webhooks |
 | `OPENROUTER_API_KEY` | Next | Optional AI extraction of the RUT when starting a process; without it the modal falls back to manual entry |
