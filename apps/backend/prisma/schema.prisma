@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Usuario {
+  id              String    @id @default(uuid())
+  workosUserId    String    @unique
+  email           String    @unique
+  nombre          String
+  cargo           String?
+  activo          Boolean   @default(true)
+  id_rol                Int
+  id_proceso            Int?
+  id_jefe_directo       String?
+  acceso_todas_empresas Boolean  @default(true)
+  created_at            DateTime @default(now())
+  updated_at            DateTime @updatedAt
+  rol                   Rol      @relation(fields: [id_rol], references: [id])
+  proceso               Proceso? @relation("UsuarioProceso", fields: [id_proceso], references: [id])
+  jefeDirecto           Usuario? @relation("JefeDirecto", fields: [id_jefe_directo], references: [id])
+  subordinados          Usuario[] @relation("JefeDirecto")
+  procesosLider         Proceso[] @relation("ProcesoLider")
+  empresas              UsuarioEmpresa[]
+
+  @@index([id_rol])
+  @@index([id_proceso])
+  @@index([id_jefe_directo])
+}
+
+model UsuarioEmpresa {
+  id         Int      @id @default(autoincrement())
+  id_usuario String
+  id_empresa Int
+  created_at DateTime @default(now())
+  usuario    Usuario  @relation(fields: [id_usuario], references: [id], onDelete: Cascade)
+
+  @@unique([id_usuario, id_empresa])
+  @@index([id_usuario])
+  @@index([id_empresa])
+}
+
+model Proceso {
+  id            Int       @id @default(autoincrement())
+  nombre        String
+  lider_user_id String?
+  activo        Boolean   @default(true)
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  lider         Usuario?  @relation("ProcesoLider", fields: [lider_user_id], references: [id])
+  usuarios      Usuario[] @relation("UsuarioProceso")
+
+  @@index([lider_user_id])
+}
+
+model Proveedor {
+  id         String   @id @default(uuid())
+  nit        String   @unique
+  nombre     String
+  email      String?
+  telefono   String?
+  direccion  String?
+  activo     Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([nombre])
+}
+
+model Rol {
+  id         Int          @id @default(autoincrement())
+  slug       String       @unique
+  nombre     String
+  activo     Boolean      @default(true)
+  created_at DateTime     @default(now())
+  updated_at DateTime     @updatedAt
+  usuarios   Usuario[]
+  permisos   PermisoRol[]
+}
+
+model PermisoRol {
+  id         Int      @id @default(autoincrement())
+  id_rol     Int
+  ruta       String
+  activo     Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  rol        Rol      @relation(fields: [id_rol], references: [id], onDelete: Cascade)
+
+  @@unique([id_rol, ruta])
+  @@index([id_rol])
+  @@index([ruta])
+}
