@@ -28,7 +28,7 @@ export const EMPRESAS_MAP: Record<number, EmpresaInfo> = {
     borderColor: "border-red-300",
     logo: EMPRESA_LOGO_PLACEHOLDER,
     logoBlanco: EMPRESA_LOGO_PLACEHOLDER,
-    icon: EMPRESA_LOGO_PLACEHOLDER,
+    icon: "/images/empresas/andes-icon.svg",
   },
   2: {
     id: 2,
@@ -41,7 +41,7 @@ export const EMPRESAS_MAP: Record<number, EmpresaInfo> = {
     borderColor: "border-emerald-300",
     logo: EMPRESA_LOGO_PLACEHOLDER,
     logoBlanco: EMPRESA_LOGO_PLACEHOLDER,
-    icon: EMPRESA_LOGO_PLACEHOLDER,
+    icon: "/images/empresas/cordillera-icon.svg",
   },
   3: {
     id: 3,
@@ -54,7 +54,7 @@ export const EMPRESAS_MAP: Record<number, EmpresaInfo> = {
     borderColor: "border-orange-300",
     logo: EMPRESA_LOGO_PLACEHOLDER,
     logoBlanco: EMPRESA_LOGO_PLACEHOLDER,
-    icon: EMPRESA_LOGO_PLACEHOLDER,
+    icon: "/images/empresas/pacifico-icon.svg",
   },
   4: {
     id: 4,
@@ -67,7 +67,7 @@ export const EMPRESAS_MAP: Record<number, EmpresaInfo> = {
     borderColor: "border-violet-300",
     logo: EMPRESA_LOGO_PLACEHOLDER,
     logoBlanco: EMPRESA_LOGO_PLACEHOLDER,
-    icon: EMPRESA_LOGO_PLACEHOLDER,
+    icon: "/images/empresas/altiplano-icon.svg",
   },
 } as const;
 
