@@ -73,6 +73,7 @@ import type * as lib_onboarding_customersDocs from "../lib/onboarding/customersD
 import type * as lib_onboarding_notificar from "../lib/onboarding/notificar.js";
 import type * as lib_onboarding_phases from "../lib/onboarding/phases.js";
 import type * as lib_onboarding_refs from "../lib/onboarding/refs.js";
+import type * as lib_onboarding_searchText from "../lib/onboarding/searchText.js";
 import type * as lib_onboarding_storageScope from "../lib/onboarding/storageScope.js";
 import type * as lib_onboarding_suppliersDocs from "../lib/onboarding/suppliersDocs.js";
 import type * as lib_onboarding_suppliersMatrizRiesgoReporte from "../lib/onboarding/suppliersMatrizRiesgoReporte.js";
@@ -93,6 +94,7 @@ import type * as onboarding_customers from "../onboarding/customers.js";
 import type * as onboarding_customersPublic from "../onboarding/customersPublic.js";
 import type * as onboarding_notificaciones from "../onboarding/notificaciones.js";
 import type * as onboarding_roles from "../onboarding/roles.js";
+import type * as onboarding_searchBackfill from "../onboarding/searchBackfill.js";
 import type * as onboarding_suppliers from "../onboarding/suppliers.js";
 import type * as onboarding_suppliersEvaluar from "../onboarding/suppliersEvaluar.js";
 import type * as onboarding_suppliersPublic from "../onboarding/suppliersPublic.js";
@@ -174,6 +176,7 @@ declare const fullApi: ApiFromModules<{
   "lib/onboarding/notificar": typeof lib_onboarding_notificar;
   "lib/onboarding/phases": typeof lib_onboarding_phases;
   "lib/onboarding/refs": typeof lib_onboarding_refs;
+  "lib/onboarding/searchText": typeof lib_onboarding_searchText;
   "lib/onboarding/storageScope": typeof lib_onboarding_storageScope;
   "lib/onboarding/suppliersDocs": typeof lib_onboarding_suppliersDocs;
   "lib/onboarding/suppliersMatrizRiesgoReporte": typeof lib_onboarding_suppliersMatrizRiesgoReporte;
@@ -194,6 +197,7 @@ declare const fullApi: ApiFromModules<{
   "onboarding/customersPublic": typeof onboarding_customersPublic;
   "onboarding/notificaciones": typeof onboarding_notificaciones;
   "onboarding/roles": typeof onboarding_roles;
+  "onboarding/searchBackfill": typeof onboarding_searchBackfill;
   "onboarding/suppliers": typeof onboarding_suppliers;
   "onboarding/suppliersEvaluar": typeof onboarding_suppliersEvaluar;
   "onboarding/suppliersPublic": typeof onboarding_suppliersPublic;

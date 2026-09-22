@@ -48,6 +48,8 @@ export const onboardingProveedores = defineTable({
   empresa: v.number(),
   /** Dígitos del número de documento (búsqueda por NIT). */
   NIT: v.string(),
+  /** Razón social + NIT normalizados para el índice `search_text` (ver `buildOnboardingSearchText`). */
+  searchText: v.optional(v.string()),
   tipoProveedor: v.optional(v.string()),
   faseActual: supplierFaseActualValidator,
   /** Instante en que la inscripción entró en `faseActual` (evita N+1 sobre las fases en el tablero). */
@@ -162,7 +164,8 @@ export const onboardingProveedores = defineTable({
   .index("by_empresa", ["empresa"])
   .index("by_empresa_faseActual", ["empresa", "faseActual"])
   .index("by_NIT", ["NIT"])
-  .index("by_responsableId", ["matriz_00.responsableId"]);
+  .index("by_responsableId", ["matriz_00.responsableId"])
+  .searchIndex("search_text", { searchField: "searchText", filterFields: ["empresa"] });
 
 export const onboardingProveedoresFases = defineTable({
   inscripcionId: v.id("onboardingProveedores"),
@@ -237,6 +240,8 @@ export const onboardingProveedoresEvaluaciones = defineTable({
 export const onboardingClientes = defineTable({
   empresa: v.number(),
   NIT: v.string(),
+  /** Razón social + NIT normalizados para el índice `search_text` (ver `buildOnboardingSearchText`). */
+  searchText: v.optional(v.string()),
   faseActual: customerFaseActualValidator,
   faseActualDesde: v.optional(v.number()),
 
@@ -317,7 +322,8 @@ export const onboardingClientes = defineTable({
   .index("by_empresa", ["empresa"])
   .index("by_empresa_faseActual", ["empresa", "faseActual"])
   .index("by_NIT", ["NIT"])
-  .index("by_responsableId", ["matriz_00.responsableId"]);
+  .index("by_responsableId", ["matriz_00.responsableId"])
+  .searchIndex("search_text", { searchField: "searchText", filterFields: ["empresa"] });
 
 export const onboardingClientesFases = defineTable({
   inscripcionId: v.id("onboardingClientes"),

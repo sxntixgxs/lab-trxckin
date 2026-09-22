@@ -17,6 +17,7 @@ import {
   resolveOnboardingAccess,
   type OnboardingAccess,
 } from "../lib/onboarding/access";
+import { buildOnboardingSearchText } from "../lib/onboarding/searchText";
 import { programarCorreoRastreado, TIPOS_RASTREADOS } from "../lib/onboarding/correos";
 import {
   assertCondicionesPagoCliente,
@@ -268,6 +269,7 @@ export const crearMatrizRiesgo = mutation({
     const inscripcionId = await ctx.db.insert("onboardingClientes", {
       empresa: args.empresa,
       NIT,
+      searchText: buildOnboardingSearchText({ NIT, razonSocial }),
       faseActual: "II_PENDIENTE_FORMULARIO",
       faseActualDesde: now,
       matriz_00: {

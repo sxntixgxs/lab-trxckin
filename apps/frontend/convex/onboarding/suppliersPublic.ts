@@ -3,6 +3,7 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { mutation, query, type MutationCtx, type QueryCtx } from "../_generated/server";
+import { buildOnboardingSearchText } from "../lib/onboarding/searchText";
 import { programarCorreoRastreado, TIPOS_RASTREADOS } from "../lib/onboarding/correos";
 import { programarNotificacion } from "../lib/onboarding/notificar";
 import { resolverAsignado } from "../lib/onboarding/phases";
@@ -236,6 +237,10 @@ export const actualizarInscripcion = mutation({
       if (patch.contactoEmail !== undefined) patch.contactoEmail = patch.contactoEmail.trim().toLowerCase();
       if (patch.representanteLegalEmail !== undefined) patch.representanteLegalEmail = patch.representanteLegalEmail.trim().toLowerCase();
       updates.datos_generales_01 = { ...ins.datos_generales_01, ...patch };
+      updates.searchText = buildOnboardingSearchText({
+        NIT: ins.NIT,
+        razonSocial: updates.datos_generales_01.razonSocial,
+      });
     }
     if (args.actividadPrincipal_02) updates.actividadPrincipal_02 = { ...(ins.actividadPrincipal_02 ?? {}), ...args.actividadPrincipal_02 };
     if (args.conflictoIntereses_03) updates.conflictoIntereses_03 = args.conflictoIntereses_03;
