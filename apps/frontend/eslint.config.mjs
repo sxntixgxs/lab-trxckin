@@ -1,0 +1,22 @@
+import { defineConfig, globalIgnores } from 'eslint/config';
+import nextCoreWebVitals from 'eslint-config-next/core-web-vitals';
+import nextTypescript from 'eslint-config-next/typescript';
+import convexPlugin from '@convex-dev/eslint-plugin';
+
+export default defineConfig([
+  ...nextCoreWebVitals,
+  ...nextTypescript,
+  ...convexPlugin.configs.recommended,
+  {
+    rules: {
+      "react-hooks/set-state-in-effect": "off",
+    },
+  },
+  {
+    files: ["tailwind.config.js"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+    },
+  },
+  globalIgnores(["convex/_generated", ".next"]),
+]);

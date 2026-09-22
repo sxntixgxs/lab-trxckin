@@ -1,0 +1,205 @@
+const colors = require("tailwindcss/colors");
+
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  mode: "jit",
+  content: [
+    "./app/**/*.{js,ts,jsx,tsx}",
+    "./pages/**/*.{js,ts,jsx,tsx}",
+    "./components/**/*.{js,ts,jsx,tsx}",
+  ],
+  darkMode: "selector",
+  theme: {
+    extend: {
+      colors: {
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
+        },
+        secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
+      },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
+      },
+      keyframes: {
+        "accordion-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+        slide: {
+          from: { opacity: "0", transform: "translateX(100%)" },
+          to: { opacity: "1", transform: "translateX(0%)" },
+        },
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
+        slide: "slide 750ms ease-in-out",
+      },
+      boxShadow: {
+        DEFAULT:
+          "0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px 0 rgba(0, 0, 0, 0.02)",
+        md: "0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.02)",
+        lg: "0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.01)",
+        xl: "0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.01)",
+      },
+      outline: {
+        blue: "2px solid rgba(0, 112, 244, 0.5)",
+      },
+      fontFamily: {
+        ubuntu: ["Ubuntu", "sans-serif"],
+      },
+      fontSize: {
+        xs: ["0.75rem", { lineHeight: "1.5" }],
+        sm: ["0.875rem", { lineHeight: "1.5715" }],
+        base: ["1rem", { lineHeight: "1.5", letterSpacing: "-0.01em" }],
+        lg: ["1.125rem", { lineHeight: "1.5", letterSpacing: "-0.01em" }],
+        xl: ["1.25rem", { lineHeight: "1.5", letterSpacing: "-0.01em" }],
+        "2xl": ["1.5rem", { lineHeight: "1.33", letterSpacing: "-0.01em" }],
+        "3xl": ["1.88rem", { lineHeight: "1.33", letterSpacing: "-0.01em" }],
+        "4xl": ["2.25rem", { lineHeight: "1.25", letterSpacing: "-0.02em" }],
+        "5xl": ["3rem", { lineHeight: "1.25", letterSpacing: "-0.02em" }],
+        "6xl": ["3.75rem", { lineHeight: "1.2", letterSpacing: "-0.02em" }],
+      },
+      screens: {
+        xxs: "340px",
+        xs: "480px",
+        sm: "640px",
+        // => @media (min-width: 640px) { ... }
+
+        md: "768px",
+        // => @media (min-width: 768px) { ... }
+
+        lg: "1024px",
+        // => @media (min-width: 1024px) { ... }
+
+        xl: "1280px",
+        // => @media (min-width: 1280px) { ... }
+
+        "2xl": "1536px",
+        // => @media (min-width: 1536px) { ... }
+      },
+    },
+    colors: {
+      indigo: {
+        50: "#eff6ff",
+        100: "#dbeafe",
+        200: "#bfdbfe",
+        300: "#93c5fd",
+        400: "#60a5fa",
+        500: "#3b82f6",
+        600: "#2563eb",
+        700: "#1d4ed8",
+        800: "#1e40af",
+        900: "#1e3a8a",
+      },
+      transparent: "transparent",
+      current: "currentColor",
+      black: colors.black,
+      white: colors.white,
+      gray: colors.gray,
+      red: colors.red,
+      yellow: colors.amber,
+      blue: colors.blue,
+      slate: colors.slate,
+      sky: colors.sky,
+      rose: colors.rose,
+      emerald: colors.emerald,
+      orange: colors.orange,
+      yellow: colors.yellow,
+      green: colors.green,
+      purple: colors.purple,
+      pink: colors.pink,
+      brown: colors.brown,
+      cyan: colors.cyan,
+      amber: colors.amber,
+      violet: colors.violet,
+      fuchsia: colors.fuchsia,
+      lime: colors.lime,
+      teal: colors.teal,
+      indigo: colors.indigo,
+      purple: colors.purple,
+      pink: colors.pink,
+      rose: colors.rose,
+      sky: colors.sky,
+      slate: colors.slate,
+      zinc: colors.zinc,
+      gray: colors.gray,
+      neutral: colors.neutral,
+      stone: colors.stone,
+      red: colors.red,
+      orange: colors.orange,
+      amber: colors.amber,
+      yellow: colors.yellow,
+      green: colors.green,
+      teal: colors.teal,
+      cyan: colors.cyan,
+      sky: colors.sky,
+      blue: colors.blue,
+      indigo: colors.indigo,
+      violet: colors.violet,
+      fuchsia: colors.fuchsia,
+      pink: colors.pink,
+      rose: colors.rose,
+      sky: colors.sky,
+      slate: colors.slate,
+      zinc: colors.zinc,
+      gray: colors.gray,
+      neutral: colors.neutral,
+      stone: colors.stone,
+      red: colors.red,
+      orange: colors.orange,
+      amber: colors.amber,
+      yellow: colors.yellow,
+      green: colors.green,
+      teal: colors.teal,
+      cyan: colors.cyan,
+      sky: colors.sky,
+      blue: colors.blue,
+      indigo: colors.indigo,
+      violet: colors.violet,
+      fuchsia: colors.fuchsia,
+      pink: colors.pink,
+      rose: colors.rose,
+      sky: colors.sky,
+      slate: colors.slate,
+    },
+  },
+  plugins: [
+    require("@tailwindcss/forms"),
+  ],
+};
