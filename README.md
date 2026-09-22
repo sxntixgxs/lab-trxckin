@@ -12,6 +12,8 @@ An internal finance operations platform for a group of Colombian companies: it i
 - **Accounting causation** — causation step with cost-center distribution and internal-document cross-checks.
 - **Advances (*anticipos*)** — request → direct-manager approval → accounting review → management approval → treasury disbursement → legalization, with adjustments and email notifications.
 - **Petty cash (*cajas menores*)** — cash boxes, movements and reimbursements that flow into the invoice workflow.
+- **Supplier onboarding** — risk-matrix intake (optional AI RUT extraction), public form with autosave and e-signature, Cumplimiento/Compras document review, Compras evaluation, accounting creation, PDF/Excel reports and tracked invitation emails (see [docs/onboarding.md](docs/onboarding.md)).
+- **Customer onboarding** — the same pipeline for customers with commercial payment terms, a single Cumplimiento lane and tiered approval.
 - **Role/permission-based access per route** — roles and route permissions live in Postgres; nav and pages are filtered by them.
 - **Multi-company** — users are scoped to one or more companies, with an active-company switcher.
 - **Admin impersonation** — admins can act as another user (signed cookie, visible banner).
@@ -45,7 +47,7 @@ flowchart LR
 
 | Layer | Tools |
 | --- | --- |
-| Frontend | Next.js 16 (App Router), React 19, Tailwind CSS 4, Radix UI, TanStack Query, Recharts, React PDF, pdf.js |
+| Frontend | Next.js 16 (App Router), React 19, Tailwind CSS 4, Radix UI, TanStack Query, react-hook-form + zod, Recharts, React PDF, pdf.js, SheetJS/ExcelJS |
 | Realtime backend | Convex (+ `@convex-dev/aggregate`), `@azure/identity` for Graph, `fast-xml-parser` |
 | API | NestJS 11, Prisma 7 (`@prisma/adapter-pg`), class-validator, Helmet, Swagger |
 | Data | Convex, Postgres (Neon) |
@@ -185,6 +187,8 @@ Generate secrets with `openssl rand -hex 32`. Secrets marked **shared** must be 
 | `FACTURACION_SLA_DIGEST_SECRET` | for email | **Shared** with Convex; HMAC for SLA digest / sync alerts | Generate |
 | `RESEND_API_KEY` | no | Without it, notification routes skip sending | Resend dashboard |
 | `RESEND_FROM_EMAIL` | no | Sender, e.g. `Notifications <notifications@example.com>` | Verified Resend domain |
+| `RESEND_WEBHOOK_SECRET` | no | Verifies Resend delivery webhooks for onboarding emails (`/api/webhooks/resend/onboarding`) | Resend dashboard (Svix secret) |
+| `OPENROUTER_API_KEY` | no | AI extraction of the RUT when starting an onboarding process; without it the form is filled manually | OpenRouter |
 | `VERCEL_ENV`, `VERCEL_BRANCH_URL`, `VERCEL_PROJECT_PRODUCTION_URL` | no | Redirect URI on Vercel previews/prod | Set by Vercel |
 
 ### Convex deployment — `npx convex env set`
@@ -242,17 +246,18 @@ Run from the repo root.
 ```
 apps/
   frontend/                 Next.js app + Convex functions
-    app/(default)/          Authenticated pages: billing/, finance/, administracion/, dashboard/, perfil/
-    app/api/                BFF routes: me, billing, finance, notifications, auth/impersonate, ...
+    app/(default)/          Authenticated pages: billing/, finance/, suppliers/, customers/, administracion/, dashboard/, perfil/
+    app/(public)/           Token-guarded public pages: onboarding/supplier, onboarding/customer (+ /sign)
+    app/api/                BFF routes: me, billing, finance, notifications, webhooks, extract-rut, auth/impersonate, ...
     components/             UI (Radix-based) and feature components
     convex/                 Schema, queries/mutations/actions, crons, lib/ (auth, Graph, SLA, ...)
-    lib/                    nav.ts, empresas.ts, fetch-backend.ts, impersonation, env helpers
+    lib/                    nav.ts, empresas.ts, fetch-backend.ts, impersonation, env helpers, onboarding/ (risk, documents, phases)
     proxy.ts                AuthKit middleware (public paths, redirect URI)
   backend/                  NestJS API
     src/                    auth/, usuarios/, roles/, permisos-roles/, procesos/, proveedores/, health/
     prisma/                 schema.prisma, migrations/, seed.ts
     scripts/                promote-admin.ts
-docs/                       billing-azure-setup.md
+docs/                       billing-azure-setup.md, onboarding.md
 ```
 
 **Naming convention.** Infrastructure and URL segments are in English (`billing`, `finance`, `inbox`, `advances`). Business-domain terms stay in Spanish because the domain is Colombian accounting and the terms have no exact English equivalent: *factura*, *anticipo*, *caja menor*, *causación*, NIT, DIAN. Older admin routes (`administracion`, `perfil`) are still in Spanish.
@@ -271,7 +276,7 @@ pnpm lint
 pnpm test
 ```
 
-- **Frontend**: Vitest with two projects — `convex` (Convex functions tested with `convex-test` in the edge runtime) and `app` (Node: API route auth, impersonation, parsers).
+- **Frontend**: Vitest with two projects — `convex` (Convex functions tested with `convex-test` in the edge runtime, including the end-to-end onboarding flows) and `app` (Node: API route auth, impersonation, parsers, onboarding payload/webhook validation, risk matrices and report builders).
 - **Backend**: Vitest specs for guards, impersonation and env validation.
 - Optional fixture: set `DIAN_XLSX_FIXTURE` to a real DIAN export to run the extra XLSX parser test.
 
@@ -291,7 +296,7 @@ This is a portfolio project extracted from a real internal tool; hardening is on
 - **No rate limiting** on the NestJS API.
 - **Convex → local services.** Convex runs in the cloud, so `FRONTEND_URL`/`BACKEND_URL` pointing at `localhost` will not be reachable from a cloud dev deployment; use a tunnel to test notifications and supplier upserts locally.
 
-What is in place: server-to-server Convex functions require `CONVEX_SERVER_SECRET` (constant-time compare); `/api/notifications/*` only accept the internal key or an HMAC signature with a 5-minute window; Nest verifies WorkOS tokens and guards internal routes with `NEST_INTERNAL_KEY`; user privileges reach Convex only through `POST /api/me` → `users.syncPrivileges`; impersonation uses a dedicated signed cookie; Helmet, strict DTO validation and fail-fast env checks on Nest.
+What is in place: server-to-server Convex functions require `CONVEX_SERVER_SECRET` (constant-time compare); `/api/notifications/*` only accept the internal key or an HMAC signature with a 5-minute window; Nest verifies WorkOS tokens and guards internal routes with `NEST_INTERNAL_KEY`; user privileges reach Convex only through `POST /api/me` → `users.syncPrivileges`; impersonation uses a dedicated signed cookie; public onboarding links carry random per-inscription tokens (hashed at rest, scoped, rotated on resend, revoked on annulment) and every public mutation re-checks the third party's document number; Resend webhooks are verified with the Svix signature; Helmet, strict DTO validation and fail-fast env checks on Nest.
 
 ## License
 
