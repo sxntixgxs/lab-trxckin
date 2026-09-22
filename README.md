@@ -1,6 +1,6 @@
 # Lab Trxckin
 
-An internal finance operations platform for a group of Colombian companies: it ingests supplier e-invoices straight from Microsoft 365 mailboxes, routes them through a multi-step approval workflow with SLA tracking, and hands them to accounting for causation. It also runs the employee advances (*anticipos*) and petty cash (*cajas menores*) processes. Built as a pnpm/Turborepo monorepo with Next.js, Convex, NestJS and Postgres.
+An internal finance operations platform for multicompany operation: it ingests supplier e-invoices straight from Microsoft 365 mailboxes, routes them through a multi-step approval workflow with SLA tracking, and hands them to accounting for causation. It also runs the employee advances (*anticipos*) and petty cash (*cajas menores*) processes. Built as a pnpm/Turborepo monorepo with Next.js, Convex, NestJS and Postgres.
 
 > All companies, NITs and emails in this repo are fictional demo data.
 
