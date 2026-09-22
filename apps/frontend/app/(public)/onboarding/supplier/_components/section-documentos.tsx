@@ -4,16 +4,20 @@ import { Check, FileText, Loader2, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { FormBranding } from "@/lib/onboarding/branding";
 import { hasComplianceLinks } from "@/lib/onboarding/branding";
+import { CUSTOMER_DECLARACIONES } from "@/lib/onboarding/declaraciones/customers";
 import { SUPPLIER_DECLARACIONES } from "@/lib/onboarding/declaraciones/suppliers";
+import type { OnboardingModulo } from "@/lib/onboarding/roles";
 import { Section, SectionHeader } from "./form-ui";
 
 export type DocUploadState = { file: File; storageId?: string; uploading: boolean };
 
 export type DocumentoRequerido = { docKey: string; docLabel: string };
 
-/** 11 — Documentos requeridos (PDF ≤ 10 MB, uno por documento). */
+/** Documentos requeridos (PDF ≤ 10 MB, uno por documento). Última sección de ambos formularios. */
 export function SeccionDocumentos({
   register,
+  index = 10,
+  step = "11",
   tipoEvaluacion,
   documentos,
   subidos,
@@ -22,6 +26,9 @@ export function SeccionDocumentos({
   onRemove,
 }: {
   register: (index: number, el: HTMLElement | null) => void;
+  /** Position of the section in the stepper (0-based) and its visible number. */
+  index?: number;
+  step?: string;
   tipoEvaluacion: string;
   documentos: DocumentoRequerido[];
   /** docKey → storageId already saved on the server. */
@@ -31,9 +38,9 @@ export function SeccionDocumentos({
   onRemove: (docKey: string) => void;
 }) {
   return (
-    <Section index={10} register={register}>
+    <Section index={index} register={register}>
       <SectionHeader
-        step="11"
+        step={step}
         title="Documentos requeridos"
         icon={FileText}
         description={
@@ -104,13 +111,16 @@ export function DeclaracionesYEnvio({
   submitting,
   disabled,
   onSubmit,
+  modulo = "supplier",
 }: {
   branding: FormBranding;
   submitting: boolean;
   disabled: boolean;
   onSubmit: () => void;
+  modulo?: OnboardingModulo;
 }) {
-  const dec = SUPPLIER_DECLARACIONES({ nombre: branding.nombre, nit: branding.nit, web: branding.web, emailProteccionDatos: branding.emailProteccionDatos });
+  const empresa = { nombre: branding.nombre, nit: branding.nit, web: branding.web, emailProteccionDatos: branding.emailProteccionDatos };
+  const dec = modulo === "customer" ? CUSTOMER_DECLARACIONES(empresa) : SUPPLIER_DECLARACIONES(empresa);
   const line = <div className="h-px flex-1" style={{ backgroundColor: `${branding.color}99` }} />;
   const compliance = branding.compliance;
   return (

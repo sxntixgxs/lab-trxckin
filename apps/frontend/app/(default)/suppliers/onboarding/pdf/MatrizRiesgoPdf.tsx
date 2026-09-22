@@ -1,5 +1,6 @@
 import { Document, Page, View, Text, StyleSheet, Image } from "@react-pdf/renderer";
 import { computeSupplierFactorRisks } from "@/lib/onboarding/risk/supplier-matrix";
+import { computeCustomerFactorRisks } from "@/lib/onboarding/risk/customer-matrix";
 import type { FactorRisk } from "@/lib/onboarding/risk/compute";
 
 const RED = "#D60000";
@@ -11,12 +12,26 @@ const BLACK = "#0f172a";
 const GRAY_BG = "#f8fafc";
 const WHITE = "#ffffff";
 
-const DOC = {
-  codigo: "CUM-F001",
-  version: "01",
-  fecha: "2026-01-15",
-  titulo: "MATRIZ DE EVALUACIÓN DE TERCEROS - PROVEEDORES Y/O CONTRATISTAS",
-} as const;
+export type MatrizRiesgoModulo = "supplier" | "customer";
+
+const DOCS: Record<MatrizRiesgoModulo, { codigo: string; version: string; fecha: string; titulo: string; tercero: string; seccion: string }> = {
+  supplier: {
+    codigo: "CUM-F001",
+    version: "01",
+    fecha: "2026-01-15",
+    titulo: "MATRIZ DE EVALUACIÓN DE TERCEROS - PROVEEDORES Y/O CONTRATISTAS",
+    tercero: "Proveedor / Contratista",
+    seccion: "1. Datos del Proveedor",
+  },
+  customer: {
+    codigo: "CUM-F002",
+    version: "01",
+    fecha: "2026-03-27",
+    titulo: "MATRIZ DE EVALUACIÓN DE TERCEROS — CLIENTES",
+    tercero: "Cliente",
+    seccion: "1. Datos del Cliente",
+  },
+};
 
 const s = StyleSheet.create({
   page: { fontFamily: "Helvetica", fontSize: 9, color: BLACK, paddingBottom: 52 },
@@ -103,6 +118,8 @@ function FactorRiskBadge({ factor }: { factor: FactorRisk }) {
 }
 
 export interface MatrizRiesgoPdfData {
+  /** Módulo que define el encabezado del documento y la matriz de factores (proveedores por defecto). */
+  modulo?: MatrizRiesgoModulo;
   tipoSolicitud?: string;
   razonSocial: string;
   tipoDocumento: string;
@@ -135,8 +152,11 @@ export default function MatrizRiesgoPdf({ data }: { data: MatrizRiesgoPdfData })
   const riskColor = RIESGO_COLOR[data.riesgo] ?? RIESGO_COLOR.INDEFINIDO;
   const evalColor = RIESGO_COLOR[data.tipoEvaluacion] ?? RIESGO_COLOR.INDEFINIDO;
   const reviewed = !!data.revisadoPorNombre;
+  const modulo: MatrizRiesgoModulo = data.modulo ?? "supplier";
+  const DOC = DOCS[modulo];
+  const computeFactors = modulo === "customer" ? computeCustomerFactorRisks : computeSupplierFactorRisks;
 
-  const factors = computeSupplierFactorRisks({
+  const factors = computeFactors({
     montoAnual: data.montoAnual,
     sectorEconomico: data.sectorEconomico,
     jurisdiccionNacional: data.jurisdiccionNacional,
@@ -185,7 +205,7 @@ export default function MatrizRiesgoPdf({ data }: { data: MatrizRiesgoPdfData })
             <Text style={s.metaValue}>{data.tipoSolicitud ?? "INSCRIPCIÓN"}</Text>
           </View>
           <View style={s.metaItem}>
-            <Text style={s.metaLabel}>Proveedor / Contratista</Text>
+            <Text style={s.metaLabel}>{DOC.tercero}</Text>
             <Text style={s.metaValue}>{data.razonSocial}</Text>
           </View>
           <View style={s.metaItem}>
@@ -205,7 +225,7 @@ export default function MatrizRiesgoPdf({ data }: { data: MatrizRiesgoPdfData })
         <View style={s.body}>
           <View style={s.section}>
             <View style={[s.sectionHeader, { backgroundColor: primaryColor }]}>
-              <Text style={s.sectionTitle}>1. Datos del Proveedor</Text>
+              <Text style={s.sectionTitle}>{DOC.seccion}</Text>
             </View>
             <View style={s.grid}>
               <View style={[s.gridItemAccent, { minWidth: "97%", borderLeftColor: primaryColor }]}>

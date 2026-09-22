@@ -1,5 +1,13 @@
 import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
+import { CUSTOMER_FASE_LABELS, CUSTOMER_FASES_ORDEN_REPORTE } from "@/lib/onboarding/phases/customers";
 import { SUPPLIER_FASE_LABELS, SUPPLIER_FASES_ORDEN_REPORTE } from "@/lib/onboarding/phases/suppliers";
+
+export type ReporteTiempoModulo = "supplier" | "customer";
+
+const MODULOS: Record<ReporteTiempoModulo, { labels: Record<string, string>; orden: readonly string[]; titulo: string; pie: string }> = {
+  supplier: { labels: SUPPLIER_FASE_LABELS, orden: SUPPLIER_FASES_ORDEN_REPORTE, titulo: "Reporte tiempos proveedor", pie: "Reporte automático de inscripción de proveedores" },
+  customer: { labels: CUSTOMER_FASE_LABELS, orden: CUSTOMER_FASES_ORDEN_REPORTE, titulo: "Reporte tiempos cliente", pie: "Reporte automático de inscripción de clientes" },
+};
 
 const SLATE = "#64748b";
 const BORDER = "#e2e8f0";
@@ -18,6 +26,8 @@ export type ReporteTiempoFase = {
 };
 
 export type ReporteTiempoFasesData = {
+  /** Módulo (etiquetas y orden de fases); proveedores por defecto. */
+  modulo?: ReporteTiempoModulo;
   empresaNombre: string;
   inscripcionRef: string;
   generadoEn: number;
@@ -65,9 +75,9 @@ function estadoLabel(estado: string): string {
   return labels[estado] ?? estado;
 }
 
-function faseSort(a: ReporteTiempoFase, b: ReporteTiempoFase): number {
-  const ia = SUPPLIER_FASES_ORDEN_REPORTE.indexOf(a.fase);
-  const ib = SUPPLIER_FASES_ORDEN_REPORTE.indexOf(b.fase);
+function faseSort(orden: readonly string[], a: ReporteTiempoFase, b: ReporteTiempoFase): number {
+  const ia = orden.indexOf(a.fase);
+  const ib = orden.indexOf(b.fase);
   if (ia === -1 && ib === -1) return (a.fechaInicio ?? 0) - (b.fechaInicio ?? 0);
   if (ia === -1) return 1;
   if (ib === -1) return -1;
@@ -124,11 +134,12 @@ function EstadoBadge({ estado }: { estado: string }) {
 }
 
 export default function ReporteTiempoFasesPdf({ data }: { data: ReporteTiempoFasesData }) {
-  const fases = data.fases.slice().sort(faseSort);
+  const conf = MODULOS[data.modulo ?? "supplier"];
+  const fases = data.fases.slice().sort((a, b) => faseSort(conf.orden, a, b));
   const diasTotales = diffDays(data.fechaInicioProceso, data.fechaCierre);
 
   return (
-    <Document title={`Reporte tiempos proveedor ${data.inscripcionRef}`}>
+    <Document title={`${conf.titulo} ${data.inscripcionRef}`}>
       <Page size="A4" orientation="landscape" style={s.page}>
         <Text style={s.title}>Reporte de tiempos por fase</Text>
         <Text style={s.subtitle}>
@@ -196,7 +207,7 @@ export default function ReporteTiempoFasesPdf({ data }: { data: ReporteTiempoFas
             const rowStyle = index === fases.length - 1 ? s.rowLast : s.row;
             return (
               <View key={`${fase.fase}-${index}`} style={rowStyle}>
-                <Text style={[s.tdStrong, { flex: 2.2 }]}>{SUPPLIER_FASE_LABELS[fase.fase] ?? fase.fase}</Text>
+                <Text style={[s.tdStrong, { flex: 2.2 }]}>{conf.labels[fase.fase] ?? fase.fase}</Text>
                 <Text style={[s.td, { flex: 1.1 }]}>{estadoLabel(fase.estado)}</Text>
                 <Text style={[s.td, { flex: 1.7 }]}>{formatDateTime(fase.fechaInicio)}</Text>
                 <Text style={[s.td, { flex: 1.7 }]}>{formatDateTime(fase.fechaCompletado)}</Text>
@@ -212,7 +223,7 @@ export default function ReporteTiempoFasesPdf({ data }: { data: ReporteTiempoFas
         </View>
 
         <View style={s.footer}>
-          <Text>Reporte automático de inscripción de proveedores</Text>
+          <Text>{conf.pie}</Text>
           <Text render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}`} />
         </View>
       </Page>

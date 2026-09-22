@@ -11,11 +11,10 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEmpresaFilter } from "@/hooks/useEmpresaFilter";
-import { SUPPLIER_ROL_CONFIG, WHITELIST_PERMISO_CONFIG, type PermisoWhitelist } from "@/lib/onboarding/roles";
-import { SUPPLIER_ROLES, type SupplierRol } from "@/lib/onboarding/phases/suppliers";
+import { ROLES_POR_MODULO, rolConfigInfo, WHITELIST_PERMISO_CONFIG, type OnboardingModulo, type OnboardingRol, type PermisoWhitelist } from "@/lib/onboarding/roles";
 import { fetchUsuariosAsignables, matchesUsuario, type UsuarioAsignable } from "@/lib/onboarding/usuarios-asignables";
 import { cn } from "@/lib/utils";
-import { getOnboardingErrorMessage, SUPPLIER_MODULO } from "./ui-config";
+import { getOnboardingErrorMessage } from "./ui-config";
 
 function UsuarioPicker({
   usuarios,
@@ -64,15 +63,16 @@ function UsuarioPicker({
   );
 }
 
-export default function ConfigRoles({ canEdit }: { canEdit: boolean }) {
+/** Role and whitelist configuration for one onboarding module (suppliers by default). */
+export default function ConfigRoles({ canEdit, modulo = "supplier" }: { canEdit: boolean; modulo?: OnboardingModulo }) {
   const { empresaActiva, empresaActivaInfo } = useEmpresaFilter();
   const roles = useQuery(
     api.onboarding.roles.obtenerRolesConfig,
-    empresaActiva !== null ? { modulo: SUPPLIER_MODULO, empresa: empresaActiva } : "skip",
+    empresaActiva !== null ? { modulo: modulo, empresa: empresaActiva } : "skip",
   );
   const whitelist = useQuery(
     api.onboarding.roles.obtenerWhitelist,
-    empresaActiva !== null ? { modulo: SUPPLIER_MODULO, empresa: empresaActiva } : "skip",
+    empresaActiva !== null ? { modulo: modulo, empresa: empresaActiva } : "skip",
   );
   const configurarRol = useMutation(api.onboarding.roles.configurarRol);
   const agregarWhitelist = useMutation(api.onboarding.roles.agregarWhitelist);
@@ -80,7 +80,7 @@ export default function ConfigRoles({ canEdit }: { canEdit: boolean }) {
 
   const [usuarios, setUsuarios] = useState<UsuarioAsignable[]>([]);
   const [loadingUsuarios, setLoadingUsuarios] = useState(false);
-  const [editando, setEditando] = useState<SupplierRol | null>(null);
+  const [editando, setEditando] = useState<OnboardingRol | null>(null);
   const [selectedUserId, setSelectedUserId] = useState("");
   const [saving, setSaving] = useState(false);
   const [agregandoWhitelist, setAgregandoWhitelist] = useState(false);
@@ -107,7 +107,7 @@ export default function ConfigRoles({ canEdit }: { canEdit: boolean }) {
     };
   }, [editando, agregandoWhitelist, empresaActiva]);
 
-  async function handleGuardar(rol: SupplierRol) {
+  async function handleGuardar(rol: OnboardingRol) {
     if (empresaActiva === null) return;
     const user = usuarios.find((u) => u.id === selectedUserId);
     if (!user) {
@@ -117,7 +117,7 @@ export default function ConfigRoles({ canEdit }: { canEdit: boolean }) {
     setSaving(true);
     try {
       const result = await configurarRol({
-        modulo: SUPPLIER_MODULO,
+        modulo: modulo,
         empresa: empresaActiva,
         rol,
         userId: user.id,
@@ -126,8 +126,8 @@ export default function ConfigRoles({ canEdit }: { canEdit: boolean }) {
       });
       toast.success(
         result.fasesReasignadas > 0
-          ? `Rol ${SUPPLIER_ROL_CONFIG[rol].label} actualizado (${result.fasesReasignadas} fase(s) reasignadas).`
-          : `Rol ${SUPPLIER_ROL_CONFIG[rol].label} actualizado`,
+          ? `Rol ${rolConfigInfo(modulo, rol).label} actualizado (${result.fasesReasignadas} fase(s) reasignadas).`
+          : `Rol ${rolConfigInfo(modulo, rol).label} actualizado`,
       );
       setEditando(null);
       setSelectedUserId("");
@@ -148,7 +148,7 @@ export default function ConfigRoles({ canEdit }: { canEdit: boolean }) {
     setGuardandoWhitelist(true);
     try {
       await agregarWhitelist({
-        modulo: SUPPLIER_MODULO,
+        modulo: modulo,
         empresa: empresaActiva,
         userId: user.id,
         nombre: user.nombre,
@@ -169,7 +169,7 @@ export default function ConfigRoles({ canEdit }: { canEdit: boolean }) {
   async function handleQuitarWhitelist(userId: string) {
     if (empresaActiva === null) return;
     try {
-      await quitarWhitelist({ modulo: SUPPLIER_MODULO, empresa: empresaActiva, userId });
+      await quitarWhitelist({ modulo: modulo, empresa: empresaActiva, userId });
       toast.success("Usuario quitado del rol de consulta");
     } catch (e) {
       toast.error(getOnboardingErrorMessage(e, "Error al quitar"));
@@ -208,8 +208,8 @@ export default function ConfigRoles({ canEdit }: { canEdit: boolean }) {
                 Solo los administradores pueden modificar roles y la lista de consulta.
               </p>
             )}
-            {SUPPLIER_ROLES.map((rol) => {
-              const config = SUPPLIER_ROL_CONFIG[rol];
+            {ROLES_POR_MODULO[modulo].map((rol) => {
+              const config = rolConfigInfo(modulo, rol);
               const actual = roles?.find((r) => r.rol === rol);
               const isEditandoThis = editando === rol;
               return (
