@@ -18,8 +18,32 @@ An internal finance operations platform for multicompany operation: it ingests s
 - **Multi-company** — users are scoped to one or more companies, with an active-company switcher.
 - **Admin impersonation** — admins can act as another user (signed cookie, visible banner).
 - **Email notifications** via Resend (React Email templates).
+- **Command palette** — Ctrl/Cmd+K: navigation, company and theme switching, and live search across invoices, advances, onboarding and cost centers.
+
+## Modules
+
+Each module has a guide with its context, operational and technical diagrams, a code map with links to the source, tests and known limitations.
+
+| Module | What it covers |
+| --- | --- |
+| [Billing](docs/billing.md) | Supplier e-invoices from the Microsoft 365 mailbox to payment: ingestion, approval workflow, SLA, dashboard |
+| [Finance](docs/finance.md) | Employee advances with legalization, and petty cash with its reimbursement chain |
+| [Suppliers](docs/suppliers.md) | Risk-based supplier onboarding: public form, e-signature, parallel review, tiered approval, purchasing rubric |
+| [Customers](docs/customers.md) | Customer onboarding with payment terms and tiered approval |
+
+Shared onboarding foundation: [docs/onboarding.md](docs/onboarding.md). Mailbox setup: [docs/billing-azure-setup.md](docs/billing-azure-setup.md).
 
 ## Architecture
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/architecture.dark.svg">
+  <img alt="Architecture: browser, Next.js BFF, Convex, NestJS and Postgres, with WorkOS, Microsoft Graph, Resend and OpenRouter" src="docs/diagrams/architecture.svg">
+</picture>
+
+The diagrams are Excalidraw files: the `.excalidraw` sources in [`docs/diagrams`](docs/diagrams) open in [excalidraw.com](https://excalidraw.com).
+
+<details>
+<summary>Mermaid version</summary>
 
 ```mermaid
 flowchart LR
@@ -36,6 +60,8 @@ flowchart LR
     C -. JWT verify .-> W
     S -. token verify .-> W
 ```
+
+</details>
 
 **Why the split?**
 
@@ -258,7 +284,8 @@ apps/
     src/                    auth/, usuarios/, roles/, permisos-roles/, procesos/, proveedores/, health/
     prisma/                 schema.prisma, migrations/, seed.ts
     scripts/                promote-admin.ts
-docs/                       billing-azure-setup.md, onboarding.md
+docs/                       module guides (billing, finance, suppliers, customers), onboarding.md, billing-azure-setup.md
+  diagrams/                 Excalidraw sources (.excalidraw) and light/dark SVG exports
 ```
 
 **Naming convention.** Infrastructure and URL segments are in English (`billing`, `finance`, `inbox`, `advances`). Business-domain terms stay in Spanish because the domain is Colombian accounting and the terms have no exact English equivalent: *factura*, *anticipo*, *caja menor*, *causación*, NIT, DIAN. Older admin routes (`administracion`, `perfil`) are still in Spanish.
@@ -298,6 +325,17 @@ This is a portfolio project extracted from a real internal tool; hardening is on
 - **Convex → local services.** Convex runs in the cloud, so `FRONTEND_URL`/`BACKEND_URL` pointing at `localhost` will not be reachable from a cloud dev deployment; use a tunnel to test notifications and supplier upserts locally.
 
 What is in place: server-to-server Convex functions require `CONVEX_SERVER_SECRET` (constant-time compare); `/api/notifications/*` only accept the internal key or an HMAC signature with a 5-minute window; Nest verifies WorkOS tokens and guards internal routes with `NEST_INTERNAL_KEY`; user privileges reach Convex only through `POST /api/me` → `users.syncPrivileges`; impersonation uses a dedicated signed cookie; public onboarding links carry random per-inscription tokens (hashed at rest, scoped, rotated on resend, revoked on annulment) and every public mutation re-checks the third party's document number; Resend webhooks are verified with the Svix signature; Helmet, strict DTO validation and fail-fast env checks on Nest.
+
+## My role
+
+I designed and built Lab Trxckin on my own: the data model, the Convex workflows and crons, the NestJS identity service, the Next.js app and BFF routes, the Microsoft Graph and Resend integrations, the tests and the CI pipeline.
+
+## What I learned
+
+- **Put each kind of data where it fits.** Live, transactional workflow data in Convex; relational, rarely changing identity and permissions in Postgres; a thin BFF that keeps the session and syncs privileges between them.
+- **Make processes explicit.** Every module is a state machine with named phases, a current owner and an append-only history, so the system can always answer who acts next, which transitions are valid and how each decision was recorded.
+- **Idempotency and reconciliation beat hoping jobs run once.** Keys on emails, invoices and adjustments make retries safe, and periodic reconciliation repairs read models instead of trusting them blindly.
+- **Write down the gaps.** The limitations below are the hardening backlog, not an afterthought.
 
 ## License
 
