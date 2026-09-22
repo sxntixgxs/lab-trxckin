@@ -351,9 +351,10 @@ describe("flujo de inscripción de proveedores", () => {
     await u.admin.mutation(api.onboarding.suppliers.anularProceso, { inscripcionId, motivo: "Duplicado" });
     ins = await t.run(async (ctx) => ctx.db.get("onboardingProveedores", inscripcionId));
     expect(ins?.faseActual).toBe("ANULADA");
+    // Los enlaces revocados devuelven null (la página pública muestra "enlace inválido") en vez de lanzar.
     await expect(
       t.query(api.onboarding.suppliersPublic.obtenerInscripcionPublica, { inscripcionId, token: formToken }),
-    ).rejects.toThrow(/enlace/i);
+    ).resolves.toBeNull();
   }, 30_000);
 
   test("rechazo de Cumplimiento en Fase IV y ajuste de riesgo en Fase III", async () => {

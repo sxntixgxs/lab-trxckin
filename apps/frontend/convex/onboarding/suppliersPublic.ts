@@ -20,7 +20,7 @@ import {
   storageCargadoDe,
   FASE_LANE_POR_GRUPO,
 } from "../lib/onboarding/suppliersDocs";
-import { assertDocumentoCoincide, requireOnboardingToken, revokeTokens } from "../lib/onboarding/tokens";
+import { assertDocumentoCoincide, requireOnboardingToken, revokeTokens, TokenInvalidoError } from "../lib/onboarding/tokens";
 import {
   certificacionValidator,
   compoAccionariaItemValidator,
@@ -96,11 +96,31 @@ async function proyeccionPublica(ctx: QueryCtx | MutationCtx, ins: SupplierDoc) 
 
 // ─── Lectura ─────────────────────────────────────────────────────────────────
 
+/**
+ * Proyección pública de la inscripción. Devuelve `null` (en vez de lanzar) cuando el enlace
+ * es inválido, vencido o revocado, para que la página muestre la pantalla de enlace inválido.
+ */
 export const obtenerInscripcionPublica = query({
   args: { inscripcionId: v.id("onboardingProveedores"), token: v.string() },
   handler: async (ctx, args) => {
-    const ins = await guardForm(ctx, args, { scopes: ["FORM", "SIGN"], allowViewOnly: true });
-    return await proyeccionPublica(ctx, ins);
+    let tokenRow;
+    let ins: SupplierDoc;
+    try {
+      const result = await requireOnboardingToken(ctx, {
+        modulo: MODULO,
+        inscripcionId: args.inscripcionId,
+        token: args.token,
+        scopes: ["FORM", "SIGN"],
+        allowViewOnly: true,
+      });
+      tokenRow = result.tokenRow;
+      ins = result.inscripcion as SupplierDoc;
+    } catch (error) {
+      if (error instanceof TokenInvalidoError) return null;
+      throw error;
+    }
+    const proyeccion = await proyeccionPublica(ctx, ins);
+    return { ...proyeccion, acceso: { scope: tokenRow.scope, viewOnly: tokenRow.viewOnly === true, expiresAt: tokenRow.expiresAt } };
   },
 });
 
