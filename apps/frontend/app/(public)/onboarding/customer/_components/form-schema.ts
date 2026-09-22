@@ -312,7 +312,7 @@ export function toFormValues(ins: InscripcionPublica): FormValues {
   const cuenta = ins.datosCuentasPagos_08?.[0];
   return {
     datos_generales_01: {
-      tipoPersona: d.tipoPersona ?? "PERSONA_JURIDICA",
+      tipoPersona: d.tipoPersona || "PERSONA_JURIDICA",
       razonSocial: d.razonSocial ?? "",
       contactoNombre: d.contactoNombre ?? d.representanteLegalNombre ?? "",
       contactoEmail: d.contactoEmail ?? d.email ?? "",

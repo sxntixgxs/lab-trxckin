@@ -6,7 +6,20 @@ import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-const Select = SelectPrimitive.Root;
+// Radix mirrors the value into a hidden native <select> and forwards its change
+// events. When the controlled value changes before the matching <option> is
+// registered (e.g. react-hook-form `reset` after loading a draft) that event
+// carries "" and would overwrite the field. Items cannot have value "", so an
+// empty string never comes from a real selection and is dropped here.
+function Select({ onValueChange, ...props }: React.ComponentProps<typeof SelectPrimitive.Root>) {
+  const handleValueChange = React.useCallback(
+    (value: string) => {
+      if (value !== "") onValueChange?.(value);
+    },
+    [onValueChange],
+  );
+  return <SelectPrimitive.Root {...props} onValueChange={onValueChange ? handleValueChange : undefined} />;
+}
 
 const SelectGroup = SelectPrimitive.Group;
 

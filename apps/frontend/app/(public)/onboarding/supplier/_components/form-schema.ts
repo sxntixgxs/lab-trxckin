@@ -394,7 +394,7 @@ export function toFormValues(ins: InscripcionPublica): FormValues {
   const ib = ins.infoBancaria_10;
   return {
     datos_generales_01: {
-      tipoPersona: d.tipoPersona ?? "PERSONA_JURIDICA",
+      tipoPersona: d.tipoPersona || "PERSONA_JURIDICA",
       razonSocial: d.razonSocial ?? "",
       contactoNombre: d.contactoNombre ?? "",
       contactoEmail: d.contactoEmail ?? "",
