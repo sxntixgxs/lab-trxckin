@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation } from "convex/react";
-import { Building2, Check, FileText, Loader2, Sparkles, Upload, X } from "lucide-react";
+import { Building2, Check, FileText, FlaskConical, Loader2, Sparkles, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEmpresaFilter } from "@/hooks/useEmpresaFilter";
 import { CIIU_ACTIVIDAD } from "@/lib/catalogs/ciiu";
+import { ACME_DEMO, ACME_DEMO_CLIENTE, fillEmptyFields } from "@/lib/onboarding/acme-demo";
 import { customerDocLabel, getCustomerDocKeys } from "@/lib/onboarding/documents/customers";
 import { computeCustomerRisk, CUSTOMER_MONTO_OPTIONS, CUSTOMER_SECTOR_OPTIONS } from "@/lib/onboarding/risk/customer-matrix";
 import { JURISDICCION_INTERNACIONAL_OPTIONS, JURISDICCION_NACIONAL_OPTIONS, TIPO_DOCUMENTO_OPTIONS, TIPO_PERSONA_LABELS, TIPO_PERSONA_OPTIONS } from "@/lib/onboarding/risk/shared";
@@ -67,6 +68,36 @@ interface UsageInfo {
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const ACCEPTED = ["application/pdf", "image/jpeg", "image/png"];
+
+// Test data for the "Completar con ACME" buttons.
+const ACME_VALUES: FormValues = {
+  tipoSolicitud: "INSCRIPCIÓN",
+  tipoPersona: "PERSONA_JURIDICA",
+  tipoDocumento: "NIT",
+  numeroDocumento: ACME_DEMO.nit,
+  razonSocial: ACME_DEMO.razonSocial,
+  direccion: ACME_DEMO.direccion,
+  ciudad: ACME_DEMO.ciudad,
+  departamento: ACME_DEMO.departamento,
+  celular: ACME_DEMO.contactoCelular,
+  email: ACME_DEMO.contactoEmail,
+  representanteLegalNombre: ACME_DEMO.representanteLegalNombre,
+  representanteLegalTipoDocumento: "C.C.",
+  representanteLegalNumeroDocumento: ACME_DEMO.representanteLegalDocumento,
+  representanteLegalEmail: ACME_DEMO.representanteLegalEmail,
+  representanteLegalNacionalidad: "Colombiana",
+  ...ACME_DEMO_CLIENTE,
+  codigoCiiu: ACME_DEMO.codigoCiiu,
+  codigoCiiuSecundario: ACME_DEMO.codigoCiiuSecundario,
+  jurisdiccionNacional: ACME_DEMO.jurisdiccionNacional,
+  jurisdiccionInternacional: "",
+  isPep: false,
+  listas: "NO",
+  formaPago: "Crédito",
+  plazo: "30 días",
+};
+
+const ACME_GROUPS = [["jurisdiccionNacional", "jurisdiccionInternacional"]] as const;
 
 function mapTipoDoc(raw: string | null | undefined): (typeof TIPO_DOCUMENTO_OPTIONS)[number] {
   const s = (raw ?? "").toUpperCase();
@@ -249,6 +280,19 @@ export default function ModalIniciarProceso({ open, onOpenChange }: { open: bool
     setAutoFilled(filled);
   }
 
+  // Fills only the empty fields, so anything typed or read from the RUT is kept. The defaults stay
+  // untouched so closing the modal still clears the form.
+  function completarConAcme() {
+    form.reset(fillEmptyFields(form.getValues(), ACME_VALUES, ACME_GROUPS), { keepDefaultValues: true });
+  }
+
+  function continuarSinRutConAcme() {
+    setRutStorageId(null);
+    setExtractSkipped("Sin RUT: se cargaron datos de prueba de ACME. Revísalos antes de continuar.");
+    completarConAcme();
+    setStep("done");
+  }
+
   const handleProcess = async () => {
     if (!file) return;
     if (empresaActiva === null) {
@@ -422,6 +466,12 @@ export default function ModalIniciarProceso({ open, onOpenChange }: { open: bool
         )}
         <input id="rut-file-cliente" ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileChange} className="hidden" />
       </label>
+
+      {step === "idle" && (
+        <Button type="button" variant="ghost" className="text-slate-500" onClick={continuarSinRutConAcme}>
+          <FlaskConical className="h-4 w-4" /> Continuar sin RUT con datos de ACME
+        </Button>
+      )}
 
       {step === "selected" && (
         <div className="flex w-full items-center gap-3">
@@ -854,6 +904,17 @@ export default function ModalIniciarProceso({ open, onOpenChange }: { open: bool
                   </div>
 
                   <div className="flex shrink-0 items-center justify-end gap-3 border-t border-slate-100 bg-slate-50/60 px-6 py-4">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={completarConAcme}
+                      disabled={form.formState.isSubmitting}
+                      title="Rellena los campos vacíos con datos de prueba de ACME"
+                      className="mr-auto rounded-lg text-slate-500"
+                    >
+                      <FlaskConical className="h-4 w-4" />
+                      <span className="sr-only sm:not-sr-only">Completar con ACME</span>
+                    </Button>
                     <Button type="button" variant="outline" onClick={handleClose} disabled={form.formState.isSubmitting} className="rounded-lg">
                       Cancelar
                     </Button>
