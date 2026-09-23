@@ -40,6 +40,7 @@ import {
   tipoDocumentoValidator,
   tipoEvaluacionValidator,
   tipoPersonaValidator,
+  tipoSolicitudOrigenValidator,
   tipoSolicitudValidator,
 } from "./validators";
 
@@ -192,6 +193,7 @@ export const crearMatrizRiesgo = mutation({
   args: {
     empresa: v.number(),
     tipoSolicitud: v.optional(tipoSolicitudValidator),
+    tipoSolicitudOrigen: v.optional(tipoSolicitudOrigenValidator),
     rutStorageId: v.optional(v.id("_storage")),
     cotizacionStorageId: v.optional(v.id("_storage")),
     tipoPersona: tipoPersonaValidator,
@@ -287,6 +289,7 @@ export const crearMatrizRiesgo = mutation({
       },
       datos_generales_01: {
         tipoSolicitud,
+        ...(args.tipoSolicitudOrigen ? { tipoSolicitudOrigen: args.tipoSolicitudOrigen } : {}),
         tipoPersona: args.tipoPersona,
         tipoDocumento: args.tipoDocumento,
         numeroDocumento,

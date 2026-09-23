@@ -42,6 +42,7 @@ import {
   tipoDocumentoValidator,
   tipoEvaluacionValidator,
   tipoPersonaValidator,
+  tipoSolicitudOrigenValidator,
   tipoSolicitudValidator,
 } from "./validators";
 
@@ -219,6 +220,7 @@ async function enviarEnlaceFirma(
 export const crearMatrizRiesgo = mutation({
   args: {
     tipoSolicitud: v.optional(tipoSolicitudValidator),
+    tipoSolicitudOrigen: v.optional(tipoSolicitudOrigenValidator),
     empresa: v.number(),
     tipoPersona: tipoPersonaValidator,
     tipoDocumento: tipoDocumentoValidator,
@@ -295,6 +297,7 @@ export const crearMatrizRiesgo = mutation({
       },
       datos_generales_01: {
         tipoSolicitud,
+        ...(args.tipoSolicitudOrigen ? { tipoSolicitudOrigen: args.tipoSolicitudOrigen } : {}),
         tipoPersona: args.tipoPersona,
         tipoDocumento: args.tipoDocumento,
         numeroDocumento,

@@ -13,6 +13,8 @@ export const tipoDocumentoValidator = v.union(
 );
 export const tipoPersonaValidator = v.union(v.literal("PERSONA_NATURAL"), v.literal("PERSONA_JURIDICA"));
 export const tipoSolicitudValidator = v.union(v.literal("INSCRIPCIÓN"), v.literal("ACTUALIZACIÓN"));
+/** Cómo se decidió el tipo de solicitud: consulta al catálogo del ERP, o a mano cuando no se pudo consultar. */
+export const tipoSolicitudOrigenValidator = v.union(v.literal("ERP"), v.literal("MANUAL"));
 
 // ─── Riesgo ──────────────────────────────────────────────────────────────────
 export const riesgoNivelValidator = v.union(

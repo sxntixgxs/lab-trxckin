@@ -16,6 +16,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useVerificacionTercero, type TipoSolicitud } from "@/components/onboarding/use-verificacion-tercero";
+import { VerificacionTerceroPanel } from "@/components/onboarding/verificacion-tercero-panel";
 import { useEmpresaFilter } from "@/hooks/useEmpresaFilter";
 import { CIIU_ACTIVIDAD } from "@/lib/catalogs/ciiu";
 import { ACME_DEMO, ACME_DEMO_PROVEEDOR, fillEmptyFields } from "@/lib/onboarding/acme-demo";
@@ -27,7 +29,6 @@ import {
   TIPO_PERSONA_LABELS,
   TIPO_PERSONA_OPTIONS,
 } from "@/lib/onboarding/risk/shared";
-import { buildSiesaProveedoresSearchParams, filterExactProveedoresSiesa, isNitConsultaReady, type ProveedoresSiesaBusquedaResponse } from "@/lib/siesa-proveedores";
 import { cn } from "@/lib/utils";
 import { getOnboardingErrorMessage, RIESGO_BADGE_SOLID } from "./ui-config";
 
@@ -65,7 +66,6 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 type Step = "idle" | "selected" | "processing" | "done";
 type ProcessingPhase = "uploading" | "extracting";
-type TipoSolicitud = "INSCRIPCIÓN" | "ACTUALIZACIÓN";
 
 interface UsageInfo {
   prompt_tokens: number;
@@ -114,23 +114,6 @@ function mapTipoDoc(raw: string | null | undefined): (typeof TIPO_DOC)[number] {
   return "C.C.";
 }
 
-/**
- * Checks the Nest supplier catalog (`/api/proveedores/search`) for an exact NIT match.
- * An existing supplier turns the request into an ACTUALIZACIÓN.
- */
-async function proveedorExisteEnCatalogo(nit: string, empresa: number): Promise<boolean> {
-  if (!isNitConsultaReady(nit)) return false;
-  const params = buildSiesaProveedoresSearchParams({ nit, empresa });
-  const res = await fetch(`/api/proveedores/search?${params.toString()}`, { credentials: "include" });
-  if (res.status === 401) throw new Error("No autorizado");
-  if (!res.ok) {
-    const body = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(body.error ?? "Error al consultar el catálogo de proveedores");
-  }
-  const data = (await res.json()) as ProveedoresSiesaBusquedaResponse | null;
-  return filterExactProveedoresSiesa(data?.proveedores ?? [], nit).length > 0;
-}
-
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">{children}</p>;
 }
@@ -154,6 +137,7 @@ interface ModalIniciarProcesoProps {
 /**
  * Starts a supplier process: upload the RUT, optionally prefill the form with AI extraction,
  * compute the risk live and create the inscription (Fase I auto-completed, Fase II pending).
+ * The typed document is checked against the company's ERP catalog (INSCRIPCIÓN vs ACTUALIZACIÓN).
  */
 export default function ModalIniciarProceso({ open, onOpenChange }: ModalIniciarProcesoProps) {
   const [step, setStep] = useState<Step>("idle");
@@ -165,8 +149,8 @@ export default function ModalIniciarProceso({ open, onOpenChange }: ModalIniciar
   const [extractUsage, setExtractUsage] = useState<UsageInfo | null>(null);
   const [extractSkipped, setExtractSkipped] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [tipoSolicitud, setTipoSolicitud] = useState<TipoSolicitud | null>(null);
-  const [checkingCatalogo, setCheckingCatalogo] = useState(false);
+  /** Only used when the ERP check cannot run; recorded as tipoSolicitudOrigen MANUAL. */
+  const [tipoSolicitudManual, setTipoSolicitudManual] = useState<TipoSolicitud | null>(null);
 
   const { empresaActiva } = useEmpresaFilter();
   const generateUploadUrl = useMutation(api.facturacionStorage.generateUploadUrl);
@@ -241,22 +225,17 @@ export default function ModalIniciarProceso({ open, onOpenChange }: ModalIniciar
     listas: form.watch("listas"),
   });
 
-  const checkCatalogoForDoc = async (doc: string) => {
-    if (!doc.trim() || empresaActiva === null) {
-      setTipoSolicitud(null);
-      return;
-    }
-    setCheckingCatalogo(true);
-    setTipoSolicitud(null);
-    try {
-      const existe = await proveedorExisteEnCatalogo(doc, empresaActiva);
-      setTipoSolicitud(existe ? "ACTUALIZACIÓN" : "INSCRIPCIÓN");
-    } catch {
-      setTipoSolicitud(null);
-    } finally {
-      setCheckingCatalogo(false);
-    }
-  };
+  // ERP catalog check for the typed document (typing, RUT extraction or ACME fill).
+  const verificacion = useVerificacionTercero({
+    modulo: "supplier",
+    empresa: empresaActiva,
+    numeroDocumento: form.watch("numeroDocumento"),
+    tipoDocumento: form.watch("tipoDocumento"),
+    habilitado: open && step === "done",
+  });
+  const manualRequerido = verificacion.erp.estado === "no_disponible";
+  const tipoSolicitud: TipoSolicitud | null = verificacion.tipoSugerido ?? (manualRequerido ? tipoSolicitudManual : null);
+  const puedeCrear = tipoSolicitud !== null;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
@@ -289,7 +268,6 @@ export default function ModalIniciarProceso({ open, onOpenChange }: ModalIniciar
       if (nit) {
         form.setValue("numeroDocumento", nit);
         filled.numeroDocumento = true;
-        void checkCatalogoForDoc(nit);
       }
       const razon = str("razon_social");
       if (razon) {
@@ -303,7 +281,6 @@ export default function ModalIniciarProceso({ open, onOpenChange }: ModalIniciar
       if (numero) {
         form.setValue("numeroDocumento", numero);
         filled.numeroDocumento = true;
-        void checkCatalogoForDoc(numero);
       }
       const nombre = [str("primer_nombre"), str("primer_apellido"), str("segundo_apellido")].filter(Boolean).join(" ");
       if (nombre) {
@@ -356,7 +333,6 @@ export default function ModalIniciarProceso({ open, onOpenChange }: ModalIniciar
     const actual = form.getValues();
     const valores = fillEmptyFields(actual, ACME_VALUES, ACME_GROUPS);
     form.reset(valores, { keepDefaultValues: true });
-    if (valores.numeroDocumento !== actual.numeroDocumento) void checkCatalogoForDoc(valores.numeroDocumento);
   }
 
   function continuarSinRutConAcme() {
@@ -422,8 +398,7 @@ export default function ModalIniciarProceso({ open, onOpenChange }: ModalIniciar
     setExtractUsage(null);
     setExtractSkipped(null);
     setPhasesDone([]);
-    setTipoSolicitud(null);
-    setCheckingCatalogo(false);
+    setTipoSolicitudManual(null);
     onOpenChange(false);
   };
 
@@ -436,19 +411,20 @@ export default function ModalIniciarProceso({ open, onOpenChange }: ModalIniciar
       toast.error("Completa los factores de riesgo antes de iniciar el proceso.");
       return;
     }
+    if (tipoSolicitud === null) {
+      toast.error(
+        manualRequerido
+          ? "Elige el tipo de solicitud: no se pudo verificar el documento en el ERP."
+          : "Espera a que termine la verificación del documento en el ERP.",
+      );
+      return;
+    }
     try {
-      let tipoSolicitudFinal: TipoSolicitud = tipoSolicitud ?? "INSCRIPCIÓN";
-      if (!tipoSolicitud) {
-        try {
-          tipoSolicitudFinal = (await proveedorExisteEnCatalogo(values.numeroDocumento, empresaActiva)) ? "ACTUALIZACIÓN" : "INSCRIPCIÓN";
-        } catch {
-          tipoSolicitudFinal = "INSCRIPCIÓN";
-        }
-      }
-
+      const tipoSolicitudFinal = tipoSolicitud;
       await crearMatrizRiesgo({
         empresa: empresaActiva,
         tipoSolicitud: tipoSolicitudFinal,
+        tipoSolicitudOrigen: verificacion.tipoSugerido ? "ERP" : "MANUAL",
         tipoProveedor: values.tipoProveedor,
         tipoPersona: values.tipoPersona,
         tipoDocumento: values.tipoDocumento,
@@ -595,8 +571,8 @@ export default function ModalIniciarProceso({ open, onOpenChange }: ModalIniciar
         <DialogHeader className="shrink-0 border-b border-slate-100 px-6 py-4">
           <div className="flex items-center gap-2.5">
             <DialogTitle>Iniciar Proceso de {tipoSolicitud === "ACTUALIZACIÓN" ? "Actualización" : "Inscripción"}</DialogTitle>
-            {checkingCatalogo && <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" />}
-            {!checkingCatalogo && tipoSolicitud !== null && (
+            {verificacion.erp.estado === "verificando" && <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" />}
+            {verificacion.erp.estado !== "verificando" && tipoSolicitud !== null && (
               <span
                 className={cn(
                   "rounded-full border px-2.5 py-0.5 text-[11px] font-semibold",
@@ -731,18 +707,7 @@ export default function ModalIniciarProceso({ open, onOpenChange }: ModalIniciar
                             <FormItem>
                               <FormLabel className={LABEL_CLS}>Número de documento{ai("numeroDocumento") && <AiBadge />}</FormLabel>
                               <FormControl>
-                                <Input
-                                  className={cn(INPUT_CLS, ai("numeroDocumento") && "ring-1 ring-blue-300")}
-                                  {...field}
-                                  onChange={(e) => {
-                                    field.onChange(e);
-                                    setTipoSolicitud(null);
-                                  }}
-                                  onBlur={(e) => {
-                                    field.onBlur();
-                                    void checkCatalogoForDoc(e.target.value);
-                                  }}
-                                />
+                                <Input className={cn(INPUT_CLS, ai("numeroDocumento") && "ring-1 ring-blue-300")} {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -762,6 +727,26 @@ export default function ModalIniciarProceso({ open, onOpenChange }: ModalIniciar
                           )}
                         />
                       </div>
+                      <VerificacionTerceroPanel
+                        verificacion={verificacion}
+                        entidad="proveedor"
+                        razonSocialFormulario={form.watch("razonSocial")}
+                      />
+                      {manualRequerido && (
+                        <div className="space-y-1.5">
+                          <p className={LABEL_CLS}>Tipo de solicitud</p>
+                          <Select value={tipoSolicitudManual ?? ""} onValueChange={(v) => setTipoSolicitudManual(v as TipoSolicitud)}>
+                            <SelectTrigger className={INPUT_CLS} aria-label="Tipo de solicitud">
+                              <SelectValue placeholder="¿El proveedor ya existe en el sistema contable?" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="INSCRIPCIÓN">INSCRIPCIÓN — proveedor nuevo</SelectItem>
+                              <SelectItem value="ACTUALIZACIÓN">ACTUALIZACIÓN — proveedor ya registrado</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-slate-500">Se registrará que el tipo se eligió manualmente.</p>
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-3">
@@ -1062,7 +1047,18 @@ export default function ModalIniciarProceso({ open, onOpenChange }: ModalIniciar
                     <Button type="button" variant="outline" onClick={handleClose} disabled={form.formState.isSubmitting} className="rounded-lg">
                       Cancelar
                     </Button>
-                    <Button type="submit" disabled={form.formState.isSubmitting} className="gap-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">
+                    <Button
+                      type="submit"
+                      disabled={form.formState.isSubmitting || !puedeCrear}
+                      title={
+                        !verificacion.listo
+                          ? "Ingresa el número de documento"
+                          : manualRequerido && tipoSolicitudManual === null
+                            ? "Elige el tipo de solicitud"
+                            : undefined
+                      }
+                      className="gap-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                    >
                       {form.formState.isSubmitting ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" /> Creando...

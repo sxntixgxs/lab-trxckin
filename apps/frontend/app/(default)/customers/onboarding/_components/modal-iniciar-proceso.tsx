@@ -16,6 +16,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useVerificacionTercero, type TipoSolicitud } from "@/components/onboarding/use-verificacion-tercero";
+import { VerificacionTerceroPanel } from "@/components/onboarding/verificacion-tercero-panel";
 import { useEmpresaFilter } from "@/hooks/useEmpresaFilter";
 import { CIIU_ACTIVIDAD } from "@/lib/catalogs/ciiu";
 import { ACME_DEMO, ACME_DEMO_CLIENTE, fillEmptyFields } from "@/lib/onboarding/acme-demo";
@@ -27,7 +29,6 @@ import { FORMA_PAGO_OPTIONS, getOnboardingErrorMessage, PLAZO_OPTIONS, plazosPar
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 const schema = z.object({
-  tipoSolicitud: z.enum(["INSCRIPCIÓN", "ACTUALIZACIÓN"]),
   tipoPersona: z.enum(TIPO_PERSONA_OPTIONS),
   tipoDocumento: z.enum(TIPO_DOCUMENTO_OPTIONS),
   numeroDocumento: z.string().min(1, "Requerido"),
@@ -71,7 +72,6 @@ const ACCEPTED = ["application/pdf", "image/jpeg", "image/png"];
 
 // Test data for the "Completar con ACME" buttons.
 const ACME_VALUES: FormValues = {
-  tipoSolicitud: "INSCRIPCIÓN",
   tipoPersona: "PERSONA_JURIDICA",
   tipoDocumento: "NIT",
   numeroDocumento: ACME_DEMO.nit,
@@ -137,7 +137,8 @@ const INPUT_CLS = "border-slate-200 bg-slate-50";
 /**
  * Starts a customer process: upload the RUT, optionally prefill the form with AI extraction,
  * compute the risk live, capture the commercial payment terms and pre-load documents.
- * The request type (inscripción / actualización) is chosen manually by the responsable.
+ * The request type (inscripción / actualización) comes from the company's ERP catalog; it is
+ * picked by hand only when that check cannot run.
  */
 export default function ModalIniciarProceso({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const [step, setStep] = useState<Step>("idle");
@@ -153,6 +154,8 @@ export default function ModalIniciarProceso({ open, onOpenChange }: { open: bool
   const [extractUsage, setExtractUsage] = useState<UsageInfo | null>(null);
   const [extractSkipped, setExtractSkipped] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  /** Only used when the ERP check cannot run; recorded as tipoSolicitudOrigen MANUAL. */
+  const [tipoSolicitudManual, setTipoSolicitudManual] = useState<TipoSolicitud | null>(null);
 
   const { empresaActiva } = useEmpresaFilter();
   const generateUploadUrl = useMutation(api.facturacionStorage.generateUploadUrl);
@@ -161,7 +164,6 @@ export default function ModalIniciarProceso({ open, onOpenChange }: { open: bool
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      tipoSolicitud: "INSCRIPCIÓN",
       tipoPersona: "PERSONA_JURIDICA",
       tipoDocumento: "NIT",
       numeroDocumento: "",
@@ -190,7 +192,17 @@ export default function ModalIniciarProceso({ open, onOpenChange }: { open: bool
     },
   });
 
-  const tipoSolicitud = form.watch("tipoSolicitud");
+  // ERP catalog check for the typed document (typing, RUT extraction or ACME fill).
+  const verificacion = useVerificacionTercero({
+    modulo: "customer",
+    empresa: empresaActiva,
+    numeroDocumento: form.watch("numeroDocumento"),
+    tipoDocumento: form.watch("tipoDocumento"),
+    habilitado: open && step === "done",
+  });
+  const manualRequerido = verificacion.erp.estado === "no_disponible";
+  const tipoSolicitud: TipoSolicitud | null = verificacion.tipoSugerido ?? (manualRequerido ? tipoSolicitudManual : null);
+  const puedeCrear = tipoSolicitud !== null;
   const tipoPersona = form.watch("tipoPersona");
   const formaPago = form.watch("formaPago");
   const codigoCiiu = form.watch("codigoCiiu");
@@ -378,6 +390,7 @@ export default function ModalIniciarProceso({ open, onOpenChange }: { open: bool
     setExtractUsage(null);
     setExtractSkipped(null);
     setPhasesDone([]);
+    setTipoSolicitudManual(null);
     onOpenChange(false);
   };
 
@@ -390,13 +403,22 @@ export default function ModalIniciarProceso({ open, onOpenChange }: { open: bool
       toast.error("Completa los factores de riesgo antes de enviar el formulario al cliente.");
       return;
     }
+    if (tipoSolicitud === null) {
+      toast.error(
+        manualRequerido
+          ? "Elige el tipo de solicitud: no se pudo verificar el documento en el ERP."
+          : "Espera a que termine la verificación del documento en el ERP.",
+      );
+      return;
+    }
     try {
       const ciiuP = values.codigoCiiu.trim();
       const ciiuS = values.codigoCiiuSecundario.trim();
       const documentosPayload = Object.fromEntries(Object.entries(documentosIniciales).map(([docKey, v]) => [docKey, v.storageId])) as Record<string, Id<"_storage">>;
       await crearMatrizRiesgo({
         empresa: empresaActiva,
-        tipoSolicitud: values.tipoSolicitud,
+        tipoSolicitud,
+        tipoSolicitudOrigen: verificacion.tipoSugerido ? "ERP" : "MANUAL",
         rutStorageId: rutStorageId ?? undefined,
         cotizacionStorageId: cotizacion?.storageId,
         tipoPersona: values.tipoPersona,
@@ -429,7 +451,7 @@ export default function ModalIniciarProceso({ open, onOpenChange }: { open: bool
         plazo: values.plazo,
       });
       toast.success(
-        values.tipoSolicitud === "ACTUALIZACIÓN"
+        tipoSolicitud === "ACTUALIZACIÓN"
           ? "Actualización iniciada. Se envió la invitación al formulario por correo."
           : "Inscripción iniciada. Se envió la invitación al formulario por correo.",
       );
@@ -583,7 +605,8 @@ export default function ModalIniciarProceso({ open, onOpenChange }: { open: bool
         <DialogHeader className="shrink-0 border-b border-slate-100 px-6 py-4">
           <div className="flex items-center gap-2.5">
             <DialogTitle>Iniciar proceso de {tipoSolicitud === "ACTUALIZACIÓN" ? "actualización" : "inscripción"}</DialogTitle>
-            {step === "done" && (
+            {step === "done" && verificacion.erp.estado === "verificando" && <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" />}
+            {step === "done" && verificacion.erp.estado !== "verificando" && tipoSolicitud !== null && (
               <span className={cn("rounded-full border px-2.5 py-0.5 text-[11px] font-semibold", tipoSolicitud === "ACTUALIZACIÓN" ? "border-amber-200 bg-amber-50 text-amber-700" : "border-green-200 bg-green-50 text-green-700")}>
                 {tipoSolicitud}
               </span>
@@ -631,32 +654,6 @@ export default function ModalIniciarProceso({ open, onOpenChange }: { open: bool
                     )}
 
                     <div className="space-y-3">
-                      <SectionLabel>Tipo de solicitud</SectionLabel>
-                      <FormField
-                        control={form.control}
-                        name="tipoSolicitud"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className={LABEL_CLS}>¿El cliente ya existe en el sistema contable?</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger className={INPUT_CLS}>
-                                  <SelectValue />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="INSCRIPCIÓN">INSCRIPCIÓN — cliente nuevo</SelectItem>
-                                <SelectItem value="ACTUALIZACIÓN">ACTUALIZACIÓN — cliente ya registrado</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormDescription className="text-xs">Verifica en el sistema contable si el documento ya está registrado antes de elegir.</FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="space-y-3">
                       <SectionLabel>Identificación</SectionLabel>
                       <div className="grid grid-cols-2 gap-3">
                         {selectField("tipoPersona", "Tipo de persona", TIPO_PERSONA_OPTIONS, (opt) => TIPO_PERSONA_LABELS[opt])}
@@ -664,6 +661,26 @@ export default function ModalIniciarProceso({ open, onOpenChange }: { open: bool
                         {textField("numeroDocumento", "Número de documento")}
                         {textField("razonSocial", "Razón social / Nombre")}
                       </div>
+                      <VerificacionTerceroPanel
+                        verificacion={verificacion}
+                        entidad="cliente"
+                        razonSocialFormulario={form.watch("razonSocial")}
+                      />
+                      {manualRequerido && (
+                        <div className="space-y-1.5">
+                          <p className={LABEL_CLS}>Tipo de solicitud</p>
+                          <Select value={tipoSolicitudManual ?? ""} onValueChange={(v) => setTipoSolicitudManual(v as TipoSolicitud)}>
+                            <SelectTrigger className={INPUT_CLS} aria-label="Tipo de solicitud">
+                              <SelectValue placeholder="¿El cliente ya existe en el sistema contable?" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="INSCRIPCIÓN">INSCRIPCIÓN — cliente nuevo</SelectItem>
+                              <SelectItem value="ACTUALIZACIÓN">ACTUALIZACIÓN — cliente ya registrado</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-slate-500">Se registrará que el tipo se eligió manualmente.</p>
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-3">
@@ -920,7 +937,18 @@ export default function ModalIniciarProceso({ open, onOpenChange }: { open: bool
                     <Button type="button" variant="outline" onClick={handleClose} disabled={form.formState.isSubmitting} className="rounded-lg">
                       Cancelar
                     </Button>
-                    <Button type="submit" disabled={form.formState.isSubmitting} className="gap-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">
+                    <Button
+                      type="submit"
+                      disabled={form.formState.isSubmitting || !puedeCrear}
+                      title={
+                        !verificacion.listo
+                          ? "Ingresa el número de documento"
+                          : manualRequerido && tipoSolicitudManual === null
+                            ? "Elige el tipo de solicitud"
+                            : undefined
+                      }
+                      className="gap-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                    >
                       {form.formState.isSubmitting ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" /> Creando...

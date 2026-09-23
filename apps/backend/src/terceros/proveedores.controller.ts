@@ -6,7 +6,7 @@ import { Permisos } from "../auth/permisos.decorator";
 import { PermisosGuard } from "../auth/permisos.guard";
 import { usuarioDe } from "../auth/request-user";
 import { WorkosGuard } from "../auth/workos.guard";
-import { BuscarProveedoresQueryDto } from "./dto/terceros-query.dto";
+import { BuscarProveedoresQueryDto, ExistenciaTerceroQueryDto } from "./dto/terceros-query.dto";
 import { TercerosCatalogoService } from "./terceros-catalogo.service";
 
 /** ERP supplier catalog (read only). */
@@ -28,5 +28,13 @@ export class ProveedoresController {
     return {
       proveedores: await this.catalogo.buscarProveedoresActivos(query.empresa, query.q ?? "", query.limit ?? 12),
     };
+  }
+
+  /** Supplier onboarding: INSCRIPCIÓN vs ACTUALIZACIÓN. */
+  @Get("existe")
+  @Permisos("suppliers/onboarding")
+  existe(@Query() query: ExistenciaTerceroQueryDto, @Req() request: AuthedRequest) {
+    assertEmpresaAccesible(usuarioDe(request), query.empresa);
+    return this.catalogo.existencia("PROVEEDORES", query.empresa, query.documento, query.tipoDocumento);
   }
 }

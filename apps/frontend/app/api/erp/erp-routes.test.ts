@@ -10,6 +10,8 @@ vi.mock("@/lib/fetch-backend", () => ({
 
 import { fetchBackend, getCurrentBackendUser } from "@/lib/fetch-backend";
 import { GET as buscarProveedores } from "@/app/api/proveedores/search/route";
+import { GET as existeProveedor } from "@/app/api/proveedores/existe/route";
+import { GET as existeCliente } from "@/app/api/clientes/existe/route";
 import { GET as listarCatalogo } from "@/app/api/erp/catalogo/[entidad]/route";
 import { GET as listarCorridas, POST as sincronizar } from "@/app/api/erp/sincronizaciones/route";
 
@@ -41,6 +43,33 @@ describe("rutas del catálogo del ERP", () => {
     vi.clearAllMocks();
   });
 
+  it("exige sesión", async () => {
+    vi.mocked(getCurrentBackendUser).mockResolvedValue(null);
+    expect((await existeProveedor(req("/api/proveedores/existe?empresa=1&documento=900123456"))).status).toBe(401);
+  });
+
+  it("la existencia exige el permiso del módulo, empresa propia y documento", async () => {
+    vi.mocked(getCurrentBackendUser).mockResolvedValue(usuario(["customers/onboarding"]) as never);
+    expect((await existeProveedor(req("/api/proveedores/existe?empresa=1&documento=900123456"))).status).toBe(403);
+
+    vi.mocked(getCurrentBackendUser).mockResolvedValue(usuario(["suppliers/onboarding"]) as never);
+    expect((await existeProveedor(req("/api/proveedores/existe?documento=900123456"))).status).toBe(400);
+    expect((await existeProveedor(req("/api/proveedores/existe?empresa=2&documento=900123456"))).status).toBe(403);
+    expect((await existeProveedor(req("/api/proveedores/existe?empresa=1"))).status).toBe(400);
+    expect(fetchBackend).not.toHaveBeenCalled();
+
+    const ok = await existeProveedor(req("/api/proveedores/existe?empresa=1&documento=900.123.456-8&tipoDocumento=NIT&otro=x"));
+    expect(ok.status).toBe(200);
+    expect(ultimaLlamada()[0]).toBe("/api/v1/proveedores/existe?empresa=1&documento=900.123.456-8&tipoDocumento=NIT");
+  });
+
+  it("clientes usa su propio permiso y ruta", async () => {
+    vi.mocked(getCurrentBackendUser).mockResolvedValue(usuario(["customers/onboarding"], [3]) as never);
+    const respuesta = await existeCliente(req("/api/clientes/existe?empresa=3&documento=800666777&tipoDocumento=NIT"));
+    expect(respuesta.status).toBe(200);
+    expect(ultimaLlamada()[0]).toBe("/api/v1/clientes/existe?empresa=3&documento=800666777&tipoDocumento=NIT");
+  });
+
   it("la búsqueda de proveedores exige empresa y reenvía solo q, empresa y limit", async () => {
     vi.mocked(getCurrentBackendUser).mockResolvedValue(usuario(["finance/advances/request"]) as never);
     expect((await buscarProveedores(req("/api/proveedores/search?q=900"))).status).toBe(400);
@@ -50,6 +79,13 @@ describe("rutas del catálogo del ERP", () => {
 
     vi.mocked(getCurrentBackendUser).mockResolvedValue(usuario(["dashboard"]) as never);
     expect((await buscarProveedores(req("/api/proveedores/search?q=900&empresa=1"))).status).toBe(403);
+  });
+
+  it("responde 502 cuando el backend no está disponible", async () => {
+    vi.mocked(getCurrentBackendUser).mockResolvedValue(usuario(["suppliers/onboarding"]) as never);
+    vi.mocked(fetchBackend).mockRejectedValue(new TypeError("fetch failed"));
+    const respuesta = await existeProveedor(req("/api/proveedores/existe?empresa=1&documento=900123456"));
+    expect(respuesta.status).toBe(502);
   });
 
   it("administración: sincronizar y listar con el permiso de Terceros ERP", async () => {

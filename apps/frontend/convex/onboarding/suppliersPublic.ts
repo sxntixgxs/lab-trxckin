@@ -32,7 +32,6 @@ import {
   referenciaComercialValidator,
   tipoDocumentoValidator,
   tipoPersonaValidator,
-  tipoSolicitudValidator,
 } from "./validators";
 
 type SupplierDoc = Doc<"onboardingProveedores">;
@@ -155,8 +154,8 @@ export const generateUploadUrlPublico = mutation({
 
 // ─── Auto-guardado del formulario (Fase II) ──────────────────────────────────
 
+// Sin tipoSolicitud: lo decide la consulta al ERP al iniciar el proceso y el tercero no puede cambiarlo.
 const datosGeneralesPatch = v.object({
-  tipoSolicitud: v.optional(tipoSolicitudValidator),
   tipoPersona: v.optional(tipoPersonaValidator),
   razonSocial: v.optional(v.string()),
   contactoNombre: v.optional(v.string()),

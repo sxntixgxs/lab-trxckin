@@ -37,6 +37,7 @@ import {
   tipoDocumentoValidator,
   tipoEvaluacionValidator,
   tipoPersonaValidator,
+  tipoSolicitudOrigenValidator,
   tipoSolicitudValidator,
 } from "./validators";
 
@@ -72,6 +73,7 @@ export const onboardingProveedores = defineTable({
   }),
   datos_generales_01: v.object({
     tipoSolicitud: v.optional(tipoSolicitudValidator),
+    tipoSolicitudOrigen: v.optional(tipoSolicitudOrigenValidator),
     tipoPersona: tipoPersonaValidator,
     tipoDocumento: tipoDocumentoValidator,
     numeroDocumento: v.string(),
@@ -260,6 +262,7 @@ export const onboardingClientes = defineTable({
   }),
   datos_generales_01: v.object({
     tipoSolicitud: v.optional(tipoSolicitudValidator),
+    tipoSolicitudOrigen: v.optional(tipoSolicitudOrigenValidator),
     tipoPersona: tipoPersonaValidator,
     tipoDocumento: tipoDocumentoValidator,
     numeroDocumento: v.string(),

@@ -32,6 +32,16 @@ export type TerceroCatalogo = {
   sincronizadoEn: string;
 };
 
+export type ExistenciaTercero = {
+  existe: boolean;
+  tercero: TerceroCatalogo | null;
+  catalogo: {
+    /** False until a full sync of this catalog and company has succeeded. */
+    sincronizado: boolean;
+    ultimaSincronizacion: string | null;
+  };
+};
+
 export type PaginaCatalogo = {
   items: TerceroCatalogo[];
   total: number;
@@ -94,6 +104,42 @@ export class TercerosCatalogoService {
       descripcionSucursal: fila.descripcion_sucursal,
       razonSocial: fila.razon_social,
     }));
+  }
+
+  /**
+   * Does this document exist in the company's ERP catalog? Inactive terceros exist too (the
+   * caller shows their state). The exact document wins over the one without a trailing DV.
+   */
+  async existencia(
+    entidad: EntidadErp,
+    empresa: number,
+    documento: string,
+    tipoDocumento?: string | null,
+  ): Promise<ExistenciaTercero> {
+    const candidatos = candidatosNit(documento, tipoDocumento);
+    const filas = candidatos.length
+      ? await this.delegado(entidad).findMany({
+          where: { id_empresa: empresa, nit: { in: candidatos } },
+          orderBy: [{ nit: "asc" }, { sucursal_id: "asc" }],
+        })
+      : [];
+    const elegido = candidatos.find((candidato) => filas.some((fila) => fila.nit === candidato));
+    const propias = filas.filter((fila) => fila.nit === elegido);
+
+    const ultima = await this.prisma.sincronizacionErp.findFirst({
+      where: { entidad, id_empresa: empresa, alcance: "COMPLETA", estado: "EXITOSA" },
+      orderBy: { finalizada_en: "desc" },
+      select: { finalizada_en: true },
+    });
+
+    return {
+      existe: propias.length > 0,
+      tercero: propias.length > 0 ? agrupar(propias) : null,
+      catalogo: {
+        sincronizado: ultima !== null,
+        ultimaSincronizacion: ultima?.finalizada_en?.toISOString() ?? null,
+      },
+    };
   }
 
   /** Admin catalog browser: terceros (with their branches) of a company, by name. */

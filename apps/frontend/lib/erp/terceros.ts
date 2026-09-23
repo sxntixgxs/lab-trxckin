@@ -1,7 +1,9 @@
 /**
- * Browser-side client of the ERP catalog routes (app/api/erp/*). Types mirror the Nest responses
- * (apps/backend/src/terceros, src/erp).
+ * Browser-side client of the ERP catalog routes (app/api/{proveedores,clientes}/existe,
+ * app/api/erp/*). Types mirror the Nest responses (apps/backend/src/terceros, src/erp).
  */
+
+export type ModuloOnboarding = "supplier" | "customer";
 
 export type SucursalTerceroErp = {
   sucursalId: string;
@@ -21,6 +23,12 @@ export type TerceroErp = {
   activo: boolean;
   sucursales: SucursalTerceroErp[];
   sincronizadoEn: string;
+};
+
+export type ExistenciaTerceroErp = {
+  existe: boolean;
+  tercero: TerceroErp | null;
+  catalogo: { sincronizado: boolean; ultimaSincronizacion: string | null };
 };
 
 export type EntidadErp = "PROVEEDORES" | "CLIENTES";
@@ -58,6 +66,21 @@ async function leer<T>(respuesta: Response, porDefecto: string): Promise<T> {
     throw new Error(mensaje ?? porDefecto);
   }
   return cuerpo as T;
+}
+
+export async function consultarExistenciaErp(
+  modulo: ModuloOnboarding,
+  params: { empresa: number; documento: string; tipoDocumento: string },
+  signal?: AbortSignal,
+): Promise<ExistenciaTerceroErp> {
+  const ruta = modulo === "supplier" ? "/api/proveedores/existe" : "/api/clientes/existe";
+  const query = new URLSearchParams({
+    empresa: String(params.empresa),
+    documento: params.documento,
+    tipoDocumento: params.tipoDocumento,
+  });
+  const respuesta = await fetch(`${ruta}?${query.toString()}`, { credentials: "include", cache: "no-store", signal });
+  return leer<ExistenciaTerceroErp>(respuesta, "No se pudo consultar el catálogo del ERP.");
 }
 
 export async function listarSincronizaciones(params: { empresa?: number; limit?: number } = {}): Promise<CorridaSincronizacion[]> {
