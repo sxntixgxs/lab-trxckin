@@ -1,10 +1,20 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { puedeVerInscripcion, requireActorEnFase, resolveOnboardingAccess } from "../lib/onboarding/access";
+import {
+  calcularEvaluacionCompras,
+  CRITERIOS_COMPRAS,
+  type CriterioComprasKey,
+} from "../../lib/onboarding/evaluacion-compras";
 
 const criterio = v.union(v.number(), v.null());
 
-/** Registra (o reemplaza) la evaluación de Compras de la Fase V. */
+/**
+ * Registra (o reemplaza) la evaluación de Compras de la Fase V. El puntaje y la aprobación se
+ * calculan aquí con la misma regla de la UI (lib/onboarding/evaluacion-compras.ts); los
+ * `calificacionGeneral`/`isAprobado` que envía el cliente se aceptan por compatibilidad y
+ * se ignoran.
+ */
 export const evaluarProveedor = mutation({
   args: {
     inscripcionId: v.id("onboardingProveedores"),
@@ -16,8 +26,8 @@ export const evaluarProveedor = mutation({
     fichasTecnicas: criterio,
     formaPago: criterio,
     sstAmbiental: criterio,
-    calificacionGeneral: v.number(),
-    isAprobado: v.boolean(),
+    calificacionGeneral: v.optional(v.number()),
+    isAprobado: v.optional(v.boolean()),
   },
   returns: v.id("onboardingProveedoresEvaluaciones"),
   handler: async (ctx, args) => {
@@ -26,17 +36,15 @@ export const evaluarProveedor = mutation({
     if (ins.faseActual !== "V_EVALUACION_COMPRAS") throw new Error("La inscripción no está en Fase V.");
     const actor = await requireActorEnFase(ctx, "supplier", ins, "V_EVALUACION_COMPRAS");
 
-    const criterios = [
-      args.experiencia,
-      args.referencias,
-      args.portfolio,
-      args.certificados,
-      args.garantias,
-      args.fichasTecnicas,
-      args.formaPago,
-      args.sstAmbiental,
-    ];
-    if (criterios.every((valor) => valor === null)) {
+    const valores = CRITERIOS_COMPRAS.map(({ key, label, options }) => {
+      const valor = args[key as CriterioComprasKey];
+      if (valor !== null && !options.some((option) => option.value === valor)) {
+        throw new Error(`Valor no válido para el criterio "${label}".`);
+      }
+      return valor;
+    });
+    const calculo = calcularEvaluacionCompras(valores);
+    if (!calculo.puedeCalcular) {
       throw new Error("Selecciona al menos un criterio aplicable para registrar la evaluación.");
     }
 
@@ -51,8 +59,8 @@ export const evaluarProveedor = mutation({
       fichasTecnicas: args.fichasTecnicas,
       formaPago: args.formaPago,
       sstAmbiental: args.sstAmbiental,
-      calificacionGeneral: args.calificacionGeneral,
-      isAprobado: args.isAprobado,
+      calificacionGeneral: calculo.calificacionGeneral,
+      isAprobado: calculo.isAprobado,
     };
     const existing = await ctx.db
       .query("onboardingProveedoresEvaluaciones")

@@ -117,7 +117,7 @@ export function CustomerForm({
   }, [inscripcion._id, token, verificado.tipoDocumento, verificado.numeroDocumento]);
 
   async function uploadPdf(file: File): Promise<Id<"_storage">> {
-    const uploadUrl = await generateUploadUrl({ inscripcionId: inscripcion._id, token });
+    const uploadUrl = await generateUploadUrl(identidad);
     const res = await fetch(uploadUrl, { method: "POST", headers: { "Content-Type": file.type }, body: file });
     if (!res.ok) throw new Error("Error al subir el archivo");
     const { storageId } = (await res.json()) as { storageId: Id<"_storage"> };

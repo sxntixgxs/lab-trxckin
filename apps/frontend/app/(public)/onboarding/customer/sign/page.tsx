@@ -8,9 +8,10 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { renderFormularioClientePdfBlob } from "@/app/(default)/customers/onboarding/pdf/formulario-pdf-cliente-data";
 import { getFormBranding } from "@/lib/onboarding/branding";
+import { DocumentoVerificacion } from "../../_components/documento-verificacion";
 import { InvalidLinkScreen, LoadingScreen, PublicShell, StatusCard } from "../../_components/public-shell";
 import { SignaturePad, type SignaturePadHandle } from "../../_components/signature-pad";
-import { getPublicErrorMessage, usePublicLink } from "../../_components/use-public-link";
+import { getPublicErrorMessage, useDocumentoVerificado, usePublicLink } from "../../_components/use-public-link";
 
 const TITULO_FIRMA = "Firma del Representante Legal";
 const TITULO_VISTA = "Formulario de inscripción";
@@ -23,6 +24,7 @@ function SignContent() {
   const link = usePublicLink();
   const inscripcion = useQuery(api.onboarding.customersPublic.obtenerInscripcionPublica, link ? { inscripcionId: link.id as Id<"onboardingClientes">, token: link.token } : "skip");
   const firmar = useMutation(api.onboarding.customersPublic.firmarFormularioRepresentante);
+  const { verificado, setVerificado } = useDocumentoVerificado(link?.id ?? null);
 
   const sigRef = useRef<SignaturePadHandle>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
@@ -58,7 +60,7 @@ function SignContent() {
   }, [inscripcion]);
 
   async function handleFirmar() {
-    if (!link || !inscripcion) return;
+    if (!link || !inscripcion || !verificado) return;
     setSigning(true);
     try {
       const firmaDataUrl = await sigRef.current?.toPngDataUrl();
@@ -66,7 +68,13 @@ function SignContent() {
         toast.error("Por favor dibuje su firma antes de continuar.");
         return;
       }
-      await firmar({ inscripcionId: inscripcion._id, token: link.token, firmaDataUrl });
+      await firmar({
+        inscripcionId: inscripcion._id,
+        token: link.token,
+        tipoDocumento: verificado.tipoDocumento,
+        numeroDocumento: verificado.numeroDocumento,
+        firmaDataUrl,
+      });
       // The SIGN token is consumed by the mutation: keep what the success screen needs.
       setSigned({ razonSocial: inscripcion.datos_generales_01.razonSocial, empresa: inscripcion.empresa });
     } catch (e) {
@@ -115,6 +123,22 @@ function SignContent() {
           titulo={esFirmada ? "Formulario ya firmado" : "Formulario no disponible para firma"}
           descripcion={esFirmada ? "Este formulario ya fue firmado. El proceso ha continuado a la siguiente etapa." : "El formulario aún no ha sido enviado por el cliente o el proceso cambió de estado."}
           razonSocial={dg.razonSocial}
+        />
+      </PublicShell>
+    );
+  }
+
+  // Like the form, signing first asks for the document the company registered; the server
+  // re-checks the same pair.
+  if (!soloVista && !verificado) {
+    return (
+      <PublicShell branding={branding} titulo={TITULO_FIRMA} subtitulo={SUB_FIRMA} center>
+        <DocumentoVerificacion
+          branding={branding}
+          titulo={TITULO_FIRMA}
+          descripcion={SUB_FIRMA}
+          esperado={{ tipoDocumento: dg.tipoDocumento, numeroDocumento: dg.numeroDocumento }}
+          onVerificado={setVerificado}
         />
       </PublicShell>
     );

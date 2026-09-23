@@ -205,14 +205,14 @@ describe("flujo de inscripción de clientes", () => {
 
     // ── Firma (IIA → III, un solo carril de Cumplimiento) ───────────────
     await expect(
-      t.mutation(api.onboarding.customersPublic.firmarFormularioRepresentante, { inscripcionId, token: formToken, firmaDataUrl: `data:image/png;base64,${"A".repeat(200)}` }),
+      t.mutation(api.onboarding.customersPublic.firmarFormularioRepresentante, { inscripcionId, token: formToken, ...IDENTIDAD, firmaDataUrl: `data:image/png;base64,${"A".repeat(200)}` }),
     ).rejects.toThrow(/enlace/i);
-    await t.mutation(api.onboarding.customersPublic.firmarFormularioRepresentante, { inscripcionId, token: signToken, firmaDataUrl: `data:image/png;base64,${"A".repeat(200)}` });
+    await t.mutation(api.onboarding.customersPublic.firmarFormularioRepresentante, { inscripcionId, token: signToken, ...IDENTIDAD, firmaDataUrl: `data:image/png;base64,${"A".repeat(200)}` });
     ins = await t.run(async (ctx) => ctx.db.get("onboardingClientes", inscripcionId));
     expect(ins?.faseActual).toBe("III_REVISION_DOCUMENTAL");
     expect(ins?.firmadoEn).toBeDefined();
     await expect(
-      t.mutation(api.onboarding.customersPublic.firmarFormularioRepresentante, { inscripcionId, token: signToken, firmaDataUrl: `data:image/png;base64,${"A".repeat(200)}` }),
+      t.mutation(api.onboarding.customersPublic.firmarFormularioRepresentante, { inscripcionId, token: signToken, ...IDENTIDAD, firmaDataUrl: `data:image/png;base64,${"A".repeat(200)}` }),
     ).rejects.toThrow(/enlace/i);
 
     const docs = await u.cumpl.query(api.onboarding.customers.obtenerRevisionDocumentos, { inscripcionId });
@@ -319,7 +319,7 @@ describe("flujo de inscripción de clientes", () => {
     await t.mutation(api.onboarding.customersPublic.enviarFormulario, { inscripcionId, token: formToken, ...IDENTIDAD });
     await flush(t);
     const tokens = trackedTokens(fetchMock);
-    await t.mutation(api.onboarding.customersPublic.firmarFormularioRepresentante, { inscripcionId, token: tokens[tokens.length - 1], firmaDataUrl: `data:image/png;base64,${"A".repeat(200)}` });
+    await t.mutation(api.onboarding.customersPublic.firmarFormularioRepresentante, { inscripcionId, token: tokens[tokens.length - 1], ...IDENTIDAD, firmaDataUrl: `data:image/png;base64,${"A".repeat(200)}` });
 
     const docsAntes = await u.cumpl.query(api.onboarding.customers.obtenerRevisionDocumentos, { inscripcionId });
     await expect(

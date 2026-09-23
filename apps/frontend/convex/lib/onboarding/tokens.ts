@@ -43,14 +43,27 @@ export async function hashToken(token: string): Promise<string> {
   return toHex(digest);
 }
 
+const MAX_TOKENS_ACTIVOS = 100;
+
+/**
+ * Tokens vigentes (no revocados) de un alcance, del más reciente al más antiguo. Recorre las
+ * filas revocadas en vez de cortar antes de filtrarlas: con un `take` previo, una inscripción
+ * con muchos enlaces históricos dejaba sin rotar ni revocar los tokens más recientes.
+ */
 async function activeTokens(ctx: QueryCtx | MutationCtx, ref: InscripcionRef, scope: TokenScope) {
-  const rows = await ctx.db
+  const activos: Doc<"onboardingAccessTokens">[] = [];
+  const rows = ctx.db
     .query("onboardingAccessTokens")
     .withIndex("by_modulo_inscripcionId_scope", (q) =>
       q.eq("modulo", ref.modulo).eq("inscripcionId", ref.inscripcionId).eq("scope", scope),
     )
-    .take(100);
-  return rows.filter((row) => row.revokedAt === undefined);
+    .order("desc");
+  for await (const row of rows) {
+    if (row.revokedAt !== undefined) continue;
+    activos.push(row);
+    if (activos.length >= MAX_TOKENS_ACTIVOS) break;
+  }
+  return activos;
 }
 
 /**

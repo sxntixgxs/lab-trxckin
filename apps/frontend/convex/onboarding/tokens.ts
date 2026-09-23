@@ -65,6 +65,12 @@ export const issueForNotificacion = internalMutation({
   },
 });
 
+/** Fases en las que el tercero usa cada enlace (las mismas que admite el reenvío). */
+const FASES_ENLACE: Record<"FORM" | "SIGN", readonly string[]> = {
+  FORM: ["II_PENDIENTE_FORMULARIO", "III_REVISION_DOCUMENTAL"],
+  SIGN: ["IIA_PENDIENTE_FIRMA"],
+};
+
 /**
  * "Copiar enlace" desde la UI interna. Emite un token nuevo (rota los anteriores del mismo
  * alcance, salvo los de solo lectura) y devuelve la URL pública una única vez.
@@ -83,15 +89,22 @@ export const emitirEnlaceAcceso = mutation({
     const actor = await requireGestionInscripcion(ctx, args.modulo, ins);
 
     if (ins.faseActual === "ANULADA") throw new Error("La inscripción está anulada.");
-    if (!args.viewOnly && args.scope === "SIGN" && ins.faseActual !== "IIA_PENDIENTE_FIRMA") {
-      throw new Error("El enlace de firma solo está disponible mientras el formulario esté pendiente de firma.");
+    if (!args.viewOnly && !FASES_ENLACE[args.scope].includes(ins.faseActual)) {
+      throw new Error(
+        args.scope === "SIGN"
+          ? "El enlace de firma solo está disponible mientras el formulario esté pendiente de firma."
+          : "El enlace del formulario solo está disponible mientras el tercero diligencia o corrige el formulario.",
+      );
     }
 
+    // Copiar un enlace nuevo invalida los anteriores del mismo paso (como el reenvío); los
+    // enlaces de solo lectura no rotan (issueToken ignora `rotate` para ellos).
     const issued = await issueToken(ctx, {
       ...ref,
       scope: args.scope,
       issuedByUserId: actor.usuarioId,
       viewOnly: args.viewOnly === true,
+      rotate: true,
     });
     const url = buildPublicOnboardingUrl(frontendUrl(), {
       modulo: args.modulo,

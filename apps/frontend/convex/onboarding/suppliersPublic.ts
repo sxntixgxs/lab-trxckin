@@ -138,10 +138,16 @@ export const obtenerUrlsArchivosPublico = query({
 // ─── Carga de archivos ───────────────────────────────────────────────────────
 
 export const generateUploadUrlPublico = mutation({
-  args: { inscripcionId: v.id("onboardingProveedores"), token: v.string() },
+  args: {
+    inscripcionId: v.id("onboardingProveedores"),
+    token: v.string(),
+    tipoDocumento: tipoDocumentoValidator,
+    numeroDocumento: v.string(),
+  },
   returns: v.string(),
   handler: async (ctx, args) => {
     const ins = await guardForm(ctx, args, { mutation: true });
+    assertDocumentoCoincide(ins, args.tipoDocumento, args.numeroDocumento);
     if (!FASES_CARGA.has(ins.faseActual)) throw new Error("La inscripción no admite cargas en su fase actual.");
     return await ctx.storage.generateUploadUrl();
   },
@@ -320,10 +326,17 @@ export const enviarFormulario = mutation({
 // ─── Firma del representante legal (IIA → III) ───────────────────────────────
 
 export const firmarFormularioRepresentante = mutation({
-  args: { inscripcionId: v.id("onboardingProveedores"), token: v.string(), firmaDataUrl: v.string() },
+  args: {
+    inscripcionId: v.id("onboardingProveedores"),
+    token: v.string(),
+    tipoDocumento: tipoDocumentoValidator,
+    numeroDocumento: v.string(),
+    firmaDataUrl: v.string(),
+  },
   returns: v.null(),
   handler: async (ctx, args) => {
     const ins = await guardForm(ctx, args, { mutation: true, scopes: ["SIGN"] });
+    assertDocumentoCoincide(ins, args.tipoDocumento, args.numeroDocumento);
     if (ins.faseActual !== "IIA_PENDIENTE_FIRMA") {
       throw new Error(`La inscripción no está pendiente de firma (está en ${ins.faseActual}).`);
     }

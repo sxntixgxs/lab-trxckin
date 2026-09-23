@@ -212,12 +212,16 @@ describe("flujo de inscripción de proveedores", () => {
       t.mutation(api.onboarding.suppliersPublic.firmarFormularioRepresentante, {
         inscripcionId,
         token: formToken,
+        tipoDocumento: "NIT",
+        numeroDocumento: "900123456",
         firmaDataUrl: `data:image/png;base64,${"A".repeat(200)}`,
       }),
     ).rejects.toThrow(/enlace/i);
     await t.mutation(api.onboarding.suppliersPublic.firmarFormularioRepresentante, {
       inscripcionId,
       token: signToken,
+      tipoDocumento: "NIT",
+      numeroDocumento: "900123456",
       firmaDataUrl: `data:image/png;base64,${"A".repeat(200)}`,
     });
     ins = await t.run(async (ctx) => ctx.db.get("onboardingProveedores", inscripcionId));
@@ -227,6 +231,8 @@ describe("flujo de inscripción de proveedores", () => {
       t.mutation(api.onboarding.suppliersPublic.firmarFormularioRepresentante, {
         inscripcionId,
         token: signToken,
+        tipoDocumento: "NIT",
+        numeroDocumento: "900123456",
         firmaDataUrl: `data:image/png;base64,${"A".repeat(200)}`,
       }),
     ).rejects.toThrow(/enlace/i);
@@ -381,6 +387,8 @@ describe("flujo de inscripción de proveedores", () => {
     await t.mutation(api.onboarding.suppliersPublic.firmarFormularioRepresentante, {
       inscripcionId,
       token: tokens[tokens.length - 1],
+      tipoDocumento: "NIT",
+      numeroDocumento: "900123456",
       firmaDataUrl: `data:image/png;base64,${"A".repeat(200)}`,
     });
 

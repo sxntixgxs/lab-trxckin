@@ -51,7 +51,12 @@ export function DocumentTracker({
     }
     setRecargando((p) => ({ ...p, [docKey]: true }));
     try {
-      const uploadUrl = await generateUploadUrl({ inscripcionId: inscripcion._id, token });
+      const uploadUrl = await generateUploadUrl({
+        inscripcionId: inscripcion._id,
+        token,
+        tipoDocumento: verificado.tipoDocumento,
+        numeroDocumento: verificado.numeroDocumento,
+      });
       const res = await fetch(uploadUrl, { method: "POST", headers: { "Content-Type": file.type }, body: file });
       if (!res.ok) throw new Error("Error al subir el archivo");
       const { storageId } = (await res.json()) as { storageId: Id<"_storage"> };
