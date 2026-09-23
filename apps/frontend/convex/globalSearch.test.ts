@@ -101,6 +101,8 @@ async function seedAnticipoRoles(t: T) {
 }
 
 async function seedAnticipo(t: T, args: { razonSocial: string; createdById: string }) {
+  // crearAnticipo requires the request permission in the advance's company.
+  await asUser(t, { id: args.createdById, permisos: ["finance/advances/request"], empresas: [1] });
   return (await actingAsActorArgs(t).mutation(api.financiero.anticipos.crearAnticipo, {
     empresa: 1,
     empresa_id: 1,

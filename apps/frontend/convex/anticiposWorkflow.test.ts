@@ -6,7 +6,8 @@ import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
-import { actingAsActorArgs } from "../test-utils/convexActingAs";
+import { actingAsActorArgs, DEFAULT_ACTOR_ID_KEYS } from "../test-utils/convexActingAs";
+import { asUser } from "../test-utils/onboardingActors";
 
 const modules = import.meta.glob("./**/*.*s");
 
@@ -29,8 +30,19 @@ const baseArgs = {
   createdById: SOLICITANTE,
 };
 
+/** Every seeded actor may request and manage advances of the tested company. */
+const PRIVILEGIOS_ANTICIPOS = {
+  permisos: ["finance/advances", "finance/advances/request"],
+  empresas: [EMPRESA],
+};
+
 function makeTest() {
-  return actingAsActorArgs(convexTest(schema, modules));
+  return actingAsActorArgs(convexTest(schema, modules), DEFAULT_ACTOR_ID_KEYS, PRIVILEGIOS_ANTICIPOS);
+}
+
+/** The advance read queries check visibility per caller: read as a full-access user. */
+async function lectorAnticipos(t: ReturnType<typeof makeTest>) {
+  return await asUser(t, { id: "lector-anticipos", hasFullAccess: true, permisos: ["*"] });
 }
 
 const seededRoles = new WeakSet<object>();
@@ -71,7 +83,7 @@ async function obtenerAnticipo(
   t: ReturnType<typeof makeTest>,
   anticipoId: Id<"anticipos">
 ) {
-  return await t.query(api.financiero.anticipos.obtenerAnticipoPorId, {
+  return await (await lectorAnticipos(t)).query(api.financiero.anticipos.obtenerAnticipoPorId, {
     id: anticipoId,
   });
 }
@@ -238,7 +250,7 @@ describe("anticipos workflow routing", () => {
       cubreFacturaCompleta: false,
     });
 
-    const fases = await t.query(
+    const fases = await (await lectorAnticipos(t)).query(
       api.financiero.anticipos.obtenerFasesDeAnticipo,
       { anticipoId }
     );
@@ -309,7 +321,7 @@ describe("anticipos desembolso adjuntos persistence", () => {
       }
     );
 
-    const adjuntos = await t.query(
+    const adjuntos = await (await lectorAnticipos(t)).query(
       api.financiero.anticipos.obtenerAdjuntosBorradorDesembolso,
       { anticipoId }
     );
@@ -346,7 +358,7 @@ describe("anticipos desembolso adjuntos persistence", () => {
       }
     );
 
-    const adjuntos = await t.query(
+    const adjuntos = await (await lectorAnticipos(t)).query(
       api.financiero.anticipos.obtenerAdjuntosBorradorDesembolso,
       { anticipoId }
     );
@@ -415,7 +427,7 @@ describe("anticipos desembolso adjuntos persistence", () => {
       motivo: "Falta revisión",
     });
 
-    const fasesDevuelto = await t.query(
+    const fasesDevuelto = await (await lectorAnticipos(t)).query(
       api.financiero.anticipos.obtenerFasesDeAnticipo,
       { anticipoId }
     );
@@ -433,7 +445,7 @@ describe("anticipos desembolso adjuntos persistence", () => {
       decision: "APROBADO",
     });
 
-    const borrador = await t.query(
+    const borrador = await (await lectorAnticipos(t)).query(
       api.financiero.anticipos.obtenerAdjuntosBorradorDesembolso,
       { anticipoId }
     );
@@ -478,7 +490,7 @@ describe("anticipos desembolso adjuntos persistence", () => {
       }
     );
 
-    const fases = await t.query(
+    const fases = await (await lectorAnticipos(t)).query(
       api.financiero.anticipos.obtenerFasesDeAnticipo,
       { anticipoId }
     );
@@ -532,7 +544,7 @@ describe("anticipos desembolso adjuntos persistence", () => {
       nombre: "primero.pdf",
     });
 
-    const fases = await t.query(
+    const fases = await (await lectorAnticipos(t)).query(
       api.financiero.anticipos.obtenerFasesDeAnticipo,
       { anticipoId }
     );
@@ -578,7 +590,7 @@ describe("anticipos desembolso adjuntos persistence", () => {
       tesoreroUserId: TESORERO,
     });
 
-    const fases = await t.query(
+    const fases = await (await lectorAnticipos(t)).query(
       api.financiero.anticipos.obtenerFasesDeAnticipo,
       { anticipoId }
     );
@@ -635,7 +647,7 @@ describe("anticipos desembolso adjuntos persistence", () => {
       }
     );
 
-    const adjuntos = await t.query(
+    const adjuntos = await (await lectorAnticipos(t)).query(
       api.financiero.anticipos.obtenerAdjuntosBorradorDesembolso,
       { anticipoId }
     );

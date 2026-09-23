@@ -68,6 +68,8 @@ type InboxProps = {
   onSelectedIdsChange: (ids: string[]) => void;
   onReview: (rows: AnticipoRow[]) => void;
   onIndividualAction: (row: AnticipoRow, mode: ReviewDialogMode) => void;
+  /** Whether the viewer may annul this row (see `canAnularAnticipo`). */
+  canAnular: (row: AnticipoRow) => boolean;
   onDetail: (row: AnticipoRow) => void;
   canGoBack: boolean;
   canGoNext: boolean;
@@ -156,6 +158,7 @@ function InboxRow({
   selected,
   selectionMode,
   assigneeName,
+  canAnular,
   onSelectedChange,
   onReview,
   onIndividualAction,
@@ -166,6 +169,7 @@ function InboxRow({
   selected: boolean;
   selectionMode: boolean;
   assigneeName: string;
+  canAnular: boolean;
   onSelectedChange: (selected: boolean) => void;
   onReview: () => void;
   onIndividualAction: (mode: ReviewDialogMode) => void;
@@ -328,14 +332,18 @@ function InboxRow({
                 Devolver
               </DropdownMenuItem>
             ) : null}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="text-rose-700 focus:bg-rose-50 focus:text-rose-800"
-              onClick={() => onIndividualAction("anular")}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Anular anticipo
-            </DropdownMenuItem>
+            {canAnular ? (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-rose-700 focus:bg-rose-50 focus:text-rose-800"
+                  onClick={() => onIndividualAction("anular")}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Anular anticipo
+                </DropdownMenuItem>
+              </>
+            ) : null}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -355,6 +363,7 @@ export function AnticiposInbox({
   onSelectedIdsChange,
   onReview,
   onIndividualAction,
+  canAnular,
   onDetail,
   canGoBack,
   canGoNext,
@@ -616,6 +625,7 @@ export function AnticiposInbox({
               selected={selectedIds.includes(String(row._id))}
               selectionMode={selectionMode}
               assigneeName={resolveAnticipoAssigneeName(row, usersById, owners)}
+              canAnular={canAnular(row)}
               onSelectedChange={(selected) => setSelected(String(row._id), selected)}
               onReview={() => onReview([row])}
               onIndividualAction={(mode) => onIndividualAction(row, mode)}

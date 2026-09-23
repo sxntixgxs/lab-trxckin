@@ -10,7 +10,7 @@ import {
   dedupeAnticipoNotificationRecipients,
 } from "./lib/anticiposNotifications";
 import schema from "./schema";
-import { actingAsActorArgs } from "../test-utils/convexActingAs";
+import { actingAsActorArgs, DEFAULT_ACTOR_ID_KEYS } from "../test-utils/convexActingAs";
 
 const modules = import.meta.glob("./**/*.*s");
 const SECRET = "anticipos-notifications-test-secret";
@@ -44,8 +44,14 @@ const TESORERO = {
   email: "tomas.tesoreria@example.com",
 };
 
+/** Every seeded actor may request and manage advances of the tested company. */
+const PRIVILEGIOS_ANTICIPOS = {
+  permisos: ["finance/advances", "finance/advances/request"],
+  empresas: [EMPRESA],
+};
+
 function makeTest() {
-  return actingAsActorArgs(convexTest(schema, modules));
+  return actingAsActorArgs(convexTest(schema, modules), DEFAULT_ACTOR_ID_KEYS, PRIVILEGIOS_ANTICIPOS);
 }
 
 async function scheduledNotificationFor(
@@ -65,18 +71,24 @@ async function scheduledNotificationFor(
 async function configureRoles(t: ReturnType<typeof makeTest>) {
   await t.mutation(api.financiero.anticipos.configurarRol, {
     secret: SECRET,
+    actorUserId: "admin-anticipos",
+    actorEsAdmin: true,
     empresa: EMPRESA,
     rol: "CONTABILIDAD",
     usuarios: [CONTADOR],
   });
   await t.mutation(api.financiero.anticipos.configurarRol, {
     secret: SECRET,
+    actorUserId: "admin-anticipos",
+    actorEsAdmin: true,
     empresa: EMPRESA,
     rol: "GERENCIA",
     ...GERENTE,
   });
   await t.mutation(api.financiero.anticipos.configurarRol, {
     secret: SECRET,
+    actorUserId: "admin-anticipos",
+    actorEsAdmin: true,
     empresa: EMPRESA,
     rol: "TESORERO",
     ...TESORERO,

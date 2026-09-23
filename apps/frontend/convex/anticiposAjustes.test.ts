@@ -6,7 +6,8 @@ import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
-import { actingAsActorArgs } from "../test-utils/convexActingAs";
+import { actingAsActorArgs, DEFAULT_ACTOR_ID_KEYS } from "../test-utils/convexActingAs";
+import { asUser } from "../test-utils/onboardingActors";
 
 const modules = import.meta.glob("./**/*.*s");
 const SECRET = "anticipos-ajustes-test-secret";
@@ -18,19 +19,34 @@ const TESORERO = "tesorero-ajustes";
 
 process.env.CONVEX_SERVER_SECRET = SECRET;
 
+/** Every seeded actor may request and manage advances of the tested company. */
+const PRIVILEGIOS_ANTICIPOS = {
+  permisos: ["finance/advances", "finance/advances/request"],
+  empresas: [EMPRESA],
+};
+
 function makeTest() {
-  return actingAsActorArgs(convexTest(schema, modules));
+  return actingAsActorArgs(convexTest(schema, modules), DEFAULT_ACTOR_ID_KEYS, PRIVILEGIOS_ANTICIPOS);
+}
+
+/** The advance read queries check visibility per caller: read as a full-access user. */
+async function lectorAnticipos(t: ReturnType<typeof makeTest>) {
+  return await asUser(t, { id: "lector-anticipos", hasFullAccess: true, permisos: ["*"] });
 }
 
 async function seedRoles(t: ReturnType<typeof makeTest>) {
   await t.mutation(api.financiero.anticipos.configurarRol, {
     secret: SECRET,
+    actorUserId: "admin-anticipos",
+    actorEsAdmin: true,
     empresa: EMPRESA,
     rol: "CONTABILIDAD",
     usuarios: [{ userId: CONTADOR, nombre: "Contador", email: "contador@test.com" }],
   });
   await t.mutation(api.financiero.anticipos.configurarRol, {
     secret: SECRET,
+    actorUserId: "admin-anticipos",
+    actorEsAdmin: true,
     empresa: EMPRESA,
     rol: "GERENCIA",
     userId: GERENTE,
@@ -39,6 +55,8 @@ async function seedRoles(t: ReturnType<typeof makeTest>) {
   });
   await t.mutation(api.financiero.anticipos.configurarRol, {
     secret: SECRET,
+    actorUserId: "admin-anticipos",
+    actorEsAdmin: true,
     empresa: EMPRESA,
     rol: "TESORERO",
     userId: TESORERO,
@@ -134,7 +152,7 @@ describe("anticipos ajustes auditables", () => {
     expect(result.resumen.valorLegalizable).toBe(2_350_000);
     expect(result.resumen.saldoPendiente).toBe(2_350_000);
 
-    const anticipo = await t.query(api.financiero.anticipos.obtenerAnticipoPorId, {
+    const anticipo = await (await lectorAnticipos(t)).query(api.financiero.anticipos.obtenerAnticipoPorId, {
       id: anticipoId,
     });
     expect(anticipo?.valorNumerico).toBe(2_000_000);
@@ -188,7 +206,7 @@ describe("anticipos ajustes auditables", () => {
     });
 
     expect(result.completado).toBe(false);
-    const anticipo = await t.query(api.financiero.anticipos.obtenerAnticipoPorId, {
+    const anticipo = await (await lectorAnticipos(t)).query(api.financiero.anticipos.obtenerAnticipoPorId, {
       id: anticipoId,
     });
     expect(anticipo?.tipoBolsa).toBe("peajes");
@@ -209,7 +227,7 @@ describe("anticipos ajustes auditables", () => {
     });
 
     expect(result.completado).toBe(false);
-    const anticipo = await t.query(api.financiero.anticipos.obtenerAnticipoPorId, {
+    const anticipo = await (await lectorAnticipos(t)).query(api.financiero.anticipos.obtenerAnticipoPorId, {
       id: anticipoId,
     });
     expect(anticipo?.valorNumerico).toBe(25_000);
@@ -235,7 +253,7 @@ describe("anticipos ajustes auditables", () => {
     });
 
     expect(result.completado).toBe(true);
-    const anticipo = await t.query(api.financiero.anticipos.obtenerAnticipoPorId, {
+    const anticipo = await (await lectorAnticipos(t)).query(api.financiero.anticipos.obtenerAnticipoPorId, {
       id: anticipoId,
     });
     expect(anticipo?.faseActual).toBe("COMPLETADO");
@@ -260,7 +278,7 @@ describe("anticipos ajustes auditables", () => {
     });
 
     expect(result.completado).toBe(false);
-    const anticipo = await t.query(api.financiero.anticipos.obtenerAnticipoPorId, {
+    const anticipo = await (await lectorAnticipos(t)).query(api.financiero.anticipos.obtenerAnticipoPorId, {
       id: anticipoId,
     });
     expect(anticipo?.valorLegalizableActual).toBe(22_000);
@@ -395,7 +413,7 @@ describe("anticipos ajustes auditables", () => {
     });
 
     expect(reversed.reabierto).toBe(true);
-    const anticipo = await t.query(api.financiero.anticipos.obtenerAnticipoPorId, {
+    const anticipo = await (await lectorAnticipos(t)).query(api.financiero.anticipos.obtenerAnticipoPorId, {
       id: anticipoId,
     });
     expect(anticipo?.valorLegalizableActual).toBe(25_000);
@@ -474,7 +492,7 @@ describe("anticipos ajustes auditables", () => {
     });
 
     expect(result.completado).toBe(true);
-    const anticipo = await t.query(api.financiero.anticipos.obtenerAnticipoPorId, {
+    const anticipo = await (await lectorAnticipos(t)).query(api.financiero.anticipos.obtenerAnticipoPorId, {
       id: anticipoId,
     });
     expect(anticipo?.valorLegalizableActual).toBe(4_354_179.5);
@@ -507,7 +525,7 @@ describe("anticipos ajustes auditables", () => {
       valorEsperado: 20_000,
     });
 
-    const anticipo = await t.query(api.financiero.anticipos.obtenerAnticipoPorId, {
+    const anticipo = await (await lectorAnticipos(t)).query(api.financiero.anticipos.obtenerAnticipoPorId, {
       id: anticipoId,
     });
     expect(anticipo?.valorLegalizableActual).toBe(20_000.25);
@@ -594,7 +612,7 @@ describe("anticipos ajustes auditables", () => {
     });
 
     expect(reversed.reabierto).toBe(true);
-    const anticipo = await t.query(api.financiero.anticipos.obtenerAnticipoPorId, {
+    const anticipo = await (await lectorAnticipos(t)).query(api.financiero.anticipos.obtenerAnticipoPorId, {
       id: anticipoId,
     });
     expect(anticipo?.valorLegalizableActual).toBe(100);

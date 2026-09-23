@@ -6,7 +6,7 @@ import { describe, expect, test } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import schema from "./schema";
-import { actingAsActorArgs } from "../test-utils/convexActingAs";
+import { actingAsActorArgs, DEFAULT_ACTOR_ID_KEYS } from "../test-utils/convexActingAs";
 
 const modules = import.meta.glob("./**/*.*s");
 const SECRET = "anticipos-dashboard-test-secret";
@@ -19,8 +19,14 @@ const RESPONSABLE = "responsable-dashboard";
 
 process.env.CONVEX_SERVER_SECRET = SECRET;
 
+/** Every seeded actor may request and manage advances of the tested company. */
+const PRIVILEGIOS_ANTICIPOS = {
+  permisos: ["finance/advances", "finance/advances/request"],
+  empresas: [EMPRESA],
+};
+
 function makeTest() {
-  return actingAsActorArgs(convexTest(schema, modules));
+  return actingAsActorArgs(convexTest(schema, modules), DEFAULT_ACTOR_ID_KEYS, PRIVILEGIOS_ANTICIPOS);
 }
 
 async function seedRoles(t: ReturnType<typeof makeTest>) {

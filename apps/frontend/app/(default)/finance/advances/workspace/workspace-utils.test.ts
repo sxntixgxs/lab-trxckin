@@ -4,6 +4,7 @@ import type { Id } from "@/convex/_generated/dataModel";
 import type { AnticipoRoleConfig, AnticipoRow, UsuarioInfo } from "../dashboard/types";
 import {
   canAccessAnticiposSettings,
+  canAnularAnticipo,
   getInboxQuickFilterPatch,
   getPendingLegalizationBalance,
   isInboxQuickFilterActive,
@@ -142,5 +143,20 @@ describe("anticipos workspace utilities", () => {
         roles,
       })
     ).toBe(true);
+  });
+
+  test("offers annulment of a disbursed advance only to Gerencia, Tesorería or admins", () => {
+    const roles = [
+      { rol: "GERENCIA", empresa: 1, userId: "gerente-1" },
+      { rol: "TESORERO", userId: "tesorero-global" },
+    ] as AnticipoRoleConfig[];
+    const enRevision = { faseActual: "III_REVISION_CONTABILIDAD", empresa: 1 } as AnticipoRow;
+    const desembolsado = { faseActual: "V_PENDIENTE_LEGALIZACION", empresa_id: 1 } as AnticipoRow;
+
+    expect(canAnularAnticipo({ row: enRevision, userId: "solicitante", roles })).toBe(true);
+    expect(canAnularAnticipo({ row: desembolsado, userId: "solicitante", roles })).toBe(false);
+    expect(canAnularAnticipo({ row: desembolsado, userId: "gerente-1", roles })).toBe(true);
+    expect(canAnularAnticipo({ row: desembolsado, userId: "tesorero-global", roles })).toBe(true);
+    expect(canAnularAnticipo({ row: desembolsado, userId: "otro", roleId: 1, roles })).toBe(true);
   });
 });

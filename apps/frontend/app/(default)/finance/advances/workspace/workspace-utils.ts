@@ -126,3 +126,31 @@ export function canAccessAnticiposSettings({
       (role.empresa === empresa || role.empresa === undefined)
   );
 }
+
+/**
+ * Mirrors `anularAnticipo`: before the disbursement the owner of the inbox row annuls; a
+ * disbursed advance (pending legalization) only by Gerencia or Tesorería of its company
+ * (company config first, else the global one) or an administrator.
+ */
+export function canAnularAnticipo({
+  row,
+  userId,
+  roleId,
+  roles,
+}: {
+  row: Pick<AnticipoRow, "faseActual" | "empresa" | "empresa_id">;
+  userId?: string;
+  roleId?: number;
+  roles?: AnticipoRoleConfig[];
+}) {
+  if (row.faseActual !== "V_PENDIENTE_LEGALIZACION") return true;
+  if (roleId === 1) return true;
+  if (!userId || !roles) return false;
+  const empresa = row.empresa_id ?? row.empresa ?? 1;
+  return (["GERENCIA", "TESORERO"] as const).some((rol) => {
+    const config =
+      roles.find((role) => role.rol === rol && role.empresa === empresa) ??
+      roles.find((role) => role.rol === rol && role.empresa === undefined);
+    return config?.userId === userId;
+  });
+}

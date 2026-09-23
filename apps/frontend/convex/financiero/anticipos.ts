@@ -5,7 +5,20 @@ import { query, } from "../_generated/server";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import type { Doc, Id } from "../_generated/dataModel";
 import { requireIdentity, requireServerSecret } from "../lib/auth";
-import { requireActor as requireBillingActor, requireAdmin } from "../lib/billingAuth";
+import {
+  actorPuedeVerEmpresa,
+  actorTieneAlgunPermiso,
+  actorTienePermiso,
+  requireActor as requireBillingActor,
+  requireAdmin,
+  requirePermisoEmpresa,
+} from "../lib/billingAuth";
+import { RUTAS_SISTEMA } from "../../lib/rutas-sistema";
+import { getCompanyVisibility } from "../lib/anticiposVisibility";
+import { refrescarProyeccionFactura } from "../lib/facturacionDashboardProjection";
+import { subtractMoneyAmounts } from "../lib/money";
+import { syncValorAPagarFactura } from "../lib/valorAPagar";
+import { getSaldoLegalizadoAnticipo } from "../lib/valorLegalizableAnticipo";
 import { mutationConActorIds } from "../lib/serverActor";
 import { getValorContableAnticipo } from "../lib/valorContable";
 import { refreshAnticipoDashboardProjection } from "../lib/anticiposDashboardProjection";
@@ -428,6 +441,161 @@ function assertFaseActual(actual: FaseActualAnticipo, esperada: FaseAnticipo) {
   }
 }
 
+/** Authorizes a caller configured for one of `roles` in the advance's company (or full access). */
+async function requireRolAnticipo(
+  ctx: MutationCtx,
+  anticipo: Doc<"anticipos">,
+  roles: RolAnticipo[],
+  mensaje: string
+): Promise<string> {
+  const actor = await requireBillingActor(ctx);
+  if (actor.hasFullAccess) return actor.usuarioId;
+  for (const rol of roles) {
+    const config = await obtenerRolConfig(ctx, obtenerEmpresaId(anticipo), rol);
+    if (config && rolConfigIncluyeUsuario(config, actor.usuarioId)) return actor.usuarioId;
+  }
+  throw new Error(mensaje);
+}
+
+const PERMISOS_ANTICIPOS = [
+  RUTAS_SISTEMA.FINANZAS_ANTICIPOS_DASHBOARD,
+  RUTAS_SISTEMA.FINANZAS_ANTICIPOS_SOLICITAR,
+];
+
+/**
+ * Read access to one advance, mirroring the advances lists (lib/anticiposVisibility.ts):
+ * its requester and legalization responsible; with the advances permission, also the
+ * company's role holders (Gerencia, Tesorería, Contabilidad) and the current phase owner.
+ * Full-access users can act on any phase, so they can read any advance.
+ */
+async function actorPuedeVerAnticipo(
+  ctx: QueryCtx,
+  anticipo: Doc<"anticipos">
+): Promise<boolean> {
+  const actor = await requireBillingActor(ctx);
+  if (actor.hasFullAccess) return true;
+  if (!actorTieneAlgunPermiso(actor, PERMISOS_ANTICIPOS)) return false;
+  const empresa = obtenerEmpresaId(anticipo);
+  if (!actorPuedeVerEmpresa(actor, empresa)) return false;
+
+  const userId = actor.usuarioId;
+  if (anticipo.createdById === userId || anticipo.responsableUserId === userId) return true;
+  if (!actorTienePermiso(actor, RUTAS_SISTEMA.FINANZAS_ANTICIPOS_DASHBOARD)) return false;
+  if ((await getCompanyVisibility(ctx, empresa, userId)).canSeeAll) return true;
+
+  const item = await ctx.db
+    .query("anticiposDashboardItems")
+    .withIndex("by_anticipoId", (q) => q.eq("anticipoId", anticipo._id))
+    .first();
+  if (item && (item.asignadoA === userId || item.ownerUserIds?.includes(userId))) return true;
+
+  const fases = await ctx.db
+    .query("anticiposFases")
+    .withIndex("by_anticipoId", (q) => q.eq("anticipoId", anticipo._id))
+    .collect();
+  return fases.some(
+    (fase) =>
+      (fase.estado === "EN_PROGRESO" || fase.estado === "PENDIENTE") && fase.asignadoA === userId
+  );
+}
+
+/** Review phases, the only ones the UI can reject from; after Tesorería nothing is rejected. */
+const FASES_RECHAZABLES: FaseAnticipo[] = [
+  "II_APROBACION_JEFE_DIRECTO",
+  "III_REVISION_CONTABILIDAD",
+  "IV_APROBACION_GERENCIA",
+];
+
+/** Before the disbursement the owner of the current phase may annul the request. */
+const FASES_ANULABLES_ANTES_DESEMBOLSO: FaseAnticipo[] = [
+  "II_APROBACION_JEFE_DIRECTO",
+  "III_REVISION_CONTABILIDAD",
+  "IV_APROBACION_GERENCIA",
+  "IV_DESEMBOLSO_TESORERIA",
+];
+
+const ESTADOS_FACTURA_CERRADA = new Set([
+  "pagada",
+  "legalizada",
+  "cerrada",
+  "rechazada",
+  "rechazada_dian",
+  "nota_credito_cerrada",
+]);
+
+/**
+ * Voids the invoice crosses of a disbursed advance that is being annulled and recomputes
+ * what each invoice still has to pay. Refuses when a crossed invoice already closed its
+ * workflow (paid / legalized): that accounting is not rewritten from here.
+ */
+async function anularCrucesFacturacionDeAnticipo(
+  ctx: MutationCtx,
+  anticipo: Doc<"anticipos">,
+  now: number
+) {
+  const cruces = await ctx.db
+    .query("facturacionAnticipoLegalizaciones")
+    .withIndex("by_anticipoId_estado", (q) =>
+      q.eq("anticipoId", anticipo._id).eq("estado", "activa")
+    )
+    .collect();
+  const facturaIds = [...new Set(cruces.map((cruce) => cruce.facturaId))];
+
+  for (const facturaId of facturaIds) {
+    const tarea = await ctx.db
+      .query("facturacionTareas")
+      .withIndex("by_facturaId", (q) => q.eq("facturaId", facturaId))
+      .first();
+    if (tarea && ESTADOS_FACTURA_CERRADA.has(tarea.estado)) {
+      const factura = await ctx.db.get("facturacionFacturas", facturaId);
+      throw new Error(
+        `No se puede anular: el anticipo está cruzado con la factura ${
+          factura?.numeroFactura ?? String(facturaId)
+        }, que ya cerró su flujo.`
+      );
+    }
+  }
+
+  let valorAnulado = 0;
+  for (const cruce of cruces) {
+    valorAnulado += cruce.valorAplicado;
+    await ctx.db.patch("facturacionAnticipoLegalizaciones", cruce._id, {
+      estado: "anulada",
+      actualizadoEn: now,
+    });
+  }
+  for (const facturaId of facturaIds) {
+    await syncValorAPagarFactura(ctx, facturaId, now);
+    await refrescarProyeccionFactura(ctx, facturaId, now);
+  }
+  return { facturaIds: new Set(facturaIds.map(String)), valorAnulado };
+}
+
+const VENTANA_DESCARTE_SUBIDA_MS = 15 * 60 * 1000;
+
+async function esAdjuntoDesembolsoDeAnticipo(
+  ctx: QueryCtx | MutationCtx,
+  anticipoId: Id<"anticipos">,
+  storageId: Id<"_storage">
+) {
+  const referencia = await ctx.db
+    .query("anticiposDesembolsoAdjuntos")
+    .withIndex("by_anticipoId_storageId", (q) =>
+      q.eq("anticipoId", anticipoId).eq("storageId", storageId)
+    )
+    .first();
+  if (referencia) return true;
+  const fasesTesoreria = await ctx.db
+    .query("anticiposFases")
+    .withIndex("by_anticipoId_fase", (q) =>
+      q.eq("anticipoId", anticipoId).eq("fase", "IV_DESEMBOLSO_TESORERIA")
+    )
+    .collect();
+  return fasesTesoreria.some((fase) =>
+    fase.adjuntos?.some((adjunto) => adjunto.storageId === storageId)
+  );
+}
+
 function assertMotivoRechazo(
   decision: "APROBADO" | "RECHAZADO",
   motivo?: string
@@ -793,9 +961,38 @@ async function rechazarDesdeFase(
   }
 }
 
+/**
+ * Same rule as the advances settings screen (`canAccessAnticiposSettings`): administrators,
+ * or the GERENCIA configured for the company (or the global GERENCIA).
+ */
+async function assertPuedeConfigurarRolesAnticipos(
+  ctx: MutationCtx,
+  empresa: number | undefined,
+  actorUserId: string,
+  actorEsAdmin: boolean
+) {
+  if (actorEsAdmin) return;
+  const gerencias = await ctx.db
+    .query("anticiposRolesConfig")
+    .withIndex("by_rol", (q) => q.eq("rol", "GERENCIA"))
+    .collect();
+  const esGerencia = gerencias.some(
+    (config) =>
+      Boolean(actorUserId) &&
+      config.userId === actorUserId &&
+      (config.empresa === undefined || config.empresa === empresa)
+  );
+  if (!esGerencia) {
+    throw new Error("No autorizado: solo un administrador o la Gerencia configura los roles.");
+  }
+}
+
 export const configurarRol = mutation({
   args: {
     secret: v.string(),
+    // Caller resolved from the session by the Next route (never from the browser).
+    actorUserId: v.string(),
+    actorEsAdmin: v.boolean(),
     empresa: v.optional(v.number()),
     rol: rolAnticipoArg,
     userId: v.optional(v.string()),
@@ -805,6 +1002,12 @@ export const configurarRol = mutation({
   },
   handler: async (ctx, args) => {
     requireServerSecret(args.secret);
+    await assertPuedeConfigurarRolesAnticipos(
+      ctx,
+      args.empresa,
+      args.actorUserId,
+      args.actorEsAdmin
+    );
 
     const usuarios =
       args.rol === "CONTABILIDAD"
@@ -883,14 +1086,22 @@ export const configurarRol = mutation({
 export const obtenerRolesConfig = query({
   args: { empresa: v.optional(v.number()) },
   handler: async (ctx, args) => {
+    // Advances users only, limited to their companies (the workspace reads it for everyone,
+    // so this returns nothing rather than throwing).
+    const actor = await requireBillingActor(ctx);
+    if (!actorTieneAlgunPermiso(actor, PERMISOS_ANTICIPOS)) return [];
     if (args.empresa !== undefined) {
+      if (!actorPuedeVerEmpresa(actor, args.empresa)) return [];
       return await ctx.db
         .query("anticiposRolesConfig")
         .withIndex("by_empresa", (q) => q.eq("empresa", args.empresa!))
         .collect();
     }
 
-    return await ctx.db.query("anticiposRolesConfig").collect();
+    const configs = await ctx.db.query("anticiposRolesConfig").collect();
+    return configs.filter(
+      (config) => config.empresa === undefined || actorPuedeVerEmpresa(actor, config.empresa)
+    );
   },
 });
 
@@ -1039,6 +1250,11 @@ export const crearAnticipo = mutation({
   handler: async (ctx, args) => {
     if (!args.createdById.trim())
       throw new Error("Debe iniciar sesión para crear un anticipo.");
+    await requirePermisoEmpresa(
+      ctx,
+      RUTAS_SISTEMA.FINANZAS_ANTICIPOS_SOLICITAR,
+      normalizeEmpresaBolsa(args.empresa_id ?? args.empresa)
+    );
     if (args.valorNumerico <= 0)
       throw new Error("El valor del anticipo debe ser mayor a cero.");
     if (args.formaPago === "TRANSFERENCIA BANCARIA") {
@@ -1488,7 +1704,7 @@ export const obtenerAdjuntosBorradorDesembolso = query({
   args: { anticipoId: v.id("anticipos") },
   handler: async (ctx, args) => {
     const anticipo = await ctx.db.get("anticipos", args.anticipoId);
-    if (!anticipo) return [];
+    if (!anticipo || !(await actorPuedeVerAnticipo(ctx, anticipo))) return [];
     if (anticipo.faseActual !== "IV_DESEMBOLSO_TESORERIA") return [];
 
     const faseActiva = await obtenerFaseTesoreriaActiva(ctx, args.anticipoId);
@@ -1517,37 +1733,41 @@ export const guardarAdjuntoBorradorDesembolso = mutation({
       throw new Error("El nombre del archivo es obligatorio.");
     }
 
+    const anticipo = await ctx.db.get("anticipos", args.anticipoId);
+    if (!anticipo) throw new Error("Anticipo no encontrado.");
+    // Tesorería of this advance (or full access). The check reads the latest Tesorería
+    // phase row, so it still holds when the advance left Tesorería during the upload.
+    await requireActorEnFaseAnticipo(ctx, anticipo, "IV_DESEMBOLSO_TESORERIA");
+
     const metadata = await ctx.db.system.get("_storage", args.storageId);
     if (!metadata) {
       throw new Error("El archivo no existe en Storage.");
     }
 
-    const anticipo = await ctx.db.get("anticipos", args.anticipoId);
-    if (!anticipo) {
-      await ctx.storage.delete(args.storageId);
-      return {
-        discarded: true as const,
-        reason: "Anticipo no encontrado; el archivo subido se descartó.",
-      };
-    }
+    // A late upload is discarded, but only a file uploaded moments ago that no attachment
+    // of this advance references: an older storage id may belong to another record.
+    const descartar = async (reason: string) => {
+      const subidaReciente = Date.now() - metadata._creationTime <= VENTANA_DESCARTE_SUBIDA_MS;
+      if (
+        subidaReciente &&
+        !(await esAdjuntoDesembolsoDeAnticipo(ctx, args.anticipoId, args.storageId))
+      ) {
+        await ctx.storage.delete(args.storageId);
+      }
+      return { discarded: true as const, reason };
+    };
 
     if (anticipo.faseActual !== "IV_DESEMBOLSO_TESORERIA") {
-      await ctx.storage.delete(args.storageId);
-      return {
-        discarded: true as const,
-        reason:
-          "El anticipo ya no está en Tesorería; el archivo subido se descartó.",
-      };
+      return await descartar(
+        "El anticipo ya no está en Tesorería; el archivo subido se descartó."
+      );
     }
 
     const faseActiva = await obtenerFaseTesoreriaActiva(ctx, args.anticipoId);
     if (!faseActiva) {
-      await ctx.storage.delete(args.storageId);
-      return {
-        discarded: true as const,
-        reason:
-          "No hay una fase activa de Tesorería; el archivo subido se descartó.",
-      };
+      return await descartar(
+        "No hay una fase activa de Tesorería; el archivo subido se descartó."
+      );
     }
 
     const existentesEnFase = await listarAdjuntosDesembolsoPorFase(
@@ -1597,6 +1817,7 @@ export const eliminarAdjuntoBorradorDesembolso = mutation({
   handler: async (ctx, args) => {
     const anticipo = await ctx.db.get("anticipos", args.anticipoId);
     if (!anticipo) throw new Error("Anticipo no encontrado.");
+    await requireActorEnFaseAnticipo(ctx, anticipo, "IV_DESEMBOLSO_TESORERIA");
     if (anticipo.faseActual !== "IV_DESEMBOLSO_TESORERIA") {
       throw new Error(
         "Sólo se pueden eliminar soportes mientras el anticipo esté en Tesorería."
@@ -1608,6 +1829,10 @@ export const eliminarAdjuntoBorradorDesembolso = mutation({
       throw new Error(
         "Sólo se pueden eliminar soportes mientras el anticipo esté en Tesorería."
       );
+    }
+    // Only this advance's disbursement supports can be removed (the helper deletes the file).
+    if (!(await esAdjuntoDesembolsoDeAnticipo(ctx, args.anticipoId, args.storageId))) {
+      throw new Error("El soporte no pertenece al desembolso de este anticipo.");
     }
 
     await eliminarAdjuntoDesembolsoDeAnticipo(
@@ -1639,6 +1864,7 @@ export const devolverAnticipo = mutation({
     }
 
     const faseActual = anticipo.faseActual as FaseAnticipo;
+    await requireActorEnFaseAnticipo(ctx, anticipo, faseActual);
     const allowedTargets: Partial<Record<FaseAnticipo, FaseAnticipo[]>> = {
       III_REVISION_CONTABILIDAD:
         anticipo.responsableOrigen === "jefe_directo" ||
@@ -1707,6 +1933,12 @@ export const rechazarAnticipo = mutation({
     if (!FASES_ANTICIPO.includes(faseActual as FaseAnticipo)) {
       throw new Error("El anticipo ya no se encuentra en una fase rechazable.");
     }
+    if (!FASES_RECHAZABLES.includes(faseActual as FaseAnticipo)) {
+      throw new Error(
+        "Solo se puede rechazar un anticipo en revisión, antes de Tesorería. Si ya se desembolsó, debe anularse o legalizarse."
+      );
+    }
+    await requireActorEnFaseAnticipo(ctx, anticipo, faseActual as FaseAnticipo);
 
     const now = Date.now();
     await rechazarDesdeFase(
@@ -1738,20 +1970,40 @@ export const anularAnticipo = mutation({
       throw new Error("Debe registrar un motivo de anulación.");
     if (anticipo.faseActual === "ANULADO") return args.anticipoId;
 
-    const now = Date.now();
-    if (FASES_ANTICIPO.includes(anticipo.faseActual as FaseAnticipo)) {
-      await cerrarFase(
+    // Before the disbursement the owner of the current phase may annul. A disbursed advance
+    // (money already paid out) needs Gerencia or Tesorería, and its invoice crosses are
+    // voided. Completed or rejected advances are closed.
+    const fase = anticipo.faseActual as FaseAnticipo;
+    if (FASES_ANULABLES_ANTES_DESEMBOLSO.includes(fase)) {
+      await requireActorEnFaseAnticipo(ctx, anticipo, fase);
+    } else if (fase === "V_PENDIENTE_LEGALIZACION") {
+      await requireRolAnticipo(
         ctx,
-        args.anticipoId,
-        anticipo.faseActual as FaseAnticipo,
-        "ANULADO",
-        args.anuladoPorUserId,
-        now,
-        args.motivo,
-        args.adjuntos,
-        { motivoAnulacion: args.motivo }
+        anticipo,
+        ["GERENCIA", "TESORERO"],
+        "Solo Gerencia o Tesorería pueden anular un anticipo ya desembolsado."
       );
+    } else {
+      throw new Error("El anticipo ya cerró su flujo y no se puede anular.");
     }
+
+    const now = Date.now();
+    const cruces =
+      fase === "V_PENDIENTE_LEGALIZACION"
+        ? await anularCrucesFacturacionDeAnticipo(ctx, anticipo, now)
+        : null;
+
+    await cerrarFase(
+      ctx,
+      args.anticipoId,
+      fase,
+      "ANULADO",
+      args.anuladoPorUserId,
+      now,
+      args.motivo,
+      args.adjuntos,
+      { motivoAnulacion: args.motivo }
+    );
 
     await ctx.db.patch("anticipos", args.anticipoId, {
       faseActual: "ANULADO",
@@ -1760,6 +2012,17 @@ export const anularAnticipo = mutation({
         anuladoPorUserId: args.anuladoPorUserId,
         fechaAnulacion: now,
       },
+      ...(cruces && cruces.facturaIds.size > 0
+        ? {
+            saldoLegalizado: Math.max(
+              0,
+              subtractMoneyAmounts(getSaldoLegalizadoAnticipo(anticipo), cruces.valorAnulado)
+            ),
+            legalizacion: (anticipo.legalizacion ?? []).filter(
+              (item) => !cruces.facturaIds.has(String(item.facturaId))
+            ),
+          }
+        : {}),
       updatedAt: now,
     });
 
@@ -1783,7 +2046,7 @@ export const obtenerAnticipoPorId = query({
   args: { id: v.id("anticipos") },
   handler: async (ctx, args) => {
     const anticipo = await ctx.db.get("anticipos", args.id);
-    if (!anticipo) return null;
+    if (!anticipo || !(await actorPuedeVerAnticipo(ctx, anticipo))) return null;
 
     const fases = await ctx.db
       .query("anticiposFases")
@@ -1824,6 +2087,9 @@ export const obtenerAnticipoPorId = query({
 export const obtenerFasesDeAnticipo = query({
   args: { anticipoId: v.id("anticipos") },
   handler: async (ctx, args) => {
+    const anticipo = await ctx.db.get("anticipos", args.anticipoId);
+    if (!anticipo || !(await actorPuedeVerAnticipo(ctx, anticipo))) return [];
+
     const fases = await ctx.db
       .query("anticiposFases")
       .withIndex("by_anticipoId", (q) => q.eq("anticipoId", args.anticipoId))

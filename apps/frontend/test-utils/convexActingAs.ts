@@ -8,7 +8,7 @@
  * on test-only packages.
  */
 
-const DEFAULT_ACTOR_ID_KEYS = [
+export const DEFAULT_ACTOR_ID_KEYS = [
   "actorUserId",
   "createdById",
   "jefeDirectoUserId",
@@ -44,9 +44,16 @@ type TestConvexLike = {
   withIdentity: (identity: Record<string, unknown>) => unknown;
 };
 
+/**
+ * Privileges given to every user the proxy seeds (route permissions, companies). Existing
+ * rows keep privileges seeded elsewhere (e.g. with `asUser`) unless these are given.
+ */
+export type ActingPrivilegios = { permisos?: string[]; empresas?: number[] };
+
 export function actingAsActorArgs<T extends object>(
   t: T,
   actorIdKeys: readonly string[] = DEFAULT_ACTOR_ID_KEYS,
+  privilegios: ActingPrivilegios = {},
 ): T {
   const client = t as unknown as TestConvexLike;
   const seeded = new Set<string>();
@@ -72,6 +79,8 @@ export function actingAsActorArgs<T extends object>(
           email,
           name,
           nestUserId: actorUserId,
+          ...(privilegios.permisos ? { permisos: privilegios.permisos } : {}),
+          ...(privilegios.empresas ? { empresas: privilegios.empresas } : {}),
           role: isAdmin ? "admin" : "member",
           hasFullAccess: isAdmin,
         };

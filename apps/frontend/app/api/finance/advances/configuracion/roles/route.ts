@@ -31,8 +31,12 @@ export async function POST(request: NextRequest) {
     const empresas = resolveEmpresasPermitidas(auth.session, [body.empresa]);
     if ("error" in empresas) return empresas.error;
 
+    // Like the settings screen, only administrators or the company's GERENCIA may change
+    // the roles; Convex checks the GERENCIA config with this session-derived actor.
     const configId = await convexServer.mutation(api.financiero.anticipos.configurarRol, {
       secret: getConvexServerSecret(),
+      actorUserId: auth.user.id,
+      actorEsAdmin: auth.user.hasFullAccess === true || auth.user.rol?.id === 1,
       empresa: body.empresa,
       rol: body.rol,
       userId: body.userId,
@@ -45,7 +49,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Error al guardar configuración";
     console.error("POST finanzas/anticipos/configuracion/roles", error);
-    const status = message === "No autorizado" ? 403 : 500;
+    const status = message.includes("No autorizado") ? 403 : 500;
     return NextResponse.json({ error: message }, { status });
   }
 }

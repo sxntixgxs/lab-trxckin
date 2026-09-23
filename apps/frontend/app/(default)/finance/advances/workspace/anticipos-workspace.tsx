@@ -49,7 +49,7 @@ import type {
   AnticiposScope,
   AnticiposWorkspaceView,
 } from "./types";
-import { canAccessAnticiposSettings } from "./workspace-utils";
+import { canAccessAnticiposSettings, canAnularAnticipo } from "./workspace-utils";
 
 const DEFAULT_FILTERS: AnticiposFilters = {
   search: "",
@@ -488,6 +488,14 @@ export function AnticiposWorkspace({
             onSelectedIdsChange={setSelectedIds}
             onReview={openReview}
             onIndividualAction={openIndividualAction}
+            canAnular={(row) =>
+              canAnularAnticipo({
+                row,
+                userId: session?.user?.id,
+                roleId: session?.user?.id_rol,
+                roles: rolesConfig,
+              })
+            }
             onDetail={setDetail}
             canGoBack={cursorHistory.length > 0}
             canGoNext={!itemsQuery.data?.isDone}
