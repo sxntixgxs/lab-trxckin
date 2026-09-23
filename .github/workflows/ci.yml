@@ -9,8 +9,9 @@ jobs:
   check:
     runs-on: ubuntu-latest
     env:
-      # Placeholder so `prisma generate` can load prisma.config.ts; no DB is contacted.
+      # Placeholders so `prisma generate` can load each prisma.config.ts; no DB is contacted.
       DATABASE_URL: postgresql://user:pass@localhost:5432/ci
+      ERP_SIM_DATABASE_URL: postgresql://user:pass@localhost:5432/ci_erp_sim
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -20,6 +21,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter backend prisma:generate
+      - run: pnpm --filter erp-simulator prisma:generate
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm test

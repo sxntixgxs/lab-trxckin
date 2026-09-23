@@ -5,7 +5,7 @@
   "license": "MIT",
   "packageManager": "pnpm@10.15.0",
   "scripts": {
-    "dev": "concurrently --names \"BACKEND,FRONTEND,CONVEX\" --prefix-colors \"red,green,blue\" \"pnpm --filter backend start:dev\" \"pnpm --filter frontend dev\" \"pnpm --filter frontend convex\"",
+    "dev": "concurrently --names \"BACKEND,FRONTEND,CONVEX,ERP\" --prefix-colors \"red,green,blue,magenta\" \"pnpm --filter backend start:dev\" \"pnpm --filter frontend dev\" \"pnpm --filter frontend convex\" \"pnpm --filter erp-simulator start:dev\"",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",

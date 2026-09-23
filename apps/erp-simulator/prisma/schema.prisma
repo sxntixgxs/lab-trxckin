@@ -1,0 +1,117 @@
+// Fake SIESA database. Table and column names follow SIESA's schema (t200_mm_terceros,
+// f200_*, ...) so the rows returned by the standard queries look like the real ones.
+// Contact fields (SIESA's t015) are kept inline on each branch row to keep the model small.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Companies (t010). `id_instancia` is SIESA Cloud's `idCompania` (one connection/tenant);
+/// `f010_id` is the company inside that instance (`f200_id_cia` in the other tables).
+model Compania {
+  id_instancia      String
+  f010_id           Int
+  f010_razon_social String
+  f010_nit          String
+  f010_ind_estado   Int       @default(1)
+  terceros          Tercero[]
+
+  @@id([id_instancia, f010_id])
+  @@map("t010_mm_companias")
+}
+
+/// Third parties (t200), one per company. The indicator flags say whether it is a customer
+/// and/or a supplier; branches live in t201 (customers) and t202 (suppliers).
+model Tercero {
+  f200_rowid               Int         @id @default(autoincrement())
+  id_instancia             String
+  f200_id_cia              Int
+  /// Tercero code inside the company (usually the document number).
+  f200_id                  String
+  /// Document number as stored by the ERP (may be zero-padded).
+  f200_nit                 String
+  f200_dv_nit              String?
+  /// N = NIT, C = cédula de ciudadanía, E = cédula de extranjería, P = pasaporte.
+  f200_id_tipo_ident       String
+  /// 1 = persona natural, 2 = persona jurídica.
+  f200_ind_tipo_tercero    Int
+  f200_razon_social        String
+  f200_nombres             String?
+  f200_apellido1           String?
+  f200_apellido2           String?
+  f200_ind_cliente         Int         @default(0)
+  f200_ind_proveedor       Int         @default(0)
+  /// 1 = activo, 0 = inactivo.
+  f200_ind_estado          Int         @default(1)
+  f200_id_ciiu             String?
+  f200_fecha_creacion      DateTime    @default(now())
+  f200_fecha_actualizacion DateTime    @updatedAt
+  compania                 Compania    @relation(fields: [id_instancia, f200_id_cia], references: [id_instancia, f010_id])
+  clientes                 Cliente[]
+  proveedores              Proveedor[]
+
+  @@unique([id_instancia, f200_id_cia, f200_nit])
+  @@unique([id_instancia, f200_id_cia, f200_id])
+  @@map("t200_mm_terceros")
+}
+
+/// Customer branches (t201).
+model Cliente {
+  f201_rowid_tercero        Int
+  f201_id_sucursal          String
+  f201_descripcion_sucursal String
+  f201_ind_estado_activo    Int     @default(1)
+  /// Payment term code: CON, ANT, C15, C30, C60, C90, C120.
+  f201_id_cond_pago         String?
+  f015_email                String?
+  f015_telefono             String?
+  f015_direccion1           String?
+  f015_ciudad               String?
+  f015_departamento         String?
+  tercero                   Tercero @relation(fields: [f201_rowid_tercero], references: [f200_rowid], onDelete: Cascade)
+
+  @@id([f201_rowid_tercero, f201_id_sucursal])
+  @@map("t201_mm_clientes")
+}
+
+/// Supplier branches (t202).
+model Proveedor {
+  f202_rowid_tercero        Int
+  f202_id_sucursal          String
+  f202_descripcion_sucursal String
+  f202_ind_estado           Int     @default(1)
+  /// Payment term code: CON, ANT, C15, C30, C60, C90, C120.
+  f202_id_cond_pago         String?
+  /// 001 = bienes, 002 = servicios.
+  f202_id_tipo_prov         String?
+  f015_email                String?
+  f015_telefono             String?
+  f015_direccion1           String?
+  f015_ciudad               String?
+  f015_departamento         String?
+  tercero                   Tercero @relation(fields: [f202_rowid_tercero], references: [f200_rowid], onDelete: Cascade)
+
+  @@id([f202_rowid_tercero, f202_id_sucursal])
+  @@map("t202_mm_proveedores")
+}
+
+/// Log of every `conectoresimportar` call, useful to see what the app sent.
+model Importacion {
+  id               Int      @id @default(autoincrement())
+  id_instancia     String
+  id_documento     String?
+  nombre_documento String?
+  payload          Json
+  exitosa          Boolean
+  resultado        Json
+  fecha            DateTime @default(now())
+
+  @@index([fecha])
+  @@map("importaciones")
+}

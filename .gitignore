@@ -37,6 +37,9 @@ yarn-error.log*
 # backend build output
 apps/backend/dist
 
+# ERP simulator: generated Prisma client (its own output, see apps/erp-simulator/prisma/schema.prisma)
+apps/erp-simulator/src/generated/
+
 # local agent / editor tooling
 .claude/
 .agents/
