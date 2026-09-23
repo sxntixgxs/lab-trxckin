@@ -348,4 +348,263 @@ describe("adjuntos de factura", () => {
     await lider.mutation(api.facturacionAdjuntos.eliminar, { adjuntoId });
     expect(await t.run(async (ctx) => ctx.db.get("facturacionAdjuntos", adjuntoId))).toBeNull();
   });
+
+  test("los adjuntos se listan a participantes y a quien ve facturas de la empresa", async () => {
+    const t = makeTest();
+    const { facturaId, asignacionId } = await seedFactura(t, { numero: "FAC-ADJ-3", empresa: 1 });
+    const lider = await asUser(t, LIDER);
+    await lider.mutation(api.facturacionAdjuntos.crear, {
+      facturaId,
+      asignacionId,
+      storageId: await storeBlob(t),
+      nombre: "soporte.pdf",
+      subidoPorNombre: "x",
+      subidoPorEmail: "x@example.com",
+    });
+
+    const listar = async (user: TestUser) =>
+      (await (await asUser(t, user)).query(api.facturacionAdjuntos.listarPorFactura, {
+        facturaId,
+      })) as Array<{ url: string | null }>;
+
+    expect(await listar(LIDER)).toHaveLength(1);
+    expect(await listar({ ...OTRO, permisos: ["billing/invoices"], empresas: [1] })).toHaveLength(1);
+    expect(await listar({ ...OTRO, permisos: ["billing/invoices"], empresas: [2] })).toHaveLength(0);
+    expect(await listar({ ...INTRUSO, permisos: ["billing/inbox"], empresas: [1] })).toHaveLength(0);
+
+    // Petty cash screens only see invoices booked against petty cash.
+    const cajaMenor = await asUser(t, {
+      id: "custodio-1",
+      permisos: ["billing/petty-cash-reimbursement"],
+      empresas: [1],
+    });
+    const listarCaja = async () =>
+      (await cajaMenor.query(api.facturacionAdjuntos.listarPorFacturas, {
+        facturaIds: [facturaId],
+      })) as Array<{ adjuntos: unknown[] }>;
+    expect((await listarCaja())[0].adjuntos).toHaveLength(0);
+    await t.run(async (ctx) => {
+      await ctx.db.patch("facturacionFacturas", facturaId, { esLegalizacionCajaMenor: true });
+    });
+    expect((await listarCaja())[0].adjuntos).toHaveLength(1);
+  });
+});
+
+describe("consultas de facturación con alcance por usuario y empresa", () => {
+  test("getWithTarea: participantes y facturas de la empresa; los demás ven null", async () => {
+    const t = makeTest();
+    const { facturaId } = await seedFactura(t, { numero: "FAC-DET-1", empresa: 1 });
+    const detalle = async (user: TestUser) =>
+      await (await asUser(t, user)).query(api.facturacionFacturas.getWithTarea, { id: facturaId });
+
+    expect(await detalle(LIDER)).not.toBeNull();
+    expect(await detalle({ ...OTRO, permisos: ["billing/invoices"], empresas: [1] })).not.toBeNull();
+    expect(await detalle({ ...OTRO, permisos: ["billing/invoices"], empresas: [2] })).toBeNull();
+    expect(await detalle({ ...INTRUSO, permisos: ["billing/tasks"], empresas: [1] })).toBeNull();
+    await expect(t.query(api.facturacionFacturas.getWithTarea, { id: facturaId })).rejects.toThrow(
+      "No autenticado",
+    );
+  });
+
+  test("buscarPorCufesParaValidacionDian solo cruza facturas de empresas visibles", async () => {
+    const t = makeTest();
+    await seedFactura(t, { numero: "FAC-CUFE-1", empresa: 1, cufe: "cufe-compartido" });
+    await seedFactura(t, { numero: "FAC-CUFE-2", empresa: 2, cufe: "cufe-empresa-2" });
+
+    const sinPermiso = await asUser(t, { ...OTRO, permisos: ["billing/inbox"], empresas: [1, 2] });
+    await expect(
+      sinPermiso.query(api.facturacionFacturas.buscarPorCufesParaValidacionDian, {
+        cufes: ["cufe-compartido"],
+      }),
+    ).rejects.toThrow("se requiere billing/invoices");
+
+    const empresa1 = await asUser(t, { ...OTRO, permisos: ["billing/invoices"], empresas: [1] });
+    const resultado = (await empresa1.query(api.facturacionFacturas.buscarPorCufesParaValidacionDian, {
+      cufes: ["cufe-compartido", "cufe-empresa-2"],
+    })) as { coincidencias: Array<{ cufe: string }> };
+    expect(resultado.coincidencias.map((c) => c.cufe)).toEqual(["cufe-compartido"]);
+    await expect(
+      empresa1.query(api.facturacionFacturas.buscarPorCufesParaValidacionDian, {
+        cufes: ["cufe-empresa-2"],
+        empresa: 2,
+      }),
+    ).rejects.toThrow("Empresa no autorizada");
+  });
+
+  test("facturacionTareas.listar exige tareas y respeta las empresas del usuario", async () => {
+    const t = makeTest();
+    await seedFactura(t, { numero: "FAC-TAR-1", empresa: 1 });
+    await seedFactura(t, { numero: "FAC-TAR-2", empresa: 2 });
+
+    const bandeja = await asUser(t, { ...OTRO, permisos: ["billing/inbox"], empresas: [1] });
+    await expect(bandeja.query(api.facturacionTareas.listar, {})).rejects.toThrow(
+      "se requiere billing/tasks",
+    );
+
+    const tareas1 = await asUser(t, { ...OTRO, permisos: ["billing/tasks"], empresas: [1] });
+    const propias = (await tareas1.query(api.facturacionTareas.listar, {})) as Array<{
+      factura: Doc<"facturacionFacturas"> | null;
+    }>;
+    expect(propias.map((tarea) => tarea.factura?.numeroFactura)).toEqual(["FAC-TAR-1"]);
+    const porEstado = (await tareas1.query(api.facturacionTareas.listar, {
+      estado: "revision_lider",
+    })) as unknown[];
+    expect(porEstado).toHaveLength(1);
+    await expect(tareas1.query(api.facturacionTareas.listar, { empresa: 2 })).rejects.toThrow(
+      "Empresa no autorizada",
+    );
+
+    const todas = await asUser(t, { ...OTRO, permisos: ["billing/tasks"], accesoTodasEmpresas: true });
+    expect((await todas.query(api.facturacionTareas.listar, {})) as unknown[]).toHaveLength(2);
+  });
+
+  test("facturacionCorreos.listar exige correos y respeta las empresas del usuario", async () => {
+    const t = makeTest();
+    await t.run(async (ctx) => {
+      for (const empresa of [1, 2]) {
+        await ctx.db.insert("facturacionCorreos", {
+          empresa,
+          graphMessageId: `msg-${empresa}`,
+          subject: `Factura empresa ${empresa}`,
+          from: "proveedor@example.com",
+          toRecipients: ["facturas@example.com"],
+          bodyPreview: "",
+          receivedDateTime: "2026-06-01T10:00:00Z",
+          isRead: false,
+          hasAttachments: false,
+          importance: "normal",
+          procesado: false,
+        });
+      }
+    });
+
+    const sinPermiso = await asUser(t, { ...OTRO, permisos: ["billing/invoices"], empresas: [1] });
+    await expect(sinPermiso.query(api.facturacionCorreos.listar, {})).rejects.toThrow(
+      "se requiere billing/emails",
+    );
+    const correos1 = await asUser(t, { ...OTRO, permisos: ["billing/emails"], empresas: [1] });
+    const propios = (await correos1.query(api.facturacionCorreos.listar, {})) as Array<{ empresa?: number }>;
+    expect(propios.map((c) => c.empresa)).toEqual([1]);
+    const noProcesados = (await correos1.query(api.facturacionCorreos.listar, {
+      procesado: false,
+    })) as unknown[];
+    expect(noProcesados).toHaveLength(1);
+    await expect(correos1.query(api.facturacionCorreos.listar, { empresa: 2 })).rejects.toThrow(
+      "Empresa no autorizada",
+    );
+  });
+
+  test("listado y exportación de facturas quedan en las empresas del usuario", async () => {
+    const t = makeTest();
+    await seedFactura(t, { numero: "FAC-EXP-1", empresa: 1 });
+    await seedFactura(t, { numero: "FAC-EXP-2", empresa: 2 });
+
+    const tareas = await asUser(t, { ...OTRO, permisos: ["billing/tasks"], empresas: [1] });
+    await expect(
+      tareas.query(api.facturacionFacturas.listarFilasParaExportar, {}),
+    ).rejects.toThrow("se requiere billing/invoices");
+
+    const facturas1 = await asUser(t, { ...OTRO, permisos: ["billing/invoices"], empresas: [1] });
+    const exportadas = (await facturas1.query(api.facturacionFacturas.listarFilasParaExportar, {
+      empresas: [1, 2],
+    })) as { rows: Array<{ numeroFactura: string }> };
+    expect(exportadas.rows.map((row) => row.numeroFactura)).toEqual(["FAC-EXP-1"]);
+    const soloAjena = (await facturas1.query(api.facturacionFacturas.listarFilasParaExportar, {
+      empresas: [2],
+    })) as { rows: unknown[] };
+    expect(soloAjena.rows).toEqual([]);
+    expect(
+      await facturas1.query(api.facturacionFacturas.listarResponsablesActuales, { empresas: [2] }),
+    ).toEqual([]);
+  });
+});
+
+describe("secciones del detalle de factura", () => {
+  test("cruces internos, historial de notas y estado contable solo para quien ve la factura", async () => {
+    const t = makeTest();
+    const { facturaId } = await seedFactura(t, { numero: "FAC-SEC-1", empresa: 1 });
+    const paginacion = { numItems: 20, cursor: null };
+    const consultar = async (user: TestUser) => {
+      const cliente = await asUser(t, user);
+      return {
+        cruces: (await cliente.query(
+          api.facturacionCrucesDocumentosInternos.listarCrucesInternosActivosPorFactura,
+          { facturaId, paginationOpts: paginacion },
+        )) as { page: unknown[]; isDone: boolean },
+        historial: (await cliente.query(
+          api.facturacionCrucesDocumentosInternos.listarHistorialCrucesInternosFactura,
+          { facturaId, paginationOpts: paginacion },
+        )) as { page: unknown[] },
+        notas: await cliente.query(api.facturacionNotaCreditoRelacion.listarHistorialRelacionDocumento, {
+          facturaId,
+        }),
+        contable: await cliente.query(api.facturacionPeajesContabilidad.obtenerEstadoContableFactura, {
+          facturaId,
+        }),
+      };
+    };
+    await t.run(async (ctx) => {
+      const operacionId = await ctx.db.insert("facturacionPeajesOperaciones", {
+        empresa: 1,
+        estado: "aplicada",
+        resumen: {},
+        facturasCruzadas: [],
+        notasCreditoAplicadas: [],
+        documentosSkippeados: [],
+        documentosYaProcesados: [],
+        diferencias: [],
+        anticiposAplicados: [],
+        legalizacionIds: [],
+        creadoPorNombre: "Peajes",
+        creadoPorEmail: "peajes@example.com",
+        creadoEn: NOW,
+        actualizadoEn: NOW,
+      });
+      await ctx.db.insert("facturacionPeajesContabilidad", {
+        facturaId,
+        empresa: 1,
+        operacionId,
+        estado: "pendiente_contabilidad",
+        numeroFactura: "FAC-SEC-1",
+        numeroFacturaNormalizado: "FACSEC1",
+        proveedorNombre: "Proveedor Test",
+        fechaEmision: "2026-06-01",
+        moneda: "COP",
+        valorBruto: 100_000,
+        valorNotasCredito: 0,
+        valorNeto: 100_000,
+        cruceAplicadoEn: NOW,
+        ordenCola: "0001",
+        searchText: "fac-sec-1",
+        origen: "cruce",
+        version: 1,
+        creadoEn: NOW,
+        actualizadoEn: NOW,
+      });
+    });
+
+    const intruso = await consultar({ ...INTRUSO, permisos: ["billing/inbox"], empresas: [1] });
+    expect(intruso).toEqual({
+      cruces: { page: [], isDone: true, continueCursor: "" },
+      historial: { page: [], isDone: true, continueCursor: "" },
+      notas: [],
+      contable: null,
+    });
+
+    const lider = await consultar(LIDER);
+    expect(lider.cruces.isDone).toBe(true);
+    expect(lider.contable).toMatchObject({ estado: "pendiente_contabilidad" });
+
+    const exportacion = async (user: TestUser) =>
+      await (await asUser(t, user)).query(
+        api.facturacionCrucesDocumentosInternos.listarCrucesInternosActivosParaExportacion,
+        { facturaIds: [facturaId], paginationOpts: paginacion },
+      );
+    await expect(exportacion({ ...INTRUSO, permisos: ["billing/inbox"], empresas: [1] })).rejects.toThrow(
+      "se requiere billing/invoices",
+    );
+    expect(await exportacion({ ...OTRO, permisos: ["billing/invoices"], empresas: [2] })).toMatchObject({
+      page: [],
+    });
+  });
 });

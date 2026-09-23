@@ -35,6 +35,14 @@ import {
 } from "./lib/cajaMenorFacturacionAdapter";
 import { SYSTEM_ACTOR_EMAIL } from "./lib/env";
 import { requireServerSecret } from "./lib/auth";
+import {
+  actorPuedeVerEmpresa,
+  empresasVisibles,
+  requireActor,
+  requirePermisoEmpresa,
+} from "./lib/billingAuth";
+import { actorPuedeVerFactura } from "./lib/facturacionAccess";
+import { RUTAS_SISTEMA } from "../lib/rutas-sistema";
 import { normalizeEmail, normalizeEmpresa } from "./lib/normalize";
 
 const DEFAULT_EMPRESA = 1;
@@ -728,8 +736,9 @@ export const getWithTarea = query({
     })
   ),
   handler: async (ctx, args) => {
+    const actor = await requireActor(ctx);
     const factura = await ctx.db.get("facturacionFacturas", args.id);
-    if (!factura) return null;
+    if (!factura || !(await actorPuedeVerFactura(ctx, actor, factura))) return null;
 
     const tarea = await ctx.db
       .query("facturacionTareas")
@@ -1248,6 +1257,28 @@ const listadoFacturasFiltrosArgs = {
 } as const;
 
 /**
+ * Invoice list and export need the invoices permission. Company-scoped users are limited
+ * to their companies: requested companies outside their scope are dropped and "every
+ * company" means every company of theirs. Returns null when nothing is left to read.
+ */
+async function acotarListadoFacturasAlActor<
+  T extends { empresa?: number; empresas?: number[] },
+>(ctx: QueryCtx, args: T): Promise<T | null> {
+  const actor = await requirePermisoEmpresa(
+    ctx,
+    RUTAS_SISTEMA.FACTURACION_FACTURAS,
+    args.empresa
+  );
+  const visibles = empresasVisibles(actor);
+  if (visibles === "todas" || typeof args.empresa === "number") return args;
+  const empresas =
+    args.empresas && args.empresas.length > 0
+      ? args.empresas.filter((empresa) => visibles.includes(empresa))
+      : visibles;
+  return empresas.length > 0 ? { ...args, empresas } : null;
+}
+
+/**
  * Distinct active, canonical owners available to the invoice-list filter.
  * This intentionally resolves directly from the workflow source of truth so a
  * recently changed assignment is not hidden while dashboard projections catch up.
@@ -1257,7 +1288,9 @@ export const listarResponsablesActuales = query({
     empresa: v.optional(v.number()),
     empresas: v.optional(v.array(v.number())),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, rawArgs) => {
+    const args = await acotarListadoFacturasAlActor(ctx, rawArgs);
+    if (!args) return [];
     // The filter is rendered when the page opens, so this query must stay
     // bounded.  The old implementation collected every invoice, task, and
     // assignment before reducing them to a few people, which could exceed
@@ -1343,9 +1376,11 @@ export const listarFilasParaExportar = query({
     cursor: v.number(),
     isDone: v.boolean(),
   }),
-  handler: async (ctx, args) => {
-    const batchSize = Math.min(Math.max(Math.trunc(args.batchSize ?? 500), 1), 1000);
-    const cursor = Math.max(Math.trunc(args.cursor ?? 0), 0);
+  handler: async (ctx, rawArgs) => {
+    const args = await acotarListadoFacturasAlActor(ctx, rawArgs);
+    const batchSize = Math.min(Math.max(Math.trunc(rawArgs.batchSize ?? 500), 1), 1000);
+    const cursor = Math.max(Math.trunc(rawArgs.cursor ?? 0), 0);
+    if (!args) return { rows: [], total: 0, cursor, isDone: true };
 
     const [todas, todasTareas, todasAsignaciones, dashboardItems, dashboardResponsables] =
       await Promise.all([
@@ -1956,6 +1991,11 @@ export const buscarPorCufesParaValidacionDian = query({
     ),
   }),
   handler: async (ctx, args) => {
+    const actor = await requirePermisoEmpresa(
+      ctx,
+      RUTAS_SISTEMA.FACTURACION_FACTURAS,
+      args.empresa
+    );
     const uniqueCufes: string[] = [];
     const seen = new Set<string>();
     for (const raw of args.cufes) {
@@ -1991,7 +2031,9 @@ export const buscarPorCufesParaValidacionDian = query({
           ? candidatos.find(
               (factura) => normalizeEmpresa(factura.empresa) === empresaFiltro
             )
-          : candidatos[0];
+          : candidatos.find((factura) =>
+              actorPuedeVerEmpresa(actor, normalizeEmpresa(factura.empresa))
+            );
 
       if (match) {
         coincidencias.push({ cufe, facturaId: match._id });

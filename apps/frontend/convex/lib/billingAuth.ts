@@ -80,6 +80,11 @@ export function actorPuedeVerEmpresa(actor: BillingActor, empresa: number | unde
   return typeof empresa === "number" && actor.empresas.includes(empresa);
 }
 
+/** Companies the actor may read: `"todas"` for full / all-company access, else their own list. */
+export function empresasVisibles(actor: BillingActor): number[] | "todas" {
+  return actor.hasFullAccess || actor.accesoTodasEmpresas ? "todas" : [...new Set(actor.empresas)];
+}
+
 /**
  * Requires one of `permisos` (route permissions, see lib/rutas-sistema.ts) and, when
  * `empresa` is given, that the caller can see that company.

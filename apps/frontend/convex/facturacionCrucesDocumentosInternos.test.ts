@@ -4,6 +4,7 @@ import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 
 import { actingAsActorArgs } from "../test-utils/convexActingAs";
+import { asUser } from "../test-utils/onboardingActors";
 import { api } from "./_generated/api";
 import schema from "./schema";
 
@@ -159,23 +160,25 @@ describe("facturacionCrucesDocumentosInternos integrated case", () => {
     expect(result.documentos.continueCursor).toEqual(expect.any(String));
     expect(result.totales).toEqual({ cantidad: 1, valorAplicado: 25 });
 
-    const activos = await t.query(
+    // Invoice detail sections: read as the invoice's assignee.
+    const responsable = await asUser(t, { id: ACTOR.actorUserId, email: ACTOR.actorEmail });
+    const activos = (await responsable.query(
       api.facturacionCrucesDocumentosInternos.listarCrucesInternosActivosPorFactura,
       {
         facturaId,
         paginationOpts: { numItems: 50, cursor: null },
       }
-    );
+    )) as { page: Array<{ numeroDocumento: string }> };
     expect(activos.page).toHaveLength(1);
     expect(activos.page[0]?.numeroDocumento).toBe("INT-PAGINADO");
 
-    const historial = await t.query(
+    const historial = (await responsable.query(
       api.facturacionCrucesDocumentosInternos.listarHistorialCrucesInternosFactura,
       {
         facturaId,
         paginationOpts: { numItems: 50, cursor: null },
       }
-    );
+    )) as { page: Array<{ accion: string }> };
     expect(historial.page).toHaveLength(1);
     expect(historial.page[0]?.accion).toBe("agregar_cruce_documento_interno");
   });

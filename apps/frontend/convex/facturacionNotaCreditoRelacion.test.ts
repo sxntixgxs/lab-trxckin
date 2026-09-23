@@ -3,6 +3,7 @@
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 
+import { asUser } from "../test-utils/onboardingActors";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
@@ -97,14 +98,20 @@ describe("facturacionNotaCreditoRelacion", () => {
       relacionDocumentoOrigen: "manual",
     });
 
-    const detalle = await t.query(api.facturacionFacturas.getWithTarea, {
-      id: nota,
+    // Invoice detail: a billing/invoices user of every company.
+    const lector = await asUser(t, {
+      id: "lector-facturas",
+      permisos: ["billing/invoices"],
+      accesoTodasEmpresas: true,
     });
+    const detalle = (await lector.query(api.facturacionFacturas.getWithTarea, {
+      id: nota,
+    })) as { notaCreditoRelacion?: { facturaOrigen?: { _id: string } } } | null;
     expect(detalle?.notaCreditoRelacion?.facturaOrigen?._id).toBe(facturaB);
 
-    const detalleA = await t.query(api.facturacionFacturas.getWithTarea, {
+    const detalleA = (await lector.query(api.facturacionFacturas.getWithTarea, {
       id: facturaA,
-    });
+    })) as { notaCreditoRelacion?: { notasCredito?: Array<{ _id: string }> } } | null;
     const notasEnA = detalleA?.notaCreditoRelacion?.notasCredito ?? [];
     expect(notasEnA.some((n: { _id: string }) => n._id === nota)).toBe(false);
   });
@@ -150,10 +157,15 @@ describe("facturacionNotaCreditoRelacion", () => {
     expect(notaAfter?.referenciaDocumento).toBe("FE-A");
     expect(notaAfter?.referenciaDocumentoNormalizado).toBe("FEA");
 
-    const historial = await t.query(
+    const lector = await asUser(t, {
+      id: "lector-facturas",
+      permisos: ["billing/invoices"],
+      accesoTodasEmpresas: true,
+    });
+    const historial = (await lector.query(
       api.facturacionNotaCreditoRelacion.listarHistorialRelacionDocumento,
       { facturaId: nota }
-    );
+    )) as Array<{ facturaNuevaNumero?: string; motivo?: string }>;
     expect(historial).toHaveLength(1);
     expect(historial[0]?.facturaNuevaNumero).toBe("FE-B");
     expect(historial[0]?.motivo).toBe(

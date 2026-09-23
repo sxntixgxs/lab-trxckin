@@ -21,6 +21,7 @@ import {
 } from "./lib/notaCreditoRelacion";
 import { normalizePeajesDocumentNumber } from "./lib/peajes";
 import { requireServerSecret } from "./lib/auth";
+import { facturaVisibleParaActor } from "./lib/facturacionAccess";
 import { normalizeEmail, normalizeEmpresa } from "./lib/normalize";
 
 const MAX_CANDIDATOS = 20;
@@ -293,7 +294,7 @@ export const listarHistorialRelacionDocumento = query({
   },
   returns: v.any(),
   handler: async (ctx, args) => {
-    const factura = await ctx.db.get("facturacionFacturas", args.facturaId);
+    const factura = await facturaVisibleParaActor(ctx, args.facturaId);
     if (!factura) return [];
 
     const asNota = await ctx.db

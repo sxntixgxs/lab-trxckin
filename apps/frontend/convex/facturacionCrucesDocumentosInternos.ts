@@ -21,6 +21,9 @@ import {
 } from "./lib/valorAPagar";
 import { getValorContable } from "./lib/valorContable";
 import { requireServerSecret } from "./lib/auth";
+import { actorPuedeVerEmpresa, requirePermisoEmpresa } from "./lib/billingAuth";
+import { facturaVisibleParaActor } from "./lib/facturacionAccess";
+import { RUTAS_SISTEMA } from "../lib/rutas-sistema";
 import { normalizeEmail, normalizeEmpresa } from "./lib/normalize";
 
 const CRUCES_PAGE_CAP = 50;
@@ -648,6 +651,9 @@ export const listarCrucesInternosActivosPorFactura = query({
   },
   returns: paginationResultValidator(documentoInternoValidator),
   handler: async (ctx, args) => {
+    if (!(await facturaVisibleParaActor(ctx, args.facturaId))) {
+      return { page: [], isDone: true, continueCursor: "" };
+    }
     const paginationOpts = {
       ...args.paginationOpts,
       numItems: Math.min(args.paginationOpts.numItems, CRUCES_PAGE_CAP),
@@ -705,6 +711,9 @@ export const listarHistorialCrucesInternosFactura = query({
       ...args.paginationOpts,
       numItems: Math.min(args.paginationOpts.numItems, CRUCES_PAGE_CAP),
     };
+    if (!(await facturaVisibleParaActor(ctx, args.facturaId))) {
+      return { page: [], isDone: true, continueCursor: "" };
+    }
     const all = await ctx.db
       .query("facturacionAprobaciones")
       .withIndex("by_facturaId", (q) => q.eq("facturaId", args.facturaId))
@@ -773,15 +782,17 @@ export const listarCrucesInternosActivosParaExportacion = query({
       };
     }> = [];
 
+    // Invoice list export: invoices permission, only the caller's companies.
+    const actor = await requirePermisoEmpresa(ctx, RUTAS_SISTEMA.FACTURACION_FACTURAS);
     for (const facturaId of args.facturaIds) {
+      const factura = await ctx.db.get("facturacionFacturas", facturaId);
+      if (!factura || !actorPuedeVerEmpresa(actor, normalizeEmpresa(factura.empresa))) continue;
       const cruces = await ctx.db
         .query("facturacionCrucesDocumentosInternos")
         .withIndex("by_facturaId_estado", (q) =>
           q.eq("facturaId", facturaId).eq("estado", "activo")
         )
         .collect();
-      const factura = await ctx.db.get("facturacionFacturas", facturaId);
-      if (!factura) continue;
       for (const cruce of cruces) {
         results.push({
           cruce,

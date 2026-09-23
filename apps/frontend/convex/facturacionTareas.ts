@@ -11,7 +11,7 @@ import {
 } from "./_generated/server";
 // actor* args of public mutations are overwritten with the authenticated caller (see
 // lib/serverActor.ts); functions that declare `secret` are server-to-server and untouched.
-import { mutationConActor as mutation, queryConActorIds } from "./lib/serverActor";
+import { mutationConActor as mutation, queryConActor, queryConActorIds } from "./lib/serverActor";
 import {
   anularMovimientosCajaMenorFacturaInterno,
   crearMovimientoCajaMenorInterno,
@@ -103,10 +103,12 @@ import { requireServerSecret } from "./lib/auth";
 import {
   actorPuedeVerEmpresa,
   actorTienePermiso,
+  empresasVisibles,
   requireActor as requireBillingActor,
+  requirePermisoEmpresa,
   type BillingActor,
 } from "./lib/billingAuth";
-import { actorEsAsignado } from "./lib/facturacionAccess";
+import { actorEsAsignado, actorPuedeVerFactura } from "./lib/facturacionAccess";
 import { normalizeEmail, normalizeEmpresa } from "./lib/normalize";
 import { RUTAS_SISTEMA } from "../lib/rutas-sistema";
 
@@ -3710,10 +3712,43 @@ export const listar = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const actor = await requirePermisoEmpresa(ctx, RUTAS_SISTEMA.FACTURACION_TAREAS, args.empresa);
     const limit = args.limit ?? 200;
     let tareas: Doc<"facturacionTareas">[];
+    const visibles = empresasVisibles(actor);
 
-    if (typeof args.empresa === "number" && args.estado) {
+    if (typeof args.empresa !== "number" && visibles !== "todas") {
+      // Company-scoped users read each of their companies through its index.
+      const porEmpresa = await Promise.all(
+        visibles.map((empresa) =>
+          args.estado
+            ? ctx.db
+                .query("facturacionTareas")
+                .withIndex("by_empresa_estado", (q) =>
+                  q.eq("empresa", empresa).eq("estado", args.estado!)
+                )
+                .order("desc")
+                .take(limit)
+            : ctx.db
+                .query("facturacionTareas")
+                .withIndex("by_empresa", (q) => q.eq("empresa", empresa))
+                .order("desc")
+                .take(limit)
+        )
+      );
+      tareas = porEmpresa
+        .flat()
+        .filter((tarea) => {
+          if (args.estado) return true;
+          if (args.asignadoAUserId) return tarea.asignadoAUserId === args.asignadoAUserId;
+          if (args.asignadoAEmail) {
+            return normalizeEmail(tarea.asignadoAEmail) === normalizeEmail(args.asignadoAEmail);
+          }
+          return true;
+        })
+        .sort((a, b) => b._creationTime - a._creationTime)
+        .slice(0, limit);
+    } else if (typeof args.empresa === "number" && args.estado) {
       tareas = await ctx.db
         .query("facturacionTareas")
         .withIndex("by_empresa_estado", (q) =>
@@ -3813,8 +3848,9 @@ export const obtenerLegalizacionAnticiposFactura = query({
     facturaId: v.id("facturacionFacturas"),
   },
   handler: async (ctx, args) => {
+    const actor = await requireBillingActor(ctx);
     const factura = await ctx.db.get("facturacionFacturas", args.facturaId);
-    if (!factura) return null;
+    if (!factura || !(await actorPuedeVerFactura(ctx, actor, factura))) return null;
 
     const tarea = await ctx.db
       .query("facturacionTareas")
@@ -3914,6 +3950,7 @@ export const obtenerResumenCrucesAnticiposFacturas = query({
     facturaIds: v.array(v.id("facturacionFacturas")),
   },
   handler: async (ctx, args) => {
+    const actor = await requireBillingActor(ctx);
     const uniqueFacturaIds: Id<"facturacionFacturas">[] = [];
     const seen = new Set<string>();
     for (const facturaId of args.facturaIds) {
@@ -3923,8 +3960,14 @@ export const obtenerResumenCrucesAnticiposFacturas = query({
       uniqueFacturaIds.push(facturaId);
     }
 
+    const visibles: Id<"facturacionFacturas">[] = [];
+    for (const facturaId of uniqueFacturaIds) {
+      const factura = await ctx.db.get("facturacionFacturas", facturaId);
+      if (factura && (await actorPuedeVerFactura(ctx, actor, factura))) visibles.push(facturaId);
+    }
+
     return await Promise.all(
-      uniqueFacturaIds.map(async (facturaId) => {
+      visibles.map(async (facturaId) => {
         const factura = await ctx.db.get("facturacionFacturas", facturaId);
         const legalizaciones = await listarLegalizacionesActivasFactura(ctx, facturaId);
         const valorAplicado = legalizaciones.reduce(
@@ -3947,14 +3990,16 @@ export const obtenerResumenCrucesAnticiposFacturas = query({
   },
 });
 
-export const obtenerLegalizacionCajaMenorFactura = query({
+// `actorUserId` (whose funds are offered) is always the authenticated caller.
+export const obtenerLegalizacionCajaMenorFactura = queryConActor({
   args: {
     facturaId: v.id("facturacionFacturas"),
     actorUserId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const actor = await requireBillingActor(ctx);
     const factura = await ctx.db.get("facturacionFacturas", args.facturaId);
-    if (!factura) return null;
+    if (!factura || !(await actorPuedeVerFactura(ctx, actor, factura))) return null;
     const tarea = await ctx.db
       .query("facturacionTareas")
       .withIndex("by_facturaId", (q) => q.eq("facturaId", args.facturaId))

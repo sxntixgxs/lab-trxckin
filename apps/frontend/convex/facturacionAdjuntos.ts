@@ -7,7 +7,11 @@ import {
 } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import { requireActor } from "./lib/billingAuth";
-import { actorTieneAsignacionPendiente } from "./lib/facturacionAccess";
+import {
+  actorPuedeVerFactura,
+  actorPuedeVerFacturaCajaMenor,
+  actorTieneAsignacionPendiente,
+} from "./lib/facturacionAccess";
 import { normalizeEmail } from "./lib/normalize";
 
 type AdjuntoConUrl = Doc<"facturacionAdjuntos"> & { url: string | null };
@@ -47,6 +51,12 @@ export const listarPorFactura = query({
     ctx: QueryCtx,
     args: ListarPorFacturaArgs,
   ): Promise<AdjuntoConUrl[]> => {
+    const actor = await requireActor(ctx);
+    const factura = await ctx.db.get("facturacionFacturas", args.facturaId);
+    if (!factura || !(await actorPuedeVerFactura(ctx, actor, factura))) {
+      return [];
+    }
+
     const adjuntos = await ctx.db
       .query("facturacionAdjuntos")
       .withIndex("by_facturaId", (q) => q.eq("facturaId", args.facturaId))
@@ -62,15 +72,24 @@ export const listarPorFactura = query({
   },
 });
 
+/** Used by the petty cash reimbursement dialogs; invoices the caller cannot see come back empty. */
 export const listarPorFacturas = query({
   args: { facturaIds: v.array(v.id("facturacionFacturas")) },
   handler: async (
     ctx: QueryCtx,
     args: ListarPorFacturasArgs,
   ): Promise<AdjuntosPorFactura[]> => {
+    const actor = await requireActor(ctx);
     const facturaIds = [...new Set(args.facturaIds)];
     return await Promise.all(
       facturaIds.map(async (facturaId) => {
+        const factura = await ctx.db.get("facturacionFacturas", facturaId);
+        const visible =
+          factura !== null &&
+          ((await actorPuedeVerFacturaCajaMenor(ctx, actor, factura)) ||
+            (await actorPuedeVerFactura(ctx, actor, factura)));
+        if (!visible) return { facturaId, adjuntos: [] };
+
         const adjuntos = await ctx.db
           .query("facturacionAdjuntos")
           .withIndex("by_facturaId", (q) => q.eq("facturaId", facturaId))

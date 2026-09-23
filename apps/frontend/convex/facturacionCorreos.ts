@@ -5,6 +5,8 @@ import {
   internalQuery,
   query,
 } from "./_generated/server";
+import { RUTAS_SISTEMA } from "../lib/rutas-sistema";
+import { empresasVisibles, requirePermisoEmpresa } from "./lib/billingAuth";
 
 const adjuntoValidator = v.object({
   graphAttachmentId: v.string(),
@@ -31,8 +33,40 @@ export const listar = query({
     procesado: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    const actor = await requirePermisoEmpresa(
+      ctx,
+      RUTAS_SISTEMA.FACTURACION_CORREOS,
+      args.empresa,
+    );
     const procesado = args.procesado;
     const empresa = args.empresa;
+    const visibles = empresasVisibles(actor);
+
+    if (typeof empresa !== "number" && visibles !== "todas") {
+      // Company-scoped users read each of their mailboxes through the company index.
+      const limit = args.limit ?? 100;
+      const porEmpresa = await Promise.all(
+        visibles.map((empresaVisible) =>
+          procesado !== undefined
+            ? ctx.db
+                .query("facturacionCorreos")
+                .withIndex("by_empresa_procesado", (q) =>
+                  q.eq("empresa", empresaVisible).eq("procesado", procesado),
+                )
+                .order("desc")
+                .take(limit)
+            : ctx.db
+                .query("facturacionCorreos")
+                .withIndex("by_empresa", (q) => q.eq("empresa", empresaVisible))
+                .order("desc")
+                .take(limit),
+        ),
+      );
+      return porEmpresa
+        .flat()
+        .sort((a, b) => b._creationTime - a._creationTime)
+        .slice(0, limit);
+    }
 
     if (typeof empresa === "number" && procesado !== undefined) {
       return await ctx.db
