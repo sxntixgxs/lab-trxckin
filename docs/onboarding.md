@@ -39,13 +39,13 @@ flowchart LR
     V -. rechazo .-> R
 ```
 
-- **Start.** A user with the route permission starts the process from the board: uploads the RUT (optionally prefilled by AI extraction), enters contact and risk-matrix data and picks the supplier type. The risk and evaluation type are computed server-side; Fase I is auto-completed and the tracked `FASE_I_COMPLETADA` invitation goes out. The modal checks the Nest supplier catalog (`/api/proveedores/search`) to turn an existing NIT into an **ACTUALIZACIÓN**; it expects a `{ proveedores: [...] }` response, while this repo's Nest endpoint returns a plain array, so in this extraction the check finds no match and every request starts as an INSCRIPCIÓN.
+- **Start.** A user with the route permission starts the process from the board: uploads the RUT (optionally prefilled by AI extraction), enters contact and risk-matrix data and picks the supplier type. The risk and evaluation type are computed server-side; Fase I is auto-completed and the tracked `FASE_I_COMPLETADA` invitation goes out. The document is checked against the company's **ERP catalog** (`/api/proveedores/existe`): a supplier that exists there, active or not, makes the request an **ACTUALIZACIÓN**, otherwise it is an INSCRIPCIÓN. The user picks by hand only when the check cannot run, and that is recorded (see [Existing third parties](#existing-third-parties)).
 - **Fase II.** The supplier fills 11 sections with autosave, uploads every required document (by evaluation type, person type, PEP and supplier-type extras) and submits. The signature request (`PENDIENTE_FIRMA`) goes to the legal representative.
 - **Fase IIA.** The legal representative reviews the PDF and signs. Signing materializes the document review rows and opens both Fase III lanes.
 - **Fase III.** Cumplimiento and Compras review their documents in parallel; rejected documents are re-uploaded by the supplier (form link stays valid) or replaced by the responsable. Cumplimiento can raise PEP/listas, which recomputes the risk and adds missing documents. When both lanes are approved, Fase IV opens assigned to the Cumplimiento tier for the evaluation type.
 - **Fase IV.** Cumplimiento approves (→ Fase V) or rejects with a supplier-facing and an internal motive.
 - **Fase V.** Compras scores the supplier (`evaluarProveedor`, which recomputes the score from the criteria on the server) and confirms.
-- **Fase VI.** Contabilidad confirms creation in the accounting system, optionally with notes and support files; the closing emails (supplier, Financiero with the phase-time PDF) are posted from the browser.
+- **Fase VI.** Contabilidad confirms creation in the accounting system, optionally with notes and support files; "Crear en ERP (simulado)" can register the supplier in the ERP first. The closing emails (supplier, Financiero with the phase-time PDF) are posted from the browser.
 
 ### Customers
 
@@ -60,14 +60,27 @@ flowchart LR
     IIIA -. rechazo .-> R[RECHAZADO]
 ```
 
-- **Start.** The commercial responsable uploads the RUT, enters the customer, legal representative and risk data, sets the **payment terms** (`Anticipado` ⇔ plazo `NA`), optionally attaches a quotation and pre-loads documents, and picks INSCRIPCIÓN or ACTUALIZACIÓN manually.
+- **Start.** The commercial responsable uploads the RUT, enters the customer, legal representative and risk data, sets the **payment terms** (`Anticipado` ⇔ plazo `NA`), optionally attaches a quotation and pre-loads documents. INSCRIPCIÓN or ACTUALIZACIÓN comes from the company's ERP customer catalog (`/api/clientes/existe`), as for suppliers.
 - **Fase II / IIA.** Same as suppliers with 10 sections; payment terms are read-only for the customer. Submitting requires the legal representative email; the tax questionnaire has conditional rules enforced on submit (`assertInfoTributariaClienteParaEnvio`). Unlike suppliers, customers can submit without every document: missing ones become `PENDIENTE` at signing and are uploaded during Fase III with the same form link.
 - **Fase III.** Single Cumplimiento lane. All approved → **Fase IIIA** assigned by evaluation tier (`APROBACION_CUMPLIMIENTO_ASIGNADA`).
 - **Fase IIIA.** Approve (→ Fase IV) or reject with customer-facing and internal motives.
-- **Fase IV.** Contabilidad confirms creation with optional closing notes; the browser posts the closing emails with the signed form PDF (customer, internal team) and the phase-time PDF (Financiero).
+- **Fase IV.** Contabilidad confirms creation with optional closing notes ("Crear en ERP (simulado)" can register the customer in the ERP first); the browser posts the closing emails with the signed form PDF (customer, internal team) and the phase-time PDF (Financiero).
 - **Notifications.** Customers get fewer emails than suppliers: none after signing, none to Contabilidad when Fase IIIA is approved, and none to the customer on rejection (the public status page shows the external motive).
 
 Both modules support **devolver fase** (return the process to an earlier phase: later rows are deleted, signature/reviews/rejections are unwound, links are revoked and the right invitation is re-sent) and **anular** (terminal `ANULADA`, all links revoked, kept for audit).
+
+## Existing third parties
+
+The "Iniciar proceso" modal looks the typed document up in two places. Details of the ERP side are in [erp.md](erp.md).
+
+- **ERP catalog** (Nest, synced from the ERP): decides INSCRIPCIÓN vs ACTUALIZACIÓN.
+  - The document matches with or without the NIT check digit and ignoring zero padding; a cédula never loses or gains a digit.
+  - When the backend is down or the catalog was never synced, the user picks the type and the process stores `tipoSolicitudOrigen: "MANUAL"` (otherwise `"ERP"`).
+  - The public supplier form can no longer change `tipoSolicitud`.
+- **Onboarding processes of the same company and document** (Convex `obtenerProcesosPorDocumento`, index `by_empresa_NIT`):
+  - **In progress:** a process in progress **blocks a new one**. The modal disables "Crear" and `crearMatrizRiesgo` refuses with `PROCESO_EN_CURSO` even for processes the user cannot see. `devolverFase` also refuses to reopen a COMPLETADO/RECHAZADO process while another one is in progress.
+  - **Finished:** COMPLETADO (inscrito) and RECHAZADO processes are listed, newest first; ANULADA ones are hidden. A rejected one can be reopened from its detail instead of starting over.
+  - **"Ver detalle"** opens the process detail stacked over the modal, keeping the form. A process of another responsable shows only its state and responsable.
 
 ## Roles and access levels
 

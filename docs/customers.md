@@ -34,13 +34,13 @@ I built the module on top of the shared onboarding foundation as part of Lab Trx
 
 ## How it works
 
-1. **Commercial responsable:** starts the process on `/customers/onboarding`: uploads the RUT (optional AI extraction), chooses a new registration or an update, enters the customer and risk data, sets the **payment terms**, and can attach a quotation and pre-load documents.
+1. **Commercial responsable:** starts the process on `/customers/onboarding`: uploads the RUT (optional AI extraction), enters the customer and risk data, sets the **payment terms**, and can attach a quotation and pre-load documents. The company's ERP customer catalog decides whether it is a new registration or an update (picked by hand only if the check cannot run); a process still in progress for the same document blocks a new one ([erp.md](erp.md)).
 2. **System:** computes the risk tier and emails the form link (valid for 30 days).
 3. **Customer:** confirms the registered document number and fills the **10-section form** (payment terms read-only). Documents can be uploaded now or later.
 4. **Legal representative:** signs electronically.
 5. **Customer and Cumplimiento (low risk):** the customer uploads any pending documents with the same link while Cumplimiento reviews each one. Rejected documents are emailed back to the customer.
 6. **Cumplimiento approver:** the tier for the evaluation type approves, or rejects with an internal reason and a reason the customer sees on their status page.
-7. **Contabilidad:** creates the customer and confirms, with optional closing notes. The closing emails with PDFs go to the customer, the internal team and Financiero.
+7. **Contabilidad:** creates the customer ("Crear en ERP" registers it in the simulated ERP) and confirms, with optional closing notes. The closing emails with PDFs go to the customer, the internal team and Financiero.
 
 ## Technical design
 
@@ -83,10 +83,11 @@ Returns and annulment work as for suppliers; see [onboarding.md](onboarding.md).
 
 - [`onboardingCustomers.test.ts`](<../apps/frontend/convex/onboardingCustomers.test.ts>): payment-term rule, the full flow including internal replacements, the exact notification list, tiered approval, returns (including rotating the form link) and annulment
 - [`onboardingFoundation.test.ts`](<../apps/frontend/convex/onboardingFoundation.test.ts>): tokens and tracked emails shared with suppliers
+- [`onboardingProcesosPorDocumento.test.ts`](<../apps/frontend/convex/onboardingProcesosPorDocumento.test.ts>): one process in progress per document and the existing-process alert, shared with suppliers
 
 ## Known limitations
 
 This is a portfolio extraction and hardening is ongoing. Server-side authorization for this module is described in the README's [security notes](../README.md#security-notes-and-known-limitations). Still open:
 
 - The notification gaps listed above: the customer learns about a rejection only on the status page.
-- Creating the customer in the accounting system is a manual confirmation, and closing emails depend on the browser tab staying open after the confirmation.
+- Creating the customer in the accounting system is still a manual confirmation ("Crear en ERP" writes to the simulated ERP only), and closing emails depend on the browser tab staying open after the confirmation.

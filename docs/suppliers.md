@@ -38,14 +38,14 @@ I designed and built the module end to end as part of Lab Trxckin: the phase sta
 
 ## How it works
 
-1. **Requester:** starts the process on `/suppliers/onboarding`: uploads the RUT (optional AI extraction fills the fields, showing its token cost), then fills the contact and risk-matrix data. The risk and evaluation type are computed on the server.
+1. **Requester:** starts the process on `/suppliers/onboarding`: uploads the RUT (optional AI extraction fills the fields, showing its token cost), then fills the contact and risk-matrix data. The risk and evaluation type are computed on the server. The document is checked against the company's ERP catalog (existing supplier → *actualización*) and against earlier processes: one still in progress blocks a new one, and previous ones open in a stacked detail view ([erp.md](erp.md)).
 2. **System:** completes phase I and emails the supplier a form link valid for 30 days.
 3. **Supplier contact:** confirms the registered document number, fills the **11-section form** with autosave, uploads every required document and submits.
 4. **Legal representative:** receives a signing link (14 days), reviews the PDF and signs on screen.
 5. **Cumplimiento (low risk) and Compras,** in parallel: each reviews its own documents. A rejected document is emailed to the supplier, who re-uploads it with the same link. Cumplimiento can also raise the PEP or restrictive-list answers, which recomputes the risk and adds documents.
 6. **Cumplimiento approver:** the tier for the evaluation type (low, medium or high) approves, or rejects with an internal reason and a reason the supplier sees.
 7. **Compras:** scores the supplier with an 8-criterion rubric (0–5: *aceptable*, *no aceptable* or *en reserva*) and confirms.
-8. **Contabilidad:** creates the supplier in the accounting system, optionally adds notes and files, and confirms. The supplier is emailed, and Financiero receives the phase-time report.
+8. **Contabilidad:** creates the supplier in the accounting system ("Crear en ERP" registers it in the simulated ERP and re-syncs the catalog), optionally adds notes and files, and confirms. The supplier is emailed, and Financiero receives the phase-time report.
 
 Management users can return the process to any completed phase or annul it; everything stays in the audit trail.
 
@@ -128,6 +128,7 @@ Eight criteria (experience, references, portfolio, certificates, guarantees, tec
 
 - [`onboardingSuppliers.test.ts`](<../apps/frontend/convex/onboardingSuppliers.test.ts>): the full flow, including company scope, the public gate, one-shot signing, both lanes, tiered approval, the rubric gate, returns and annulment
 - [`onboardingFoundation.test.ts`](<../apps/frontend/convex/onboardingFoundation.test.ts>): hash-only token storage, rotation, revocation, expiry and the tracked-email lifecycle
+- [`onboardingProcesosPorDocumento.test.ts`](<../apps/frontend/convex/onboardingProcesosPorDocumento.test.ts>): one process in progress per document, the existing-process alert (with redaction), the non-throwing stacked detail and the ERP registration
 - [`lib/onboarding/risk/compute.test.ts`](<../apps/frontend/lib/onboarding/risk/compute.test.ts>), [`lib/onboarding/documents/documents.test.ts`](<../apps/frontend/lib/onboarding/documents/documents.test.ts>), [`lib/onboarding/evaluacion-compras.test.ts`](<../apps/frontend/lib/onboarding/evaluacion-compras.test.ts>): risk, documents and rubric
 - [`supplier/route.test.ts`](<../apps/frontend/app/api/notifications/onboarding/supplier/route.test.ts>), [`webhooks/resend/onboarding/route.test.ts`](<../apps/frontend/app/api/webhooks/resend/onboarding/route.test.ts>): route authorization and webhook handling
 
@@ -137,8 +138,7 @@ This is a portfolio extraction and hardening is ongoing. Server-side authorizati
 
 - Phase V can be confirmed with a *no aceptable* result (the score itself is recomputed on the server from the criteria).
 - The document type and number the supplier confirms are part of the public projection, so re-checking them is not a strong second factor.
-- Creating the supplier in the accounting system is a manual confirmation; nothing is written back.
+- Creating the supplier in the accounting system is still a manual confirmation; "Crear en ERP" writes to the simulated ERP only (see [erp.md](erp.md) to go live).
 - Signed forms are re-rendered from current data on each download rather than archived.
 - Closing emails are sent from the browser after the final confirmation; if the tab closes first, they are not sent.
-- In this repo the catalog check never detects an existing supplier (it expects a `{ proveedores: [...] }` response while the NestJS endpoint returns an array), so every request starts as a new registration.
 - Each role has one user per company, and boards load up to 2,000 rows and filter in the browser.

@@ -67,7 +67,7 @@ At any active phase the current owner can return the invoice to an earlier phase
 - An email that fails processing is retried up to **5 times**; unprocessed emails older than 1 hour trigger an HMAC-signed alert, at most once per mailbox every 6 hours.
 - One email can create several invoices (one per XML). Unknown customer NITs are skipped rather than guessed.
 - Dedupe: first by **CUFE**, then by company + normalized invoice number + supplier NIT. On a match the row is updated, but a *valor contable* edited by a user is kept.
-- New suppliers are upserted into NestJS (`x-internal-key`).
+- The invoice keeps the supplier's NIT and name; the supplier catalog itself is filled only by the ERP sync ([erp.md](erp.md)).
 
 ### Workflow
 

@@ -14,6 +14,7 @@ An internal finance operations platform for multicompany operation: it ingests s
 - **Petty cash (*cajas menores*)** — cash boxes, movements and reimbursements that flow into the invoice workflow.
 - **Supplier onboarding** — risk-matrix intake (optional AI RUT extraction), public form with autosave and e-signature, Cumplimiento/Compras document review, Compras evaluation, accounting creation, PDF/Excel reports and tracked invitation emails (see [docs/onboarding.md](docs/onboarding.md)).
 - **Customer onboarding** — the same pipeline for customers with commercial payment terms, a single Cumplimiento lane and tiered approval.
+- **ERP catalog (simulated SIESA)** — a local clientes/proveedores catalog synced from the ERP (daily, on demand, CLI) decides *inscripción* vs *actualización*, blocks duplicate onboarding processes and feeds supplier lookups; a separate fake-SIESA app with its own database stands in for the real ERP (see [docs/erp.md](docs/erp.md)).
 - **Role/permission-based access per route** — roles and route permissions live in Postgres; nav and pages are filtered by them.
 - **Multi-company** — users are scoped to one or more companies, with an active-company switcher.
 - **Admin impersonation** — admins can act as another user (signed cookie, visible banner).
@@ -30,6 +31,7 @@ Each module has a guide with its context, operational and technical diagrams, a 
 | [Finance](docs/finance.md) | Employee advances with legalization, and petty cash with its reimbursement chain |
 | [Suppliers](docs/suppliers.md) | Risk-based supplier onboarding: public form, e-signature, parallel review, tiered approval, purchasing rubric |
 | [Customers](docs/customers.md) | Customer onboarding with payment terms and tiered approval |
+| [ERP catalog](docs/erp.md) | Clientes/proveedores synced from the (simulated) SIESA ERP, existence checks, "Crear en ERP" |
 
 Shared onboarding foundation: [docs/onboarding.md](docs/onboarding.md). Mailbox setup: [docs/billing-azure-setup.md](docs/billing-azure-setup.md).
 
@@ -50,9 +52,10 @@ flowchart LR
     B[Browser] --> N["Next.js 16<br/>AuthKit session, API routes (BFF)"]
     B -- realtime queries/mutations --> C
     N -- "ConvexHttpClient<br/>(CONVEX_SERVER_SECRET)" --> C["Convex<br/>realtime DB, workflows, crons"]
-    N -- "Bearer WorkOS token" --> S["NestJS<br/>users, roles, permissions"]
+    N -- "Bearer WorkOS token<br/>(+ x-internal-key for Crear en ERP)" --> S["NestJS<br/>users, roles, permissions,<br/>ERP catalog + sync"]
     S -- Prisma --> P[("Postgres<br/>(Neon)")]
-    C -- "x-internal-key<br/>(NEST_INTERNAL_KEY)" --> S
+    S -- "ConniKey / ConniToken" --> E["ERP simulator<br/>fake SIESA (NestJS)"]
+    E -- Prisma --> PE[("Its own Postgres")]
     C -- "notifications<br/>(internal key / HMAC)" --> N
     C -- "app-only Mail.Read" --> G[Microsoft Graph]
     N --> R[Resend]
@@ -66,7 +69,7 @@ flowchart LR
 **Why the split?**
 
 - **Convex** holds the workflow data (invoices, tasks, advances, petty cash). Every screen is a live subscription, workflow steps are transactional mutations, and crons/actions handle mailbox ingestion, SLA digests and dashboard reconciliation without extra infrastructure.
-- **NestJS + Postgres** own identity and RBAC (users, roles, route permissions, processes, companies, suppliers). This data is relational, changes rarely and is shared with other systems, so it stays in a conventional SQL service.
+- **NestJS + Postgres** own identity and RBAC (users, roles, route permissions, processes, companies) and the ERP catalog of clientes and proveedores. This data is relational, changes rarely and is shared with other systems, so it stays in a conventional SQL service. The catalog is a replica of the ERP (SIESA), refreshed by a sync; locally a separate fake-SIESA app plays the ERP ([docs/erp.md](docs/erp.md)).
 - **Next.js** is the BFF: it holds the WorkOS session, proxies to Nest, and syncs each user's privileges into Convex (`POST /api/me` → `users.syncPrivileges`, guarded by the server secret) so Convex functions can authorize without calling Nest.
 
 ## Tech stack
@@ -108,6 +111,7 @@ pnpm install
 ```bash
 cp apps/frontend/.env.local.example apps/frontend/.env.local
 cp apps/backend/.env.example apps/backend/.env
+cp apps/erp-simulator/.env.example apps/erp-simulator/.env
 ```
 
 Generate every secret with:
@@ -142,9 +146,7 @@ npx convex env set WORKOS_CLIENT_ID "client_..."
 npx convex env set CONVEX_SERVER_SECRET "<same value as in .env.local>"
 npx convex env set NOTIFICATIONS_INTERNAL_KEY "<same value as in .env.local>"
 npx convex env set FACTURACION_SLA_DIGEST_SECRET "<same value as in .env.local>"
-npx convex env set NEST_INTERNAL_KEY "<same value as in apps/backend/.env>"
 npx convex env set FRONTEND_URL "http://localhost:3000"
-npx convex env set BACKEND_URL "http://localhost:8000"
 npx convex env set DEFAULT_CONTACT_EMAIL "no-email@example.com"
 npx convex env set FACTURACION_GRAPH_MAILBOXES "ops@example.com"
 cd ../..
@@ -166,21 +168,40 @@ pnpm --filter backend prisma:seed
 
 The seed creates the `admin` and `member` roles and their route permissions.
 
-**7. Run everything**
+**7. ERP simulator (fake SIESA)**
+
+Create a second database in your Neon project (e.g. `erp_sim`) and set `ERP_SIM_DATABASE_URL`, `ERP_SIM_DIRECT_URL`, `ERP_SIM_CONNI_KEY` and `ERP_SIM_CONNI_TOKEN` in `apps/erp-simulator/.env`; set `ERP_BASE_URL=http://localhost:8100` and the same key/token as `ERP_CONNI_KEY`/`ERP_CONNI_TOKEN` in `apps/backend/.env`. For the "Crear en ERP" button, copy the backend's `NEST_INTERNAL_KEY` into `apps/frontend/.env.local`. Then:
+
+```bash
+pnpm --filter erp-simulator prisma:migrate
+```
+
+```bash
+pnpm --filter erp-simulator prisma:seed
+```
+
+After step 8 starts everything, load the catalog once (it then syncs daily; see [docs/erp.md](docs/erp.md)):
+
+```bash
+pnpm --filter backend erp:sync
+```
+
+**8. Run everything**
 
 ```bash
 pnpm dev
 ```
 
-This starts Nest (watch), Next.js and `convex dev` side by side.
+This starts Nest (watch), Next.js, `convex dev` and the ERP simulator side by side.
 
 | Service | URL |
 | --- | --- |
 | Frontend | http://localhost:3000 |
 | Nest API | http://localhost:8000/api/v1 (health: `/health`) |
 | Swagger | http://localhost:8000/api (when `NODE_ENV != production` or `ENABLE_SWAGGER=true`) |
+| ERP simulator | http://localhost:8100 (Swagger: `/docs`) |
 
-**8. Make yourself admin**
+**9. Make yourself admin**
 
 Sign in once at http://localhost:3000 (new users are created with the `member` role), then:
 
@@ -208,6 +229,7 @@ Generate secrets with `openssl rand -hex 32`. Secrets marked **shared** must be 
 | `CONVEX_SERVER_SECRET` | yes | **Shared** with Convex; guards server-to-server Convex calls | Generate |
 | `IMPERSONATE_COOKIE_SECRET` | yes | HMAC key for the impersonation cookie (dedicated) | Generate |
 | `BACKEND_URL` | prod | Nest base URL (defaults to `http://localhost:8000` in dev) | Your deployment |
+| `NEST_INTERNAL_KEY` | for "Crear en ERP" | **Shared** with Nest; `x-internal-key` of `/api/erp/terceros` (server-only) | Same as Nest |
 | `NEXT_PUBLIC_APP_URL` | no | Public URL used in email links (default `http://localhost:3000`) | Your deployment |
 | `NOTIFICATIONS_INTERNAL_KEY` | for email | **Shared** with Convex; `x-notifications-key` header | Generate |
 | `FACTURACION_SLA_DIGEST_SECRET` | for email | **Shared** with Convex; HMAC for SLA digest / sync alerts | Generate |
@@ -227,8 +249,6 @@ Generate secrets with `openssl rand -hex 32`. Secrets marked **shared** must be 
 | `FACTURACION_SLA_DIGEST_SECRET` | for email | **Shared** with Next; signs digest/alert requests | Same as Next |
 | `FACTURACION_SLA_DIGEST_DRY_RUN` | no | `true` builds the digest without sending | — |
 | `FRONTEND_URL` | yes | Next URL Convex calls for notifications (default `http://localhost:3000`) | Your deployment / tunnel |
-| `BACKEND_URL` | no | Nest URL for supplier upserts (skipped if unset/unreachable) | Your deployment / tunnel |
-| `NEST_INTERNAL_KEY` | no | **Shared** with Nest; `x-internal-key` header | Same as Nest |
 | `ENABLE_BACKGROUND_JOBS` | no | `true` lets crons do work (usually prod only) | — |
 | `DEFAULT_CONTACT_EMAIL` | no | Fallback email for actors without one | Any placeholder |
 | `FACTURACION_GRAPH_MAILBOXES` | no | Comma-separated recipients of ingest alerts | Your team |
@@ -243,13 +263,28 @@ Generate secrets with `openssl rand -hex 32`. Secrets marked **shared** must be 
 | `DIRECT_URL` | no | Direct connection for Prisma migrations | Neon dashboard |
 | `WORKOS_CLIENT_ID` | yes | Access token verification | WorkOS dashboard |
 | `WORKOS_API_KEY` | yes | User lookups, `promote-admin` | WorkOS dashboard |
-| `NEST_INTERNAL_KEY` | yes | **Shared** with Convex | Generate |
+| `NEST_INTERNAL_KEY` | yes | **Shared** with Next; guards server-to-server routes | Generate |
+| `ERP_BASE_URL` | for the ERP | ERP base URL: the simulator (`http://localhost:8100`) or `https://servicios.siesacloud.com` | — |
+| `ERP_CONNI_KEY`, `ERP_CONNI_TOKEN` | for the ERP | SIESA credentials; **shared** with the simulator's `ERP_SIM_CONNI_*` | Generate / SIESA |
+| `ERP_INSTANCIA_1_ID_COMPANIA`, `ERP_INSTANCIA_2_ID_COMPANIA` | no | SIESA instance ids (default `5001`, `5002`, the simulator's) | SIESA |
+| `ERP_SYNC_PROGRAMADA`, `ERP_SYNC_CRON`, `ERP_SYNC_TZ` | no | Daily catalog sync (default on, `0 0 2 * * *`, `America/Bogota`) | — |
+| `ERP_TIMEOUT_MS`, `ERP_TAM_PAGINA` | no | ERP request timeout (30000) and page size (500) | — |
 | `FRONTEND_URL` | no | CORS origin (default `http://localhost:3000`) | — |
 | `BACKEND_PORT` | no | HTTP port (default `8000`) | — |
 | `NODE_ENV` | no | `production` disables Swagger | — |
 | `ENABLE_SWAGGER` | no | `true` forces Swagger in production | — |
 
-The backend fails fast at boot if any required variable is missing (`src/config/env.ts`).
+The backend fails fast at boot if any required variable is missing (`src/config/env.ts`). Without the `ERP_*` connection the catalog stays readable, but nothing syncs.
+
+### ERP simulator — `apps/erp-simulator/.env`
+
+| Name | Required | Description | Where to get it |
+| --- | --- | --- | --- |
+| `ERP_SIM_DATABASE_URL` | yes | Pooled connection to its **own** database (never the app's) | Neon dashboard |
+| `ERP_SIM_DIRECT_URL` | no | Direct connection for its migrations and seed | Neon dashboard |
+| `ERP_SIM_CONNI_KEY`, `ERP_SIM_CONNI_TOKEN` | yes | `ConniKey` / `ConniToken` it accepts; **shared** with Nest's `ERP_CONNI_*` | Generate |
+| `ERP_SIM_PORT` | no | HTTP port (default `8100`) | — |
+| `NODE_ENV`, `ENABLE_SWAGGER` | no | Swagger (`/docs`) outside production | — |
 
 ## Scripts
 
@@ -257,7 +292,7 @@ Run from the repo root.
 
 | Command | What it does |
 | --- | --- |
-| `pnpm dev` | Nest (watch) + Next.js + `convex dev` via `concurrently` |
+| `pnpm dev` | Nest (watch) + Next.js + `convex dev` + ERP simulator via `concurrently` |
 | `pnpm build` | `turbo run build` (Nest build, `tsc` + `next build`) |
 | `pnpm lint` | ESLint in every app |
 | `pnpm typecheck` | `tsc --noEmit` (frontend, `convex/`, backend, backend scripts) |
@@ -265,6 +300,8 @@ Run from the repo root.
 | `pnpm --filter backend prisma:migrate` | `prisma migrate dev` |
 | `pnpm --filter backend prisma:seed` | Seed roles and route permissions |
 | `pnpm --filter backend promote-admin <email>` | Give an existing WorkOS user the `admin` role |
+| `pnpm --filter backend erp:sync [--empresa N] [--entidad proveedores\|clientes]` | Sync the ERP catalog now |
+| `pnpm --filter erp-simulator prisma:migrate` / `prisma:seed [--reset]` | Create / load the fake SIESA database |
 | `pnpm --filter frontend convex` | `convex dev` alone |
 
 ## Project structure
@@ -281,10 +318,11 @@ apps/
     store/                  empresa-store.ts (active company: zustand + localStorage + cookie)
     proxy.ts                AuthKit middleware (public paths, redirect URI)
   backend/                  NestJS API
-    src/                    auth/, usuarios/, roles/, permisos-roles/, procesos/, proveedores/, health/
+    src/                    auth/, usuarios/, roles/, permisos-roles/, procesos/, terceros/ (ERP catalog reads), erp/ (SIESA client, sync, scheduler), health/
     prisma/                 schema.prisma, migrations/, seed.ts
-    scripts/                promote-admin.ts
-docs/                       module guides (billing, finance, suppliers, customers), onboarding.md, billing-azure-setup.md
+    scripts/                promote-admin.ts, erp-sync.ts
+  erp-simulator/            Fake SIESA (NestJS) with its own Postgres: standard queries, import connector, seed data
+docs/                       module guides (billing, finance, suppliers, customers, erp), onboarding.md, billing-azure-setup.md
   diagrams/                 Excalidraw sources (.excalidraw) and light/dark SVG exports
 ```
 
@@ -305,7 +343,8 @@ pnpm test
 ```
 
 - **Frontend**: Vitest with two projects — `convex` (Convex functions tested with `convex-test` in the edge runtime, including the end-to-end onboarding flows) and `app` (Node: API route auth, impersonation, parsers, onboarding payload/webhook validation, risk matrices and report builders).
-- **Backend**: Vitest specs for guards, impersonation and env validation.
+- **Backend**: Vitest specs for guards, impersonation, env validation and the ERP integration (client paging/retries, row mapping, sync diff, import document, NIT check digits).
+- **ERP simulator**: Vitest specs for the SIESA filter grammar, pagination, row projection, import validation and the deterministic data generator.
 - Optional fixture: set `DIAN_XLSX_FIXTURE` to a real DIAN export to run the extra XLSX parser test.
 
 ## Adding a module
@@ -347,9 +386,9 @@ This is a portfolio project extracted from a real internal tool. The Convex depl
 - **Legacy data.** Advances rejected after disbursement before this pass may still hold active invoice crosses, and reimbursements whose aggregate key drifted before the fix need an aggregate repair.
 - **Admin maintenance mutations** such as `limpiarDatosAnticipos` are destructive by design; demo accounts should not have full access.
 - **No rate limiting** on the NestJS API.
-- **Convex → local services.** Convex runs in the cloud, so `FRONTEND_URL`/`BACKEND_URL` pointing at `localhost` will not be reachable from a cloud dev deployment; use a tunnel to test notifications and supplier upserts locally.
+- **Convex → local services.** Convex runs in the cloud, so a `FRONTEND_URL` pointing at `localhost` will not be reachable from a cloud dev deployment; use a tunnel to test notifications locally. (Convex no longer calls Nest: every ERP call goes through the Next BFF.)
 
-Also in place: `/api/notifications/*` only accept the internal key or an HMAC signature with a 5-minute window; Nest verifies WorkOS tokens and guards internal routes with `NEST_INTERNAL_KEY`; user privileges reach Convex only through `POST /api/me` → `users.syncPrivileges`; impersonation uses a dedicated signed cookie; public onboarding links carry random per-inscription tokens (hashed at rest, scoped, rotated on resend and on "Copiar enlace", revoked on annulment); Resend webhooks are verified with the Svix signature; Helmet, strict DTO validation and fail-fast env checks on Nest.
+Also in place: `/api/notifications/*` only accept the internal key or an HMAC signature with a 5-minute window; Nest verifies WorkOS tokens, checks route permissions and company scope on the ERP catalog routes, and guards internal routes with `NEST_INTERNAL_KEY`; user privileges reach Convex only through `POST /api/me` → `users.syncPrivileges`; impersonation uses a dedicated signed cookie; public onboarding links carry random per-inscription tokens (hashed at rest, scoped, rotated on resend and on "Copiar enlace", revoked on annulment); Resend webhooks are verified with the Svix signature; Helmet, strict DTO validation and fail-fast env checks on Nest.
 
 ## My role
 

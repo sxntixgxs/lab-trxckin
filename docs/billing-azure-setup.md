@@ -30,8 +30,6 @@ npx convex env set MS_SECONDARY_TENANT_ID "<tenant-id>"
 npx convex env set MS_SECONDARY_CLIENT_ID "<client-id>"
 npx convex env set MS_SECONDARY_CLIENT_SECRET "<secret>"
 npx convex env set ENABLE_BACKGROUND_JOBS true # crons only do work when "true"
-npx convex env set NEST_INTERNAL_KEY "<same as Nest NEST_INTERNAL_KEY>"
-npx convex env set BACKEND_URL "http://localhost:8000"
 npx convex env set FRONTEND_URL "http://localhost:3000"
 npx convex env set DEFAULT_CONTACT_EMAIL "no-email@example.com"
 npx convex env set FACTURACION_GRAPH_MAILBOXES "ops@example.com,admin@example.com" # sync-alert recipients
@@ -42,7 +40,7 @@ npx convex env set CONVEX_SERVER_SECRET "<same as Next>"
 
 Generate secrets with `openssl rand -hex 32`. The full list lives in `apps/frontend/convex/.env.convex.example`.
 
-`FRONTEND_URL` and `BACKEND_URL` must be reachable from Convex's cloud; with a cloud dev deployment use a tunnel instead of `localhost` to test alerts and supplier upserts.
+`FRONTEND_URL` must be reachable from Convex's cloud; with a cloud dev deployment use a tunnel instead of `localhost` to test alerts.
 
 Next.js (`apps/frontend/.env.local`) also needs:
 
@@ -50,8 +48,6 @@ Next.js (`apps/frontend/.env.local`) also needs:
 - `NOTIFICATIONS_INTERNAL_KEY` (must match Convex)
 - `FACTURACION_SLA_DIGEST_SECRET` (must match Convex; signs sync alerts and the SLA digest)
 - `CONVEX_SERVER_SECRET` (must match Convex)
-
-Nest (`apps/backend/.env`) needs `NEST_INTERNAL_KEY` matching Convex.
 
 ## Mailbox
 
