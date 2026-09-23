@@ -39,7 +39,7 @@ Shared onboarding foundation: [docs/onboarding.md](docs/onboarding.md). Mailbox 
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/architecture.dark.svg">
-  <img alt="Architecture: browser, Next.js BFF, Convex, NestJS and Postgres, with WorkOS, Microsoft Graph, Resend and OpenRouter" src="docs/diagrams/architecture.svg">
+  <img alt="Architecture: browser, Next.js BFF, Convex, NestJS and Postgres, the ERP simulator with its own Postgres, with WorkOS, Microsoft Graph, Resend and OpenRouter" src="docs/diagrams/architecture.svg">
 </picture>
 
 The diagrams are Excalidraw files: the `.excalidraw` sources in [`docs/diagrams`](docs/diagrams) open in [excalidraw.com](https://excalidraw.com).
