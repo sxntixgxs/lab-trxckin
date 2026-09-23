@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { api } from "@/convex/_generated/api";
-import type { Id } from "@/convex/_generated/dataModel";
 import { requireApiSession, userHasAccessToAny } from "@/lib/api-route-auth";
-import { convexServer, getConvexServerSecret } from "@/lib/convexServerClient";
 import { RUTAS_SISTEMA } from "@/lib/rutas-sistema";
 
 export const runtime = "nodejs";
@@ -76,41 +73,28 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const body = (await req.json().catch(() => null)) as { storageId?: unknown } | null;
-  const storageId = typeof body?.storageId === "string" ? body.storageId.trim() : "";
-  if (!storageId) {
-    return NextResponse.json({ error: "storageId requerido" }, { status: 400 });
+  // The RUT the user just picked travels in the request (multipart `file`). The route used
+  // to take a Convex storage id and resolve it with the server secret, which let any
+  // onboarding user send any stored file (invoices, supports...) to the extraction model.
+  const declaredLength = Number(req.headers.get("content-length") ?? 0);
+  if (declaredLength > MAX_FILE_BYTES + 64 * 1024) {
+    return NextResponse.json({ error: "El archivo excede 10 MB" }, { status: 413 });
+  }
+  const form = await req.formData().catch(() => null);
+  const file = form?.get("file");
+  if (!(file instanceof Blob)) {
+    return NextResponse.json({ error: "Archivo requerido" }, { status: 400 });
   }
 
-  let storageUrl: string | null;
-  try {
-    storageUrl = await convexServer.query(api.facturacionStorage.getUrlDesdeServidor, {
-      secret: getConvexServerSecret(),
-      storageId: storageId as Id<"_storage">,
-    });
-  } catch (error) {
-    console.error("[extract-rut] No fue posible resolver el archivo de Convex:", error);
-    return NextResponse.json({ error: "No fue posible resolver el archivo" }, { status: 502 });
-  }
-  if (!storageUrl) {
-    return NextResponse.json({ error: "Archivo no encontrado" }, { status: 404 });
-  }
-
-  const fileRes = await fetch(storageUrl, { cache: "no-store" });
-  if (!fileRes.ok) {
-    return NextResponse.json({ error: "No se pudo obtener el archivo" }, { status: 502 });
-  }
-
-  const contentType = (fileRes.headers.get("content-type") ?? "").split(";", 1)[0].trim().toLowerCase();
+  const contentType = (file.type ?? "").split(";", 1)[0].trim().toLowerCase();
   if (!ALLOWED_MEDIA_TYPES.has(contentType)) {
     return NextResponse.json({ error: "Tipo de archivo no permitido" }, { status: 415 });
   }
-  const contentLength = Number(fileRes.headers.get("content-length") ?? 0);
-  if (contentLength > MAX_FILE_BYTES) {
+  if (file.size > MAX_FILE_BYTES) {
     return NextResponse.json({ error: "El archivo excede 10 MB" }, { status: 413 });
   }
 
-  const buffer = await fileRes.arrayBuffer();
+  const buffer = await file.arrayBuffer();
   if (buffer.byteLength === 0) {
     return NextResponse.json({ error: "El archivo está vacío" }, { status: 400 });
   }

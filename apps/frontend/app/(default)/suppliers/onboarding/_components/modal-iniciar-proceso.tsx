@@ -387,11 +387,9 @@ export default function ModalIniciarProceso({ open, onOpenChange }: ModalIniciar
       setPhasesDone(["uploading"]);
 
       setPhase("extracting");
-      const extractRes = await fetch("/api/extract-rut", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ storageId }),
-      });
+      const extractBody = new FormData();
+      extractBody.append("file", file);
+      const extractRes = await fetch("/api/extract-rut", { method: "POST", body: extractBody });
       if (extractRes.status === 503) {
         // Extraction not configured: continue with manual entry.
         setExtractSkipped("La extracción automática con IA no está configurada. Completa los datos manualmente.");
