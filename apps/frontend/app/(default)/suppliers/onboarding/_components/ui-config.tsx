@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { ConvexError } from "convex/values";
 import { Ban, Briefcase, Building2, CheckCircle2, FileText, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -141,6 +142,14 @@ export function getInitials(name: string): string {
 
 /** Extracts the human message from a Convex error (strips request ids and prefixes). */
 export function getOnboardingErrorMessage(error: unknown, fallback = "No se pudo completar la acción."): string {
+  // Structured errors (e.g. PROCESO_EN_CURSO) carry `{ code, message }`.
+  if (error instanceof ConvexError) {
+    const data: unknown = error.data;
+    if (typeof data === "string" && data.trim()) return data;
+    if (typeof data === "object" && data !== null && typeof (data as { message?: unknown }).message === "string") {
+      return (data as { message: string }).message;
+    }
+  }
   if (!(error instanceof Error)) return fallback;
   const message = error.message;
   const uncaught = message.match(/Uncaught Error:\s*([^]*?)(?:\. at handler|$)/);

@@ -1,6 +1,6 @@
 // Inscripción de PROVEEDORES — funciones internas (identidad WorkOS).
 // El actor se deriva siempre de la identidad; ningún id de usuario viene del cliente.
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { mutation, query, type MutationCtx, type QueryCtx } from "../_generated/server";
 import { supplierDocLabel, supplierDocRevisorRol } from "../../lib/onboarding/documents/suppliers";
@@ -22,6 +22,11 @@ import { buildOnboardingSearchText } from "../lib/onboarding/searchText";
 import { programarCorreoRastreado, TIPOS_RASTREADOS } from "../lib/onboarding/correos";
 import { programarNotificacion } from "../lib/onboarding/notificar";
 import { obtenerRolConfig, resolverAsignado, type OnboardingRol } from "../lib/onboarding/phases";
+import {
+  inscripcionesPorDocumento,
+  procesoEnCursoPorDocumento,
+  resumirProcesos,
+} from "../lib/onboarding/procesosPorDocumento";
 import { contactoFirmaDe, contactoFormularioDe, contactoTerceroDe, normalizeNumeroDocumento } from "../lib/onboarding/refs";
 import {
   FASE_LANE_POR_GRUPO,
@@ -258,6 +263,13 @@ export const crearMatrizRiesgo = mutation({
     const numeroDocumento = args.numeroDocumento.trim();
     const NIT = normalizeNumeroDocumento(numeroDocumento);
     if (!NIT) throw new Error("El número de documento es requerido.");
+    // Un solo proceso en curso por documento y empresa, aunque el actor no vea el otro.
+    if (await procesoEnCursoPorDocumento(ctx, MODULO, args.empresa, numeroDocumento, args.tipoDocumento)) {
+      throw new ConvexError({
+        code: "PROCESO_EN_CURSO",
+        message: "Ya hay un proceso en curso para este documento en esta empresa. Termínalo o anúlalo antes de iniciar otro.",
+      });
+    }
 
     const { riesgo, tipoEvaluacion } = computeSupplierRisk({
       montoAnual: args.montoAnual,
@@ -394,6 +406,47 @@ export const obtenerInscripcionPorId = query({
     if (!ins) return null;
     await requireVer(ctx, ins);
     return ins;
+  },
+});
+
+/**
+ * Procesos de la empresa para un documento: alerta del modal "Iniciar proceso". Los procesos en
+ * curso bloquean uno nuevo; los que el actor no puede ver llegan sin id ni razón social.
+ */
+export const obtenerProcesosPorDocumento = query({
+  args: { empresa: v.number(), numeroDocumento: v.string(), tipoDocumento: v.optional(tipoDocumentoValidator) },
+  handler: async (ctx, args) => {
+    const { access } = await resolveOnboardingAccess(ctx, MODULO, args.empresa);
+    const inscripciones = await inscripcionesPorDocumento(ctx, MODULO, args.empresa, args.numeroDocumento, args.tipoDocumento);
+    return await resumirProcesos(ctx, access, inscripciones);
+  },
+});
+
+/**
+ * Detalle de una inscripción abierto sobre el modal "Iniciar proceso", con el mismo acceso que el
+ * tablero. Devuelve null (en vez de lanzar) si no existe o el actor no puede verla.
+ */
+export const obtenerDetalleInscripcion = query({
+  args: { inscripcionId: v.id("onboardingProveedores") },
+  handler: async (ctx, args) => {
+    const ins = await ctx.db.get("onboardingProveedores", args.inscripcionId);
+    if (!ins) return null;
+    let access: OnboardingAccess;
+    try {
+      ({ access } = await resolveOnboardingAccess(ctx, MODULO, ins.empresa));
+    } catch {
+      return null;
+    }
+    if (!puedeVerInscripcion(access, ins)) return null;
+    return {
+      access: { nivel: access.nivel, isAdmin: access.isAdmin, usuarioId: access.usuarioId, roles: access.roles },
+      puedeVerAdjuntos: access.nivel === "full" || access.nivel === "responsable",
+      inscripcion: {
+        ...ins,
+        ultimaFaseInicio: ins.faseActualDesde ?? ins._creationTime,
+        tipoSolicitud: ins.datos_generales_01.tipoSolicitud ?? "INSCRIPCIÓN",
+      },
+    };
   },
 });
 
@@ -1096,6 +1149,15 @@ export const devolverFase = mutation({
     const actor = await requireGestionInscripcion(ctx, MODULO, ins);
     const motivo = args.motivo.trim();
     if (!motivo) throw new Error("Debes registrar una razón para devolver el proceso a esta fase.");
+    if (ins.faseActual === "COMPLETADO" || ins.faseActual === "RECHAZADO") {
+      const d = ins.datos_generales_01;
+      if (await procesoEnCursoPorDocumento(ctx, MODULO, ins.empresa, d.numeroDocumento, d.tipoDocumento, ins._id)) {
+        throw new ConvexError({
+          code: "PROCESO_EN_CURSO",
+          message: "No se puede reabrir: ya hay otro proceso en curso para este documento en esta empresa.",
+        });
+      }
+    }
 
     const todas = (await listFasesIns(ctx, ins._id)).sort((a, b) => (a.fechaInicio ?? 0) - (b.fechaInicio ?? 0));
     const idx = todas.findIndex((f) => f._id === args.faseId);

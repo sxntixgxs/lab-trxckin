@@ -165,6 +165,7 @@ export const onboardingProveedores = defineTable({
 })
   .index("by_empresa", ["empresa"])
   .index("by_empresa_faseActual", ["empresa", "faseActual"])
+  .index("by_empresa_NIT", ["empresa", "NIT"])
   .index("by_NIT", ["NIT"])
   .index("by_responsableId", ["matriz_00.responsableId"])
   .searchIndex("search_text", { searchField: "searchText", filterFields: ["empresa"] });
@@ -324,6 +325,7 @@ export const onboardingClientes = defineTable({
 })
   .index("by_empresa", ["empresa"])
   .index("by_empresa_faseActual", ["empresa", "faseActual"])
+  .index("by_empresa_NIT", ["empresa", "NIT"])
   .index("by_NIT", ["NIT"])
   .index("by_responsableId", ["matriz_00.responsableId"])
   .searchIndex("search_text", { searchField: "searchText", filterFields: ["empresa"] });

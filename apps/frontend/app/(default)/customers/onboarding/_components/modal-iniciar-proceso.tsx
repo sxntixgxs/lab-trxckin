@@ -25,7 +25,8 @@ import { customerDocLabel, getCustomerDocKeys } from "@/lib/onboarding/documents
 import { computeCustomerRisk, CUSTOMER_MONTO_OPTIONS, CUSTOMER_SECTOR_OPTIONS } from "@/lib/onboarding/risk/customer-matrix";
 import { JURISDICCION_INTERNACIONAL_OPTIONS, JURISDICCION_NACIONAL_OPTIONS, TIPO_DOCUMENTO_OPTIONS, TIPO_PERSONA_LABELS, TIPO_PERSONA_OPTIONS } from "@/lib/onboarding/risk/shared";
 import { cn } from "@/lib/utils";
-import { FORMA_PAGO_OPTIONS, getOnboardingErrorMessage, PLAZO_OPTIONS, plazosPara, RIESGO_BADGE_SOLID } from "./ui-config";
+import { DetailDialogById } from "./detail-dialog";
+import { FASE_CONFIG, FORMA_PAGO_OPTIONS, getOnboardingErrorMessage, PLAZO_OPTIONS, plazosPara, RIESGO_BADGE_SOLID } from "./ui-config";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 const schema = z.object({
@@ -138,7 +139,8 @@ const INPUT_CLS = "border-slate-200 bg-slate-50";
  * Starts a customer process: upload the RUT, optionally prefill the form with AI extraction,
  * compute the risk live, capture the commercial payment terms and pre-load documents.
  * The request type (inscripción / actualización) comes from the company's ERP catalog; it is
- * picked by hand only when that check cannot run.
+ * picked by hand only when that check cannot run. An in-progress process of the same document
+ * blocks a new one.
  */
 export default function ModalIniciarProceso({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const [step, setStep] = useState<Step>("idle");
@@ -156,6 +158,8 @@ export default function ModalIniciarProceso({ open, onOpenChange }: { open: bool
   const fileInputRef = useRef<HTMLInputElement>(null);
   /** Only used when the ERP check cannot run; recorded as tipoSolicitudOrigen MANUAL. */
   const [tipoSolicitudManual, setTipoSolicitudManual] = useState<TipoSolicitud | null>(null);
+  const [detalleId, setDetalleId] = useState<Id<"onboardingClientes"> | null>(null);
+  const verDetalleOrigen = useRef<HTMLElement | null>(null);
 
   const { empresaActiva } = useEmpresaFilter();
   const generateUploadUrl = useMutation(api.facturacionStorage.generateUploadUrl);
@@ -192,7 +196,7 @@ export default function ModalIniciarProceso({ open, onOpenChange }: { open: bool
     },
   });
 
-  // ERP catalog check for the typed document (typing, RUT extraction or ACME fill).
+  // ERP catalog + existing processes for the typed document (typing, RUT extraction or ACME fill).
   const verificacion = useVerificacionTercero({
     modulo: "customer",
     empresa: empresaActiva,
@@ -202,7 +206,7 @@ export default function ModalIniciarProceso({ open, onOpenChange }: { open: bool
   });
   const manualRequerido = verificacion.erp.estado === "no_disponible";
   const tipoSolicitud: TipoSolicitud | null = verificacion.tipoSugerido ?? (manualRequerido ? tipoSolicitudManual : null);
-  const puedeCrear = tipoSolicitud !== null;
+  const puedeCrear = tipoSolicitud !== null && !verificacion.bloqueado && !verificacion.cargandoProcesos;
   const tipoPersona = form.watch("tipoPersona");
   const formaPago = form.watch("formaPago");
   const codigoCiiu = form.watch("codigoCiiu");
@@ -391,6 +395,7 @@ export default function ModalIniciarProceso({ open, onOpenChange }: { open: bool
     setExtractSkipped(null);
     setPhasesDone([]);
     setTipoSolicitudManual(null);
+    setDetalleId(null);
     onOpenChange(false);
   };
 
@@ -401,6 +406,10 @@ export default function ModalIniciarProceso({ open, onOpenChange }: { open: bool
     }
     if (risk.riesgo === "INDEFINIDO" || risk.tipoEvaluacion === "INDEFINIDO") {
       toast.error("Completa los factores de riesgo antes de enviar el formulario al cliente.");
+      return;
+    }
+    if (verificacion.bloqueado) {
+      toast.error("Ya hay un proceso en curso para este documento en esta empresa.");
       return;
     }
     if (tipoSolicitud === null) {
@@ -664,7 +673,12 @@ export default function ModalIniciarProceso({ open, onOpenChange }: { open: bool
                       <VerificacionTerceroPanel
                         verificacion={verificacion}
                         entidad="cliente"
+                        faseConfig={FASE_CONFIG}
                         razonSocialFormulario={form.watch("razonSocial")}
+                        onVerDetalle={(id) => {
+                          verDetalleOrigen.current = document.activeElement as HTMLElement | null;
+                          setDetalleId(id as Id<"onboardingClientes">);
+                        }}
                       />
                       {manualRequerido && (
                         <div className="space-y-1.5">
@@ -941,11 +955,13 @@ export default function ModalIniciarProceso({ open, onOpenChange }: { open: bool
                       type="submit"
                       disabled={form.formState.isSubmitting || !puedeCrear}
                       title={
-                        !verificacion.listo
-                          ? "Ingresa el número de documento"
-                          : manualRequerido && tipoSolicitudManual === null
-                            ? "Elige el tipo de solicitud"
-                            : undefined
+                        verificacion.bloqueado
+                          ? "Hay un proceso en curso para este documento"
+                          : !verificacion.listo
+                            ? "Ingresa el número de documento"
+                            : manualRequerido && tipoSolicitudManual === null
+                              ? "Elige el tipo de solicitud"
+                              : undefined
                       }
                       className="gap-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
                     >
@@ -965,6 +981,19 @@ export default function ModalIniciarProceso({ open, onOpenChange }: { open: bool
             )}
           </>
         )}
+
+        {/* Stacks over this modal (portaled; Radix keeps the modal open underneath), so the form is kept. */}
+        <DetailDialogById
+          inscripcionId={detalleId}
+          open={detalleId !== null}
+          onOpenChange={(abierto) => {
+            if (!abierto) setDetalleId(null);
+          }}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            verDetalleOrigen.current?.focus();
+          }}
+        />
       </DialogContent>
     </Dialog>
   );

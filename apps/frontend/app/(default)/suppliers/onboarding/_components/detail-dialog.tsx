@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Component, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import {
@@ -51,9 +51,9 @@ import {
   TipoSolicitudChip,
 } from "./ui-config";
 
-type SeguimientoData = FunctionReturnType<typeof api.onboarding.suppliers.obtenerInscripcionesConUltimaFase>;
-/** A board row (`obtenerInscripcionesConUltimaFase`): the document plus `ultimaFaseInicio` and `tipoSolicitud`. */
-type Inscripcion = SeguimientoData["inscripciones"][number];
+type DetalleInscripcion = NonNullable<FunctionReturnType<typeof api.onboarding.suppliers.obtenerDetalleInscripcion>>;
+/** Same shape as the board rows (`obtenerInscripcionesConUltimaFase`): the document plus `ultimaFaseInicio` and `tipoSolicitud`. */
+type Inscripcion = DetalleInscripcion["inscripcion"];
 
 function getPayloadString(payload: unknown, key: string) {
   if (!payload || typeof payload !== "object") return undefined;
@@ -67,7 +67,7 @@ function getPayloadString(payload: unknown, key: string) {
  * read-only modes. Client-side hints only: the server re-checks every action.
  */
 export function permisosDetalle(
-  access: SeguimientoData["access"] | undefined,
+  access: DetalleInscripcion["access"] | undefined,
   inscripcion: Pick<Inscripcion, "matriz_00"> | null,
 ): { allowDevolver: boolean; puedeGestionarCorreo: boolean } {
   const nivel = access?.nivel;
@@ -84,6 +84,7 @@ export function DetailDialog({
   inscripcion,
   open,
   onOpenChange,
+  onCloseAutoFocus,
   allowDevolver,
   puedeGestionarCorreo,
   puedeVerAdjuntos,
@@ -91,6 +92,8 @@ export function DetailDialog({
   inscripcion: Inscripcion | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Radix `onCloseAutoFocus`, so the caller can restore focus when the dialog closes. */
+  onCloseAutoFocus?: (event: Event) => void;
   allowDevolver: boolean;
   puedeGestionarCorreo: boolean;
   puedeVerAdjuntos: boolean;
@@ -161,7 +164,7 @@ export function DetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto" onCloseAutoFocus={onCloseAutoFocus}>
         <DialogHeader>
           <DialogTitle className="text-base font-semibold">{d?.razonSocial ?? "Inscripción"}</DialogTitle>
           <DialogDescription className="flex flex-wrap items-center gap-2">
@@ -591,4 +594,71 @@ function DocAdjuntoLink({ storageId, inscripcionId }: { storageId?: Id<"_storage
       </Button>
     </a>
   );
+}
+
+// ─── Detail dialog by id ───────────────────────────────────────────────────────
+type DetailDialogByIdProps = {
+  inscripcionId: Id<"onboardingProveedores"> | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCloseAutoFocus?: (event: Event) => void;
+};
+
+/**
+ * Detail of one inscription loaded by id, with the same access as the board. It is meant to stack
+ * over another dialog (e.g. "Iniciar proceso"): renders nothing while loading, and closes with a
+ * toast when the process does not exist or the user cannot see it.
+ */
+export function DetailDialogById(props: DetailDialogByIdProps) {
+  const { inscripcionId, open, onOpenChange } = props;
+  // The key resets the boundary (and the dialog state) on every opening and process change.
+  return (
+    <DetailDialogErrorBoundary key={open ? inscripcionId : null} onError={() => onOpenChange(false)}>
+      <DetailDialogByIdContent {...props} />
+    </DetailDialogErrorBoundary>
+  );
+}
+
+function DetailDialogByIdContent({ inscripcionId, open, onOpenChange, onCloseAutoFocus }: DetailDialogByIdProps) {
+  const data = useQuery(api.onboarding.suppliers.obtenerDetalleInscripcion, open && inscripcionId ? { inscripcionId } : "skip");
+  // `null` (not `undefined`, which is loading or skipped): the process is gone or no longer visible.
+  const sinAcceso = open && data === null;
+  const avisadoRef = useRef(false);
+
+  useEffect(() => {
+    if (!sinAcceso || avisadoRef.current) return;
+    avisadoRef.current = true;
+    toast.error("No tienes acceso a este proceso.");
+    onOpenChange(false);
+  }, [sinAcceso, onOpenChange]);
+
+  if (!data) return null;
+  return (
+    <DetailDialog
+      inscripcion={data.inscripcion}
+      open={open}
+      onOpenChange={onOpenChange}
+      onCloseAutoFocus={onCloseAutoFocus}
+      puedeVerAdjuntos={data.puedeVerAdjuntos}
+      {...permisosDetalle(data.access, data.inscripcion)}
+    />
+  );
+}
+
+/**
+ * Keeps a throwing query inside the dialog (e.g. "No autorizado…" after a visibility change) from
+ * crashing the page: it renders nothing and asks the caller to close, so reopening retries.
+ */
+class DetailDialogErrorBoundary extends Component<{ onError: () => void; children: React.ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  componentDidCatch(error: Error) {
+    console.error("[DetailDialogById] No se pudo mostrar el detalle de la inscripción:", error);
+    this.props.onError();
+  }
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
 }

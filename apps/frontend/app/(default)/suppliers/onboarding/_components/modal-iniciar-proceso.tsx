@@ -30,7 +30,8 @@ import {
   TIPO_PERSONA_OPTIONS,
 } from "@/lib/onboarding/risk/shared";
 import { cn } from "@/lib/utils";
-import { getOnboardingErrorMessage, RIESGO_BADGE_SOLID } from "./ui-config";
+import { DetailDialogById } from "./detail-dialog";
+import { FASE_CONFIG, getOnboardingErrorMessage, RIESGO_BADGE_SOLID } from "./ui-config";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 const TIPO_DOC = TIPO_DOCUMENTO_OPTIONS;
@@ -137,7 +138,8 @@ interface ModalIniciarProcesoProps {
 /**
  * Starts a supplier process: upload the RUT, optionally prefill the form with AI extraction,
  * compute the risk live and create the inscription (Fase I auto-completed, Fase II pending).
- * The typed document is checked against the company's ERP catalog (INSCRIPCIÓN vs ACTUALIZACIÓN).
+ * The typed document is checked against the company's ERP catalog (INSCRIPCIÓN vs ACTUALIZACIÓN)
+ * and against the existing processes: one in progress blocks a new one.
  */
 export default function ModalIniciarProceso({ open, onOpenChange }: ModalIniciarProcesoProps) {
   const [step, setStep] = useState<Step>("idle");
@@ -151,6 +153,7 @@ export default function ModalIniciarProceso({ open, onOpenChange }: ModalIniciar
   const fileInputRef = useRef<HTMLInputElement>(null);
   /** Only used when the ERP check cannot run; recorded as tipoSolicitudOrigen MANUAL. */
   const [tipoSolicitudManual, setTipoSolicitudManual] = useState<TipoSolicitud | null>(null);
+  const [detalleId, setDetalleId] = useState<Id<"onboardingProveedores"> | null>(null);
 
   const { empresaActiva } = useEmpresaFilter();
   const generateUploadUrl = useMutation(api.facturacionStorage.generateUploadUrl);
@@ -225,7 +228,7 @@ export default function ModalIniciarProceso({ open, onOpenChange }: ModalIniciar
     listas: form.watch("listas"),
   });
 
-  // ERP catalog check for the typed document (typing, RUT extraction or ACME fill).
+  // ERP catalog + existing processes for the typed document (typing, RUT extraction or ACME fill).
   const verificacion = useVerificacionTercero({
     modulo: "supplier",
     empresa: empresaActiva,
@@ -235,7 +238,8 @@ export default function ModalIniciarProceso({ open, onOpenChange }: ModalIniciar
   });
   const manualRequerido = verificacion.erp.estado === "no_disponible";
   const tipoSolicitud: TipoSolicitud | null = verificacion.tipoSugerido ?? (manualRequerido ? tipoSolicitudManual : null);
-  const puedeCrear = tipoSolicitud !== null;
+  const puedeCrear = tipoSolicitud !== null && !verificacion.bloqueado && !verificacion.cargandoProcesos;
+  const verDetalleOrigen = useRef<HTMLElement | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
@@ -399,6 +403,7 @@ export default function ModalIniciarProceso({ open, onOpenChange }: ModalIniciar
     setExtractSkipped(null);
     setPhasesDone([]);
     setTipoSolicitudManual(null);
+    setDetalleId(null);
     onOpenChange(false);
   };
 
@@ -409,6 +414,10 @@ export default function ModalIniciarProceso({ open, onOpenChange }: ModalIniciar
     }
     if (risk.riesgo === "INDEFINIDO" || risk.tipoEvaluacion === "INDEFINIDO") {
       toast.error("Completa los factores de riesgo antes de iniciar el proceso.");
+      return;
+    }
+    if (verificacion.bloqueado) {
+      toast.error("Ya hay un proceso en curso para este documento en esta empresa.");
       return;
     }
     if (tipoSolicitud === null) {
@@ -730,7 +739,12 @@ export default function ModalIniciarProceso({ open, onOpenChange }: ModalIniciar
                       <VerificacionTerceroPanel
                         verificacion={verificacion}
                         entidad="proveedor"
+                        faseConfig={FASE_CONFIG}
                         razonSocialFormulario={form.watch("razonSocial")}
+                        onVerDetalle={(id) => {
+                          verDetalleOrigen.current = document.activeElement as HTMLElement | null;
+                          setDetalleId(id as Id<"onboardingProveedores">);
+                        }}
                       />
                       {manualRequerido && (
                         <div className="space-y-1.5">
@@ -1051,11 +1065,13 @@ export default function ModalIniciarProceso({ open, onOpenChange }: ModalIniciar
                       type="submit"
                       disabled={form.formState.isSubmitting || !puedeCrear}
                       title={
-                        !verificacion.listo
-                          ? "Ingresa el número de documento"
-                          : manualRequerido && tipoSolicitudManual === null
-                            ? "Elige el tipo de solicitud"
-                            : undefined
+                        verificacion.bloqueado
+                          ? "Hay un proceso en curso para este documento"
+                          : !verificacion.listo
+                            ? "Ingresa el número de documento"
+                            : manualRequerido && tipoSolicitudManual === null
+                              ? "Elige el tipo de solicitud"
+                              : undefined
                       }
                       className="gap-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
                     >
@@ -1075,6 +1091,19 @@ export default function ModalIniciarProceso({ open, onOpenChange }: ModalIniciar
             )}
           </>
         )}
+
+        {/* Stacks over this modal (portaled; Radix keeps the modal open underneath), so the form is kept. */}
+        <DetailDialogById
+          inscripcionId={detalleId}
+          open={detalleId !== null}
+          onOpenChange={(abierto) => {
+            if (!abierto) setDetalleId(null);
+          }}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            verDetalleOrigen.current?.focus();
+          }}
+        />
       </DialogContent>
     </Dialog>
   );
