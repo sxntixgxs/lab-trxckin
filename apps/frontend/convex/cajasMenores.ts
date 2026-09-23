@@ -7253,7 +7253,9 @@ export const devolverMovimientoABuzon = mutation({
       .collect();
     for (const row of movimientosFactura) {
       if (row.estado !== "pendiente_reembolso") continue;
-      await ctx.db.patch("facturacionCajaMenorMovimientos", row._id, {
+      // Through the bandeja helper so disponibleEnBandeja and the pending-movements
+      // aggregate (sorted by actualizadoEn) follow the change.
+      await patchMovimientoConBandeja(ctx, row._id, {
         estado: "anulado" as MovimientoCajaMenorEstado,
         reembolsoId: undefined,
         actualizadoEn: now,

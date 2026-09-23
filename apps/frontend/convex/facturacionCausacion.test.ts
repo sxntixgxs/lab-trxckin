@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 
 import { ConvexError } from "convex/values";
+import aggregateTest from "@convex-dev/aggregate/test";
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 
@@ -39,7 +40,13 @@ const OTRO = {
 
 function makeTest() {
   process.env.CONVEX_SERVER_SECRET = SECRET;
-  return convexTest(schema, modules);
+  const t = convexTest(schema, modules);
+  // Reimbursement writes keep the petty cash bandeja aggregates in sync.
+  aggregateTest.register(t, "cajaMenorMovimientosDisponibles");
+  aggregateTest.register(t, "cajaMenorReembolsosActivosCaja");
+  aggregateTest.register(t, "cajaMenorReembolsosActivosResponsable");
+  aggregateTest.register(t, "cajaMenorReembolsosActivosCustodio");
+  return t;
 }
 
 async function insertFactura(

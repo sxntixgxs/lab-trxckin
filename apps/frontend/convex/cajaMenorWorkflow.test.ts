@@ -4768,6 +4768,60 @@ describe("caja menor: autorización y consistencia de la bandeja", () => {
     expect(asignacion?.estado).toBe("pendiente");
   });
 
+  test("devolverMovimientoABuzon saca el movimiento de la bandeja y del agregado", async () => {
+    const t = makeTest();
+    await seedConfigs(t);
+    const cajaMenorId = await seedCaja(t);
+    const seeded = await seedMovimientoPendiente(t, {
+      cajaMenorId,
+      suffix: "devolver-agregado",
+      estadoTarea: "reembolso_caja_menor",
+      valor: 90_000,
+    });
+    const resumen = async () =>
+      (await t.query(api.cajaMenorBandejaQueries.obtenerResumenBandejaReembolsos, {
+        empresas: [EMPRESA],
+        actorUserId: LIDER.actorUserId,
+      })) as { kpis: { facturasPendientes: number; valorPendiente: number } };
+    expect((await resumen()).kpis.facturasPendientes).toBe(1);
+
+    await t.mutation(api.cajasMenores.devolverMovimientoABuzon, {
+      movimientoId: seeded.movimientoId,
+      ...LIDER,
+    });
+
+    const movimiento = (await getSnapshot(t)).movimientos.find(
+      (row) => row._id === seeded.movimientoId,
+    );
+    expect(movimiento?.estado).toBe("anulado");
+    expect(movimiento?.disponibleEnBandeja).toBe(false);
+    expect((await resumen()).kpis).toMatchObject({ facturasPendientes: 0, valorPendiente: 0 });
+  });
+
+  test("recalcular la causación de un reembolso mantiene su entrada en el agregado", async () => {
+    const t = makeTest();
+    await seedConfigs(t);
+    const cajaMenorId = await seedCaja(t);
+    const { reembolsoId } = await seedReembolsoPendienteRevision(t, cajaMenorId, "causacion-agregado");
+
+    await t.run(async (ctx) => {
+      const { patchReembolsoConBandeja } = await import("./lib/cajaMenorBandeja");
+      const { recomputeReembolsoCausacionCounts } = await import("./facturacionCausacion");
+      await patchReembolsoConBandeja(ctx, reembolsoId, { actualizadoEn: NOW });
+      await recomputeReembolsoCausacionCounts(ctx, reembolsoId, NOW + 1_000);
+    });
+
+    // Before the fix the next bandeja patch failed with DELETE_MISSING_KEY.
+    await t.mutation(api.cajasMenores.revisarReembolsoCajaMenor, {
+      reembolsoId,
+      decision: "aprobar",
+      contadorUserId: CONTADOR.usuarioId,
+      ...REVISOR,
+    });
+    const reembolso = await t.run(async (ctx) => ctx.db.get("cajasMenoresReembolsos", reembolsoId));
+    expect(reembolso?.estado).toBe("pendiente_revision_impuestos");
+  });
+
   test("eliminarArchivoFallido solo borra un archivo recién subido", async () => {
     const t = makeTest();
     await seedConfigs(t);

@@ -12,6 +12,7 @@ import {
   resolveCausacionTransition,
 } from "./lib/facturacionCausacion";
 import { refrescarProyeccionFactura } from "./lib/facturacionDashboardProjection";
+import { patchReembolsoConBandeja } from "./lib/cajaMenorBandeja";
 import { requireServerSecret } from "./lib/auth";
 import { normalizeEmpresa } from "./lib/normalize";
 
@@ -341,7 +342,10 @@ export async function recomputeReembolsoCausacionCounts(
     else sinRegistro += 1;
   }
 
-  await ctx.db.patch("cajasMenoresReembolsos", reembolsoId, {
+  // `actualizadoEn` is part of the reembolsos aggregate key: patching it directly left the
+  // aggregate entry under the old key and the next bandeja patch failed with
+  // DELETE_MISSING_KEY. The bandeja helper moves the entry along with the document.
+  await patchReembolsoConBandeja(ctx, reembolsoId, {
     causacionCausadasCount: causadas,
     causacionNoCausadasCount: noCausadas,
     causacionSinRegistroCount: sinRegistro,
