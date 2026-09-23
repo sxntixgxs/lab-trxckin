@@ -335,7 +335,7 @@ I designed and built Lab Trxckin on my own: the data model, the Convex workflows
 - **Put each kind of data where it fits.** Live, transactional workflow data in Convex; relational, rarely changing identity and permissions in Postgres; a thin BFF that keeps the session and syncs privileges between them.
 - **Make processes explicit.** Every module is a state machine with named phases, a current owner and an append-only history, so the system can always answer who acts next, which transitions are valid and how each decision was recorded.
 - **Idempotency and reconciliation beat hoping jobs run once.** Keys on emails, invoices and adjustments make retries safe, and periodic reconciliation repairs read models instead of trusting them blindly.
-- **Write down the gaps.** The limitations below are the hardening backlog, not an afterthought.
+- **Write down the gaps.** The known limitations above are the hardening backlog, not an afterthought.
 
 ## License
 
