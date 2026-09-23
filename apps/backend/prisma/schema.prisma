@@ -25,6 +25,7 @@ model Usuario {
   subordinados          Usuario[] @relation("JefeDirecto")
   procesosLider         Proceso[] @relation("ProcesoLider")
   empresas              UsuarioEmpresa[]
+  sincronizacionesErp   SincronizacionErp[]
 
   @@index([id_rol])
   @@index([id_proceso])
@@ -56,18 +57,95 @@ model Proceso {
   @@index([lider_user_id])
 }
 
+/// ERP (SIESA) supplier catalog: one row per company, document and supplier branch. Filled only
+/// by the ERP sync (src/erp/sync); never edited by hand.
 model Proveedor {
-  id         String   @id @default(uuid())
-  nit        String   @unique
-  nombre     String
-  email      String?
-  telefono   String?
-  direccion  String?
-  activo     Boolean  @default(true)
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  id                   String   @id @default(uuid())
+  id_empresa           Int
+  /// Tercero code in the ERP (f200_id): the stable `id` of the search contract, which advance
+  /// requests persist as `siesaId`.
+  erp_tercero_id       String
+  /// Digits only, without check digit or leading zeros.
+  nit                  String
+  dv                   String?
+  /// App vocabulary: NIT, C.C., C.E, P.A.
+  tipo_documento       String
+  /// PERSONA_JURIDICA | PERSONA_NATURAL
+  tipo_persona         String
+  razon_social         String
+  sucursal_id          String
+  descripcion_sucursal String
+  tercero_activo       Boolean
+  /// Branch state in the ERP.
+  activo               Boolean  @default(true)
+  condicion_pago       String?
+  email                String?
+  telefono             String?
+  direccion            String?
+  ciudad               String?
+  departamento         String?
+  sincronizado_en      DateTime
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
 
-  @@index([nombre])
+  @@unique([id_empresa, nit, sucursal_id])
+  @@index([id_empresa, razon_social])
+}
+
+/// ERP (SIESA) customer catalog, same shape as Proveedor (one row per company, document and
+/// customer branch). Filled only by the ERP sync.
+model Cliente {
+  id                   String   @id @default(uuid())
+  id_empresa           Int
+  erp_tercero_id       String
+  nit                  String
+  dv                   String?
+  tipo_documento       String
+  tipo_persona         String
+  razon_social         String
+  sucursal_id          String
+  descripcion_sucursal String
+  tercero_activo       Boolean
+  activo               Boolean  @default(true)
+  condicion_pago       String?
+  email                String?
+  telefono             String?
+  direccion            String?
+  ciudad               String?
+  departamento         String?
+  sincronizado_en      DateTime
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
+
+  @@unique([id_empresa, nit, sucursal_id])
+  @@index([id_empresa, razon_social])
+}
+
+/// One ERP sync run per catalog (entidad) and company.
+model SincronizacionErp {
+  id            String    @id @default(uuid())
+  /// PROVEEDORES | CLIENTES
+  entidad       String
+  id_empresa    Int
+  /// COMPLETA (whole company catalog) | NIT (one document)
+  alcance       String
+  nit           String?
+  /// MANUAL | PROGRAMADA | CLI | CREACION_ERP
+  origen        String
+  /// EN_CURSO | EXITOSA | FALLIDA | OMITIDA (another run held the lock)
+  estado        String
+  filas_leidas  Int       @default(0)
+  creadas       Int       @default(0)
+  actualizadas  Int       @default(0)
+  eliminadas    Int       @default(0)
+  error         String?
+  id_usuario    String?
+  iniciada_en   DateTime  @default(now())
+  finalizada_en DateTime?
+  usuario       Usuario?  @relation(fields: [id_usuario], references: [id], onDelete: SetNull)
+
+  @@index([id_empresa, entidad, iniciada_en])
+  @@index([estado])
 }
 
 model Rol {

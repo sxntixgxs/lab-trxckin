@@ -2,12 +2,13 @@ import { Module } from "@nestjs/common";
 import { AuthController } from "./auth.controller";
 import { WorkosGuard } from "./workos.guard";
 import { RolesGuard } from "./roles.guard";
+import { PermisosGuard } from "./permisos.guard";
 import { PrismaModule } from "../prisma/prisma.module";
 
 @Module({
   imports: [PrismaModule],
   controllers: [AuthController],
-  providers: [WorkosGuard, RolesGuard],
-  exports: [WorkosGuard, RolesGuard],
+  providers: [WorkosGuard, RolesGuard, PermisosGuard],
+  exports: [WorkosGuard, RolesGuard, PermisosGuard],
 })
 export class AuthModule {}

@@ -23,7 +23,6 @@ import type * as facturacionFacturas from "../facturacionFacturas.js";
 import type * as facturacionGraph from "../facturacionGraph.js";
 import type * as facturacionNotaCreditoRelacion from "../facturacionNotaCreditoRelacion.js";
 import type * as facturacionPeajesContabilidad from "../facturacionPeajesContabilidad.js";
-import type * as facturacionProveedores from "../facturacionProveedores.js";
 import type * as facturacionReportes from "../facturacionReportes.js";
 import type * as facturacionSla from "../facturacionSla.js";
 import type * as facturacionStorage from "../facturacionStorage.js";
@@ -130,7 +129,6 @@ declare const fullApi: ApiFromModules<{
   facturacionGraph: typeof facturacionGraph;
   facturacionNotaCreditoRelacion: typeof facturacionNotaCreditoRelacion;
   facturacionPeajesContabilidad: typeof facturacionPeajesContabilidad;
-  facturacionProveedores: typeof facturacionProveedores;
   facturacionReportes: typeof facturacionReportes;
   facturacionSla: typeof facturacionSla;
   facturacionStorage: typeof facturacionStorage;

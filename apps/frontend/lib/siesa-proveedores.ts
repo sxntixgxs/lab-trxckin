@@ -28,9 +28,8 @@ export type ProveedorAnticipo =
 
 export type ProveedorOrigenAnticipo = ProveedorAnticipo["origen"];
 
+/** The ERP catalog search pages on the server; the client only caps how many rows come back. */
 export const SIESA_PROVEEDORES_SEARCH_PARAMS = {
-  pageSize: "100",
-  maxPages: "10",
   limit: "12",
 } as const;
 

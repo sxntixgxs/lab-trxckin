@@ -30,7 +30,6 @@ import type { DataModel } from "./dataModel.js";
 type Env = {
   readonly CONVEX_CLOUD_URL: string;
   readonly CONVEX_SITE_URL: string;
-  readonly BACKEND_URL: string | undefined;
   readonly CONVEX_SERVER_SECRET: string | undefined;
   readonly DEFAULT_CONTACT_EMAIL: string | undefined;
   readonly ENABLE_BACKGROUND_JOBS: string | undefined;
@@ -38,7 +37,6 @@ type Env = {
   readonly FACTURACION_SLA_DIGEST_DRY_RUN: string | undefined;
   readonly FACTURACION_SLA_DIGEST_SECRET: string | undefined;
   readonly FRONTEND_URL: string | undefined;
-  readonly NEST_INTERNAL_KEY: string | undefined;
   readonly NEXT_PUBLIC_BASE_URL: string | undefined;
   readonly NOTIFICATIONS_INTERNAL_KEY: string | undefined;
 };

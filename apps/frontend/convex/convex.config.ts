@@ -9,8 +9,6 @@ const app = defineApp({
     NOTIFICATIONS_INTERNAL_KEY: v.optional(v.string()),
     FRONTEND_URL: v.optional(v.string()),
     NEXT_PUBLIC_BASE_URL: v.optional(v.string()),
-    NEST_INTERNAL_KEY: v.optional(v.string()),
-    BACKEND_URL: v.optional(v.string()),
     ENABLE_BACKGROUND_JOBS: v.optional(v.string()),
     CONVEX_SERVER_SECRET: v.optional(v.string()),
     DEFAULT_CONTACT_EMAIL: v.optional(v.string()),

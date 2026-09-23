@@ -1703,13 +1703,6 @@ export const crearDesdeXml = internalMutation({
     });
     await enlazarNotasCreditoAutomaticamente(ctx, facturaId);
     await refrescarProyeccionFactura(ctx, facturaId);
-    await ctx.scheduler.runAfter(0, internal.facturacionProveedores.upsertDesdeFactura, {
-      nit: args.proveedorNit,
-      nombre: args.proveedorNombre,
-      email: args.proveedorEmail,
-      telefono: args.proveedorTelefono,
-      direccion: args.proveedorDireccion,
-    });
     return facturaId;
   },
 });
@@ -1903,11 +1896,6 @@ async function ejecutarCrearDocumentoFisico(
         ? { valorContable: valorContableInicial }
         : {}),
     });
-    await ctx.scheduler.runAfter(0, internal.facturacionProveedores.upsertDesdeFactura, {
-      nit: proveedorNit,
-      nombre: proveedorNombre,
-    });
-
     const tareaId: Id<"facturacionTareas"> = await ctx.runMutation(
       internal.facturacionTareas.crearDesdeFacturaInterno,
       {
