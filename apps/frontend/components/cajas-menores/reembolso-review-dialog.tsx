@@ -176,7 +176,7 @@ export function ReembolsoReviewDialog({
 
   const facturaStorageUrls = useQuery(
     api.facturacionStorage.getUrls,
-    facturaStorageIds.length > 0 ? { storageIds: facturaStorageIds } : "skip"
+    facturaStorageIds.length > 0 ? { storageIds: facturaStorageIds, facturaIds } : "skip"
   );
 
   const adjuntosLoading = facturaIds.length > 0 && adjuntosPorFacturas === undefined;

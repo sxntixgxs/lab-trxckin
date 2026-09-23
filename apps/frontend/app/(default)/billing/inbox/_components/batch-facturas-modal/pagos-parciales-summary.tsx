@@ -35,7 +35,7 @@ export function PagosParcialesSummaryCard({
 
   const storageUrls = useQuery(
     api.facturacionStorage.getUrls,
-    storageIds.length > 0 ? { storageIds } : "skip",
+    storageIds.length > 0 && factura ? { storageIds, facturaIds: [factura._id] } : "skip",
   );
 
   const urlByStorageId = useMemo(() => {

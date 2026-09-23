@@ -78,28 +78,32 @@ export default function FacturacionDetallePage() {
     id: params.id as Id<"facturacionFacturas">,
   });
 
+  // File URLs are only served for ids that belong to this invoice.
+  const contextoArchivos = rawData?.factura?._id
+    ? { tipo: "factura" as const, facturaId: rawData.factura._id as Id<"facturacionFacturas"> }
+    : null;
   const xmlUrl = useQuery(
     api.facturacionStorage.getUrl,
-    rawData?.factura?.xmlStorageId
-      ? { storageId: rawData.factura.xmlStorageId }
+    contextoArchivos && rawData?.factura?.xmlStorageId
+      ? { storageId: rawData.factura.xmlStorageId, contexto: contextoArchivos }
       : "skip",
   );
   const pdfUrl = useQuery(
     api.facturacionStorage.getUrl,
-    rawData?.factura?.pdfStorageId
-      ? { storageId: rawData.factura.pdfStorageId }
+    contextoArchivos && rawData?.factura?.pdfStorageId
+      ? { storageId: rawData.factura.pdfStorageId, contexto: contextoArchivos }
       : "skip",
   );
   const soportesUrl = useQuery(
     api.facturacionStorage.getUrl,
-    rawData?.factura?.soportesStorageId
-      ? { storageId: rawData.factura.soportesStorageId }
+    contextoArchivos && rawData?.factura?.soportesStorageId
+      ? { storageId: rawData.factura.soportesStorageId, contexto: contextoArchivos }
       : "skip",
   );
   const comprobanteUrl = useQuery(
     api.facturacionStorage.getUrl,
-    rawData?.tarea?.comprobantePagoStorageId
-      ? { storageId: rawData.tarea.comprobantePagoStorageId }
+    contextoArchivos && rawData?.tarea?.comprobantePagoStorageId
+      ? { storageId: rawData.tarea.comprobantePagoStorageId, contexto: contextoArchivos }
       : "skip",
   );
   const adjuntosFactura = useQuery(

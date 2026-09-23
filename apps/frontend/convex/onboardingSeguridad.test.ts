@@ -9,6 +9,7 @@ import { asUser } from "../test-utils/onboardingActors";
 import { hashToken, issueToken, requireOnboardingToken } from "./lib/onboarding/tokens";
 
 const modules = import.meta.glob("./**/*.*s");
+const PERMISO = "suppliers/onboarding";
 
 function setup() {
   return convexTest(schema, modules);
@@ -16,14 +17,14 @@ function setup() {
 
 type T = ReturnType<typeof setup>;
 
-async function seedSupplier(t: T, faseActual: string) {
+async function seedSupplier(t: T, faseActual: string, overrides: { responsableId?: string } = {}) {
   return (await t.run(async (ctx) =>
     ctx.db.insert("onboardingProveedores", {
       empresa: 1,
       NIT: "900123456",
       faseActual: faseActual as "II_PENDIENTE_FORMULARIO",
       matriz_00: {
-        responsableId: "resp-1",
+        responsableId: overrides.responsableId ?? "resp-1",
         servicioSuministrado: "Servicio",
         montoAnual: "Menor a 10 millones COP",
         actividadEconomicaPrincipal: "Comercio",
@@ -267,5 +268,40 @@ describe("mutaciones públicas: re-verificación del documento", () => {
     const ins = await t.run(async (ctx) => ctx.db.get("onboardingProveedores", inscripcionId));
     expect(ins?.faseActual).toBe("IIA_PENDIENTE_FIRMA");
     expect(ins?.firmaRepresentante_16).toBeUndefined();
+  });
+});
+
+describe("URLs de archivos de una inscripción", () => {
+  test("solo los ids de la inscripción, para quien puede ver sus adjuntos", async () => {
+    const t = setup();
+    const store = async (contenido: string) =>
+      (await t.run(async (ctx) =>
+        ctx.storage.store(new Blob([contenido], { type: "application/pdf" })),
+      )) as Id<"_storage">;
+    const rut = await store("rut");
+    const ajeno = await store("otro archivo");
+    const inscripcionId = await seedSupplier(t, "III_REVISION_DOCUMENTAL", { responsableId: "resp-1" });
+    await t.run(async (ctx) => {
+      const ins = await ctx.db.get("onboardingProveedores", inscripcionId);
+      await ctx.db.patch("onboardingProveedores", inscripcionId, {
+        matriz_00: { ...ins!.matriz_00, rutStorageId: rut },
+      });
+    });
+    const contexto = { tipo: "inscripcion" as const, modulo: "supplier" as const, inscripcionId };
+
+    const responsable = await asUser(t, { id: "resp-1", permisos: [PERMISO], empresas: [1] });
+    expect(await responsable.query(api.facturacionStorage.getUrl, { storageId: rut, contexto })).toEqual(
+      expect.any(String),
+    );
+    expect(
+      await responsable.query(api.facturacionStorage.getUrl, { storageId: ajeno, contexto }),
+    ).toBeNull();
+
+    const otroResponsable = await asUser(t, { id: "resp-2", permisos: [PERMISO], empresas: [1] });
+    expect(
+      await otroResponsable.query(api.facturacionStorage.getUrl, { storageId: rut, contexto }),
+    ).toBeNull();
+    const sinModulo = await asUser(t, { id: "sin-modulo", permisos: ["billing/invoices"], empresas: [1] });
+    expect(await sinModulo.query(api.facturacionStorage.getUrl, { storageId: rut, contexto })).toBeNull();
   });
 });

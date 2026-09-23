@@ -86,6 +86,7 @@ import type * as lib_peajesCentroCosto from "../lib/peajesCentroCosto.js";
 import type * as lib_proveedorNit from "../lib/proveedorNit.js";
 import type * as lib_serverActor from "../lib/serverActor.js";
 import type * as lib_sessionAuth from "../lib/sessionAuth.js";
+import type * as lib_storageAccess from "../lib/storageAccess.js";
 import type * as lib_valorAPagar from "../lib/valorAPagar.js";
 import type * as lib_valorContable from "../lib/valorContable.js";
 import type * as lib_valorLegalizableAnticipo from "../lib/valorLegalizableAnticipo.js";
@@ -192,6 +193,7 @@ declare const fullApi: ApiFromModules<{
   "lib/proveedorNit": typeof lib_proveedorNit;
   "lib/serverActor": typeof lib_serverActor;
   "lib/sessionAuth": typeof lib_sessionAuth;
+  "lib/storageAccess": typeof lib_storageAccess;
   "lib/valorAPagar": typeof lib_valorAPagar;
   "lib/valorContable": typeof lib_valorContable;
   "lib/valorLegalizableAnticipo": typeof lib_valorLegalizableAnticipo;

@@ -5,6 +5,7 @@ import { useMutation, useQuery } from "convex/react";
 import { Check, ClipboardList, ExternalLink, FileText, Loader2, ShoppingCart, X } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/convex/_generated/api";
+import { useArchivoInscripcionUrl } from "@/hooks/useArchivoInscripcionUrl";
 import type { Id } from "@/convex/_generated/dataModel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,8 +21,8 @@ import { getOnboardingErrorMessage, InfoItem, RIESGO_BADGE_SOLID, RIESGO_CONFIG 
 
 const COMPRAS_DOC_KEYS = [...SUPPLIER_DOCS_COMPRAS];
 
-function ComprasDocLink({ label, storageId }: { label: string; storageId?: Id<"_storage"> }) {
-  const url = useQuery(api.facturacionStorage.getUrl, storageId ? { storageId } : "skip");
+function ComprasDocLink({ label, storageId, inscripcionId }: { label: string; storageId?: Id<"_storage">; inscripcionId: Id<"onboardingProveedores"> }) {
+  const url = useArchivoInscripcionUrl("supplier", inscripcionId, storageId);
   if (storageId && url) {
     return (
       <a href={url} target="_blank" rel="noopener noreferrer" className="flex w-full items-center justify-between rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 transition-colors hover:bg-slate-50">
@@ -175,7 +176,7 @@ export default function FaseVDialog({
                 {loadingFormulario ? <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" /> : <ExternalLink className="h-3.5 w-3.5 text-slate-400" />}
               </button>
               {COMPRAS_DOC_KEYS.map((key) => (
-                <ComprasDocLink key={key} label={SUPPLIER_DOC_LABELS[key] ?? key} storageId={docs15[key]} />
+                <ComprasDocLink key={key} label={SUPPLIER_DOC_LABELS[key] ?? key} storageId={docs15[key]} inscripcionId={inscripcionId} />
               ))}
             </div>
 

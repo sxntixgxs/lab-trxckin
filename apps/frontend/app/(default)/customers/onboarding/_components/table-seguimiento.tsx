@@ -38,6 +38,7 @@ import { differenceInDays, format } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
 import { api } from "@/convex/_generated/api";
+import { useArchivoInscripcionUrl } from "@/hooks/useArchivoInscripcionUrl";
 import type { Id } from "@/convex/_generated/dataModel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -291,7 +292,7 @@ function DetailDialog({
   const revDocs = useQuery(api.onboarding.customers.obtenerRevisionDocumentos, inscripcion ? { inscripcionId: inscripcion._id } : "skip");
   const correosData = useQuery(api.onboarding.correos.obtenerCorreosPorInscripcion, inscripcion ? { modulo: CUSTOMER_MODULO, inscripcionId: inscripcion._id, limit: 20 } : "skip");
   const cotizacionStorageId = inscripcion?.matriz_00.cotizacionStorageId;
-  const cotizacionUrl = useQuery(api.facturacionStorage.getUrl, cotizacionStorageId && puedeVerAdjuntos ? { storageId: cotizacionStorageId } : "skip");
+  const cotizacionUrl = useArchivoInscripcionUrl("customer", puedeVerAdjuntos ? inscripcion?._id : undefined, cotizacionStorageId);
   const devolverFase = useMutation(api.onboarding.customers.devolverFase);
   const cargarInterno = useMutation(api.onboarding.customers.cargarDocumentoRevisionInterno);
   const generateUploadUrl = useMutation(api.facturacionStorage.generateUploadUrl);
@@ -740,7 +741,7 @@ function DetailDialog({
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
                         <DocEstadoBadge estado={doc.estado} />
-                        {puedeVerAdjuntos && <DocAdjuntoLink storageId={doc.storageId} />}
+                        {puedeVerAdjuntos && <DocAdjuntoLink storageId={doc.storageId} inscripcionId={inscripcion._id} />}
                         {puedeReemplazar && doc.estado === "RECHAZADO" && (
                           <label className="inline-flex h-7 cursor-pointer items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 text-[10px] font-semibold text-blue-700 hover:bg-blue-100">
                             {uploadingDocKey === doc.docKey ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
@@ -865,8 +866,8 @@ function DocEstadoBadge({ estado }: { estado: string }) {
   );
 }
 
-function DocAdjuntoLink({ storageId }: { storageId?: Id<"_storage"> }) {
-  const storageUrl = useQuery(api.facturacionStorage.getUrl, storageId ? { storageId } : "skip");
+function DocAdjuntoLink({ storageId, inscripcionId }: { storageId?: Id<"_storage">; inscripcionId: Id<"onboardingClientes"> }) {
+  const storageUrl = useArchivoInscripcionUrl("customer", inscripcionId, storageId);
   if (!storageUrl) return null;
   return (
     <a href={storageUrl} target="_blank" rel="noopener noreferrer" title="Ver documento adjunto">

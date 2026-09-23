@@ -5,6 +5,7 @@ import { useMutation, useQuery } from "convex/react";
 import { Check, ExternalLink, FileText, FolderOpen, Loader2, Lock, ShieldCheck, ShoppingCart, SlidersHorizontal, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/convex/_generated/api";
+import { useArchivoInscripcionUrl } from "@/hooks/useArchivoInscripcionUrl";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,8 +29,8 @@ const ESTADO_CONFIG: Record<string, { label: string; badgeClass: string; borderC
   RECHAZADO: { label: "Rechazado", badgeClass: "bg-red-50 text-red-700 border-red-200", borderClass: "border-l-red-500" },
 };
 
-function useStorageUrl(storageId: Id<"_storage"> | undefined) {
-  return useQuery(api.facturacionStorage.getUrl, storageId ? { storageId } : "skip");
+function useStorageUrl(inscripcionId: Id<"onboardingProveedores">, storageId: Id<"_storage"> | undefined) {
+  return useArchivoInscripcionUrl("supplier", inscripcionId, storageId);
 }
 
 function DocRow({
@@ -48,7 +49,7 @@ function DocRow({
   const revisarDoc = useMutation(api.onboarding.suppliers.revisarDocumento);
   const cargarInterno = useMutation(api.onboarding.suppliers.cargarDocumentoRevisionInterno);
   const generateUploadUrl = useMutation(api.facturacionStorage.generateUploadUrl);
-  const storageUrl = useStorageUrl(doc.storageId);
+  const storageUrl = useStorageUrl(inscripcionId, doc.storageId);
   const [observaciones, setObservaciones] = useState(doc.observaciones ?? "");
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);

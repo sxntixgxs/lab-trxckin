@@ -537,9 +537,14 @@ export function FacturacionApprovalTimeline({
     return Array.from(ids);
   }, [sorted]);
 
+  const facturaIds = useMemo(
+    () => Array.from(new Set(sorted.map((item) => item.facturaId))),
+    [sorted],
+  );
+
   const storageUrls = useQuery(
     api.facturacionStorage.getUrls,
-    storageIds.length > 0 ? { storageIds } : "skip",
+    storageIds.length > 0 ? { storageIds, facturaIds } : "skip",
   );
 
   const storageUrlMap = useMemo(() => {

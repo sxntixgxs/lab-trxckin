@@ -519,6 +519,38 @@ describe("consultas de facturación con alcance por usuario y empresa", () => {
   });
 });
 
+describe("URLs de archivos de factura", () => {
+  test("getUrl y getUrls solo firman archivos de una factura visible", async () => {
+    const t = makeTest();
+    const { facturaId } = await seedFactura(t, { numero: "FAC-URL-1" });
+    const pdfId = await storeBlob(t, "pdf");
+    const ajenoId = await storeBlob(t, "ajeno");
+    await t.run(async (ctx) => {
+      await ctx.db.patch("facturacionFacturas", facturaId, { pdfStorageId: pdfId });
+    });
+    const contexto = { tipo: "factura" as const, facturaId };
+
+    const lider = await asUser(t, LIDER);
+    expect(await lider.query(api.facturacionStorage.getUrl, { storageId: pdfId, contexto })).toEqual(
+      expect.any(String),
+    );
+    // An id that does not belong to the invoice is not signed, even for a participant.
+    expect(await lider.query(api.facturacionStorage.getUrl, { storageId: ajenoId, contexto })).toBeNull();
+
+    const intruso = await asUser(t, { ...INTRUSO, permisos: ["billing/inbox"], empresas: [1] });
+    expect(await intruso.query(api.facturacionStorage.getUrl, { storageId: pdfId, contexto })).toBeNull();
+
+    const urls = (await lider.query(api.facturacionStorage.getUrls, {
+      storageIds: [pdfId, ajenoId],
+      facturaIds: [facturaId],
+    })) as Array<{ url: string | null }>;
+    expect(urls.map((u) => u.url !== null)).toEqual([true, false]);
+    await expect(
+      t.query(api.facturacionStorage.getUrl, { storageId: pdfId, contexto }),
+    ).rejects.toThrow("No autenticado");
+  });
+});
+
 describe("secciones del detalle de factura", () => {
   test("cruces internos, historial de notas y estado contable solo para quien ve la factura", async () => {
     const t = makeTest();

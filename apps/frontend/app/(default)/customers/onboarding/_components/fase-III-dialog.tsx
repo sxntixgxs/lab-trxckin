@@ -5,6 +5,7 @@ import { useMutation, useQuery } from "convex/react";
 import { Check, ExternalLink, FileText, FolderOpen, Loader2, Lock, ShieldCheck, SlidersHorizontal, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/convex/_generated/api";
+import { useArchivoInscripcionUrl } from "@/hooks/useArchivoInscripcionUrl";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,7 +32,7 @@ function DocRow({ doc, inscripcionId, canAct, canReplace }: { doc: RevDoc; inscr
   const revisarDoc = useMutation(api.onboarding.customers.revisarDocumento);
   const cargarInterno = useMutation(api.onboarding.customers.cargarDocumentoRevisionInterno);
   const generateUploadUrl = useMutation(api.facturacionStorage.generateUploadUrl);
-  const storageUrl = useQuery(api.facturacionStorage.getUrl, doc.storageId ? { storageId: doc.storageId } : "skip");
+  const storageUrl = useArchivoInscripcionUrl("customer", inscripcionId, doc.storageId);
   const [observaciones, setObservaciones] = useState(doc.observaciones ?? "");
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);

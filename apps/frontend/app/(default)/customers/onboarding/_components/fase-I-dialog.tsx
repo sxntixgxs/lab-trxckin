@@ -5,6 +5,7 @@ import { useMutation, useQuery } from "convex/react";
 import { CheckCircle2, ExternalLink, Loader2, Pencil, Save, ShieldAlert, SlidersHorizontal, X } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/convex/_generated/api";
+import { useArchivoInscripcionUrl } from "@/hooks/useArchivoInscripcionUrl";
 import type { Id } from "@/convex/_generated/dataModel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,8 +35,8 @@ function EditItem({ label, children }: { label: string; children: React.ReactNod
   );
 }
 
-function StorageLink({ storageId, label }: { storageId: Id<"_storage"> | undefined; label: string }) {
-  const url = useQuery(api.facturacionStorage.getUrl, storageId ? { storageId } : "skip");
+function StorageLink({ storageId, label, inscripcionId }: { storageId: Id<"_storage"> | undefined; label: string; inscripcionId: Id<"onboardingClientes"> }) {
+  const url = useArchivoInscripcionUrl("customer", inscripcionId, storageId);
   if (url) {
     return (
       <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:underline">
@@ -274,10 +275,10 @@ export default function FaseIDialog({ inscripcionId, open, onOpenChange }: { ins
                     </Select>
                   </EditItem>
                   <InfoItem label="RUT">
-                    <StorageLink storageId={matriz.rutStorageId} label="Ver RUT" />
+                    <StorageLink storageId={matriz.rutStorageId} label="Ver RUT" inscripcionId={inscripcionId} />
                   </InfoItem>
                   <InfoItem label="Cotización">
-                    <StorageLink storageId={matriz.cotizacionStorageId} label="Ver cotización" />
+                    <StorageLink storageId={matriz.cotizacionStorageId} label="Ver cotización" inscripcionId={inscripcionId} />
                   </InfoItem>
                   <EditItem label="Servicio suministrado">
                     <Input value={edit.servicioSuministrado} onChange={(e) => setEdit((s) => ({ ...s, servicioSuministrado: e.target.value }))} className={inputCls} />
@@ -365,10 +366,10 @@ export default function FaseIDialog({ inscripcionId, open, onOpenChange }: { ins
                   <InfoItem label="Actividad secundaria">{actSecVista || "—"}</InfoItem>
                   <InfoItem label="Sector económico">{matriz.sectorEconomico || "—"}</InfoItem>
                   <InfoItem label="RUT">
-                    <StorageLink storageId={matriz.rutStorageId} label="Ver RUT" />
+                    <StorageLink storageId={matriz.rutStorageId} label="Ver RUT" inscripcionId={inscripcionId} />
                   </InfoItem>
                   <InfoItem label="Cotización">
-                    <StorageLink storageId={matriz.cotizacionStorageId} label="Ver cotización" />
+                    <StorageLink storageId={matriz.cotizacionStorageId} label="Ver cotización" inscripcionId={inscripcionId} />
                   </InfoItem>
                   <InfoItem label="Servicio suministrado">{matriz.servicioSuministrado || "—"}</InfoItem>
                   <InfoItem label="Monto anual">{matriz.montoAnual || "—"}</InfoItem>

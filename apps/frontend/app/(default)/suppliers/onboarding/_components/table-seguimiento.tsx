@@ -36,6 +36,7 @@ import { differenceInDays, format } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
 import { api } from "@/convex/_generated/api";
+import { useArchivoInscripcionUrl } from "@/hooks/useArchivoInscripcionUrl";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -660,7 +661,7 @@ function DetailDialog({
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
                       <DocEstadoBadge estado={doc.estado} />
-                      {puedeVerAdjuntos && <DocAdjuntoLink storageId={doc.storageId} />}
+                      {puedeVerAdjuntos && <DocAdjuntoLink storageId={doc.storageId} inscripcionId={inscripcion._id} />}
                     </div>
                   </div>
                 ))}
@@ -677,7 +678,7 @@ function DetailDialog({
                   {inscripcion.notasContabilidadFaseVI.archivosSoporte.map((a) => (
                     <li key={a.storageId} className="flex items-center justify-between gap-2 text-xs text-slate-700">
                       <span className="truncate">{a.nombre}</span>
-                      {puedeVerAdjuntos && <DocAdjuntoLink storageId={a.storageId} />}
+                      {puedeVerAdjuntos && <DocAdjuntoLink storageId={a.storageId} inscripcionId={inscripcion._id} />}
                     </li>
                   ))}
                 </ul>
@@ -758,8 +759,8 @@ function DocEstadoBadge({ estado }: { estado: string }) {
   );
 }
 
-function DocAdjuntoLink({ storageId }: { storageId?: Id<"_storage"> }) {
-  const storageUrl = useQuery(api.facturacionStorage.getUrl, storageId ? { storageId } : "skip");
+function DocAdjuntoLink({ storageId, inscripcionId }: { storageId?: Id<"_storage">; inscripcionId: Id<"onboardingProveedores"> }) {
+  const storageUrl = useArchivoInscripcionUrl("supplier", inscripcionId, storageId);
   if (!storageUrl) return null;
   return (
     <a href={storageUrl} target="_blank" rel="noopener noreferrer" title="Ver documento adjunto">

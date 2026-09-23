@@ -5,6 +5,7 @@ import { useMutation, useQuery } from "convex/react";
 import { CheckCircle2, ExternalLink, Loader2, Pencil, Save, ShieldAlert, SlidersHorizontal, X } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/convex/_generated/api";
+import { useArchivoInscripcionUrl } from "@/hooks/useArchivoInscripcionUrl";
 import type { Id } from "@/convex/_generated/dataModel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -50,7 +51,7 @@ export default function FaseIDialog({
   const completarFaseI = useMutation(api.onboarding.suppliers.completarFaseI);
   const actualizarCamposFaseI = useMutation(api.onboarding.suppliers.actualizarCamposFaseI);
   const rutStorageId = inscripcion?.matriz_00.rutStorageId;
-  const rutUrl = useQuery(api.facturacionStorage.getUrl, rutStorageId ? { storageId: rutStorageId } : "skip");
+  const rutUrl = useArchivoInscripcionUrl("supplier", inscripcionId, rutStorageId);
   const responsable = useUsuario(inscripcion?.matriz_00.responsableId);
 
   const [observaciones, setObservaciones] = useState("");

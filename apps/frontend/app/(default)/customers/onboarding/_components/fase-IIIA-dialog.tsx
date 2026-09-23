@@ -5,6 +5,7 @@ import { useMutation, useQuery } from "convex/react";
 import { Check, ExternalLink, FileText, Loader2, ShieldCheck, X } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/convex/_generated/api";
+import { useArchivoInscripcionUrl } from "@/hooks/useArchivoInscripcionUrl";
 import type { Id } from "@/convex/_generated/dataModel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,8 +15,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { CUSTOMER_MODULO, ESTADO_DOC_BADGE, ESTADO_DOC_LABEL, EVALUACION_CONFIG, getOnboardingErrorMessage, InfoItem, RIESGO_BADGE_SOLID } from "./ui-config";
 
-function DocLinkRow({ label, estado, storageId, onOpen, loading }: { label: string; estado?: string; storageId?: Id<"_storage">; onOpen?: () => void; loading?: boolean }) {
-  const storageUrl = useQuery(api.facturacionStorage.getUrl, storageId ? { storageId } : "skip");
+function DocLinkRow({ label, estado, storageId, inscripcionId, onOpen, loading }: { label: string; estado?: string; storageId?: Id<"_storage">; inscripcionId?: Id<"onboardingClientes">; onOpen?: () => void; loading?: boolean }) {
+  const storageUrl = useArchivoInscripcionUrl("customer", inscripcionId, storageId);
   return (
     <div className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2">
       <div className="flex min-w-0 items-center gap-2">
@@ -163,7 +164,7 @@ export default function FaseIIIADialog({ inscripcionId, open, onOpenChange }: { 
             <div className="space-y-1.5">
               <DocLinkRow label="Formulario de inscripción (firmado)" onOpen={handleVerFormato} loading={abriendoFormato} />
               {revisiones?.map((doc) => (
-                <DocLinkRow key={doc._id} label={doc.docLabel} estado={doc.estado} storageId={doc.storageId} />
+                <DocLinkRow key={doc._id} label={doc.docLabel} estado={doc.estado} storageId={doc.storageId} inscripcionId={inscripcionId} />
               ))}
             </div>
           </div>
