@@ -5,6 +5,7 @@ export const ALLOWED_RUTAS = [
   "administracion/usuarios",
   "administracion/accesos",
   "administracion/centro-costo",
+  "administracion/terceros-erp",
   "perfil",
   "billing/dashboard",
   "billing/inbox",

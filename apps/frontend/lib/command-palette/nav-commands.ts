@@ -36,6 +36,7 @@ export const NAV_LABELS_ES: Record<string, string> = {
   usuarios: "Usuarios",
   accesos: "Accesos",
   "centro-costo": "Centros de costo",
+  "terceros-erp": "Terceros ERP",
   perfil: "Perfil",
 };
 

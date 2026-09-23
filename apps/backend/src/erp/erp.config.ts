@@ -4,6 +4,9 @@ import { EMPRESAS_APP } from "../auth/empresa-access";
 export type EntidadErp = "PROVEEDORES" | "CLIENTES";
 export const ENTIDADES_ERP: readonly EntidadErp[] = ["PROVEEDORES", "CLIENTES"];
 
+/** Route permission of the Administración → Terceros ERP page (catalog browser + sync). */
+export const RUTA_TERCEROS_ERP = "administracion/terceros-erp";
+
 /** Where an app company lives in SIESA: the instance (`idCompania`) and the company inside it. */
 export type CompaniaErp = { idCompania: string; cia: number };
 

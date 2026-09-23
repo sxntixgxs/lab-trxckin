@@ -21,3 +21,8 @@ export function assertEmpresaAccesible(user: UsuarioConEmpresas | undefined, emp
     throw new ForbiddenException("Empresa no autorizada");
   }
 }
+
+/** The companies (out of `empresas`) the user may see. */
+export function empresasAccesibles(user: UsuarioConEmpresas, empresas: readonly number[] = EMPRESAS_APP): number[] {
+  return empresas.filter((empresa) => puedeAccederEmpresa(user, empresa));
+}

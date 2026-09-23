@@ -106,6 +106,12 @@ export const NAV_ITEMS: NavItem[] = [
         href: "/administracion/centro-costo",
         permission: "administracion/centro-costo",
       },
+      {
+        id: "terceros-erp",
+        label: "Terceros ERP",
+        href: "/administracion/terceros-erp",
+        permission: "administracion/terceros-erp",
+      },
     ],
   },
   {
