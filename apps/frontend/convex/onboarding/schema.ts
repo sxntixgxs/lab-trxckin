@@ -28,6 +28,7 @@ import {
   plazoPagoValidator,
   rechazoValidator,
   referenciaComercialValidator,
+  registroErpValidator,
   revisorRolValidator,
   riesgoNivelValidator,
   rolValidator,
@@ -162,6 +163,7 @@ export const onboardingProveedores = defineTable({
   devolucionesFase: v.optional(v.array(devolucionFaseValidator)),
   ajustesRiesgoCumplimiento: v.optional(v.array(ajusteRiesgoValidator)),
   correoResumen: v.optional(correoResumenValidator),
+  registroErp: v.optional(registroErpValidator),
 })
   .index("by_empresa", ["empresa"])
   .index("by_empresa_faseActual", ["empresa", "faseActual"])
@@ -322,6 +324,7 @@ export const onboardingClientes = defineTable({
   devolucionesFase: v.optional(v.array(devolucionFaseValidator)),
   ajustesRiesgoCumplimiento: v.optional(v.array(ajusteRiesgoValidator)),
   correoResumen: v.optional(correoResumenValidator),
+  registroErp: v.optional(registroErpValidator),
 })
   .index("by_empresa", ["empresa"])
   .index("by_empresa_faseActual", ["empresa", "faseActual"])

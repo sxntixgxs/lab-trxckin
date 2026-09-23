@@ -7,5 +7,6 @@ import { TercerosCatalogoService } from "./terceros-catalogo.service";
 @Module({
   controllers: [ProveedoresController, ClientesController, CatalogoController],
   providers: [TercerosCatalogoService],
+  exports: [TercerosCatalogoService],
 })
 export class TercerosModule {}

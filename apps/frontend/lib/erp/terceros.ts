@@ -31,6 +31,16 @@ export type ExistenciaTerceroErp = {
   catalogo: { sincronizado: boolean; ultimaSincronizacion: string | null };
 };
 
+/** Stored on the inscription after "Crear en ERP" (convex/onboarding/validators.ts registroErpValidator). */
+export type RegistroErp = {
+  erpTerceroId: string;
+  sucursalId: string;
+  accion: "CREADO" | "ACTUALIZADO";
+  catalogoActualizado: boolean;
+  fecha: number;
+  porUserId: string;
+};
+
 export type EntidadErp = "PROVEEDORES" | "CLIENTES";
 
 export type CorridaSincronizacion = {
@@ -81,6 +91,19 @@ export async function consultarExistenciaErp(
   });
   const respuesta = await fetch(`${ruta}?${query.toString()}`, { credentials: "include", cache: "no-store", signal });
   return leer<ExistenciaTerceroErp>(respuesta, "No se pudo consultar el catálogo del ERP.");
+}
+
+export async function crearEnErp(
+  modulo: ModuloOnboarding,
+  inscripcionId: string,
+): Promise<{ registroErp: RegistroErp; existencia: ExistenciaTerceroErp | null }> {
+  const respuesta = await fetch("/api/erp/terceros", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ modulo, inscripcionId }),
+  });
+  return leer(respuesta, "No se pudo registrar el tercero en el ERP.");
 }
 
 export async function listarSincronizaciones(params: { empresa?: number; limit?: number } = {}): Promise<CorridaSincronizacion[]> {

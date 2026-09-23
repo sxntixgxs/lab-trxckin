@@ -278,6 +278,19 @@ export const anulacionValidator = v.object({
   motivo: v.string(),
 });
 
+/** Registro del tercero en el ERP desde la última fase ("Crear en ERP"). */
+export const registroErpValidator = v.object({
+  /** Código del tercero en el ERP (f200_id). */
+  erpTerceroId: v.string(),
+  sucursalId: v.string(),
+  /** CREADO si no existía en esa compañía del ERP; ACTUALIZADO si ya existía. */
+  accion: v.union(v.literal("CREADO"), v.literal("ACTUALIZADO")),
+  /** false cuando el ERP lo registró pero la sincronización posterior del catálogo no lo trajo. */
+  catalogoActualizado: v.boolean(),
+  fecha: v.number(),
+  porUserId: v.string(),
+});
+
 /** Rechazo con motivo visible al tercero y motivo interno. */
 export const rechazoValidator = v.object({
   motivoExterno: v.string(),

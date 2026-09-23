@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { RegistroErpPanel } from "@/components/onboarding/registro-erp-panel";
 import { useUsuario } from "@/hooks/useUsuariosMap";
 import { generateFormularioClienteEmailPdf, generateReporteTiempoFasesClienteEmailPdf } from "@/lib/onboarding/customers-email-pdfs";
 import { blobToBase64, notificarOnboarding, type NotificarOnboardingResult, type OnboardingEmailAttachment } from "@/lib/onboarding/email-client";
@@ -221,6 +222,13 @@ export default function FaseIVDialog({ inscripcionId, open, onOpenChange }: { in
             <p className="text-sm leading-relaxed text-teal-700">
               Cumplimiento aprobó la inscripción. Confirma que el cliente fue creado y está activo en el sistema contable para finalizar el proceso.
             </p>
+            <RegistroErpPanel
+              modulo={CUSTOMER_MODULO}
+              inscripcionId={inscripcionId}
+              registroErp={inscripcion.registroErp}
+              entidad="cliente"
+              onRegistrado={() => setConfirmed(true)}
+            />
             <label className="group flex cursor-pointer items-start gap-3">
               <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} className="mt-0.5 h-4 w-4 cursor-pointer rounded-xs border-slate-300 text-teal-600 accent-teal-600" />
               <span className="text-sm font-medium leading-snug text-slate-700 group-hover:text-slate-900">

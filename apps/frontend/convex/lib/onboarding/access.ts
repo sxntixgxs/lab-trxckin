@@ -109,7 +109,7 @@ export async function requireGestionInscripcion(
  * o el usuario configurado para el rol que atiende la fase (escalado por riesgo cuando aplica).
  */
 export async function requireActorEnFase(
-  ctx: MutationCtx,
+  ctx: QueryCtx | MutationCtx,
   modulo: OnboardingModulo,
   ins: InscripcionDoc,
   fase: string,

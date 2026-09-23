@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { RegistroErpPanel } from "@/components/onboarding/registro-erp-panel";
 import { blobToBase64, notificarOnboarding, type NotificarOnboardingResult, type OnboardingEmailAttachment } from "@/lib/onboarding/email-client";
 import { generateReporteTiempoFasesEmailPdf } from "@/lib/onboarding/suppliers-email-pdfs";
 import { cn } from "@/lib/utils";
@@ -279,6 +280,13 @@ export default function FaseVIDialog({
             <p className="text-sm leading-relaxed text-teal-700">
               La evaluación de Compras ha sido completada. Confirma que el proveedor fue creado correctamente en el sistema contable para finalizar el proceso de inscripción.
             </p>
+            <RegistroErpPanel
+              modulo={SUPPLIER_MODULO}
+              inscripcionId={inscripcionId}
+              registroErp={inscripcion.registroErp}
+              entidad="proveedor"
+              onRegistrado={() => setConfirmed(true)}
+            />
             <label className="group flex cursor-pointer items-start gap-3">
               <input
                 type="checkbox"

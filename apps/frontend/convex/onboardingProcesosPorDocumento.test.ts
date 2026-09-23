@@ -10,6 +10,8 @@ const modules = import.meta.glob("./**/*.*s");
 
 type T = ReturnType<typeof convexTest>;
 
+const SECRETO = "test-convex-server-secret";
+
 const PROVEEDOR = {
   empresa: 1,
   tipoPersona: "PERSONA_JURIDICA" as const,
@@ -70,7 +72,7 @@ async function usuarios(t: T) {
   };
 }
 
-async function fijarFase(t: T, id: Id<"onboardingProveedores">, faseActual: "COMPLETADO" | "RECHAZADO", desde: number) {
+async function fijarFase(t: T, id: Id<"onboardingProveedores">, faseActual: "COMPLETADO" | "RECHAZADO" | "VI_CREACION_CONTABILIDAD", desde: number) {
   await t.run(async (ctx) => ctx.db.patch("onboardingProveedores", id, { faseActual, faseActualDesde: desde }));
 }
 
@@ -220,5 +222,68 @@ describe("procesos existentes por documento", () => {
     expect(alerta.enCurso).toEqual([expect.objectContaining({ inscripcionId: null, responsableNombre: "Responsable Uno" })]);
     expect(await u.resp.query(api.onboarding.customers.obtenerDetalleInscripcion, { inscripcionId: id })).not.toBeNull();
     expect(await u.otro.query(api.onboarding.customers.obtenerDetalleInscripcion, { inscripcionId: id })).toBeNull();
+  });
+});
+
+describe("registro en el ERP", () => {
+  beforeEach(() => {
+    vi.stubEnv("FRONTEND_URL", "https://app.test");
+    vi.stubEnv("NOTIFICATIONS_INTERNAL_KEY", "notif-key");
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ ok: true }), { status: 200 })));
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  test("solo en la fase de creación, para quien la atiende, con secreto de servidor e idempotente", async () => {
+    const t = convexTest(schema, modules);
+    const u = await usuarios(t);
+    const id = await u.resp.mutation(api.onboarding.suppliers.crearMatrizRiesgo, PROVEEDOR);
+    const args = { modulo: "supplier" as const, inscripcionId: id };
+
+    await expect(u.admin.query(api.onboarding.erp.datosParaCrearEnErp, args)).rejects.toThrow(/fase de creación/);
+
+    await fijarFase(t, id, "VI_CREACION_CONTABILIDAD", Date.now());
+    await expect(u.resp.query(api.onboarding.erp.datosParaCrearEnErp, args)).rejects.toThrow(/asignada/);
+    expect(await u.admin.query(api.onboarding.erp.datosParaCrearEnErp, args)).toMatchObject({
+      entidad: "PROVEEDOR",
+      empresa: 1,
+      tipoDocumento: "NIT",
+      numeroDocumento: "900.123.456",
+      razonSocial: "ACME Colombia S.A.S.",
+      email: "laura@acme.test",
+      telefono: "3001234567",
+      codigoCiiu: "2599",
+      registroErp: null,
+    });
+
+    const registro = { ...args, erpTerceroId: "900123456", sucursalId: "001", accion: "CREADO" as const };
+    await expect(
+      u.admin.mutation(api.onboarding.erp.registrarCreacionEnErp, { ...registro, catalogoActualizado: true, secret: "otro" }),
+    ).rejects.toThrow(/No autorizado/);
+
+    const primero = await u.admin.mutation(api.onboarding.erp.registrarCreacionEnErp, {
+      ...registro,
+      catalogoActualizado: false,
+      secret: SECRETO,
+    });
+    expect(primero).toMatchObject({ erpTerceroId: "900123456", accion: "CREADO", catalogoActualizado: false, porUserId: "admin" });
+
+    const repetido = await u.admin.mutation(api.onboarding.erp.registrarCreacionEnErp, {
+      ...registro,
+      accion: "ACTUALIZADO",
+      catalogoActualizado: false,
+      secret: SECRETO,
+    });
+    expect(repetido).toEqual(primero);
+
+    const sincronizado = await u.admin.mutation(api.onboarding.erp.registrarCreacionEnErp, {
+      ...registro,
+      catalogoActualizado: true,
+      secret: SECRETO,
+    });
+    expect(sincronizado).toEqual({ ...primero, catalogoActualizado: true });
+    expect((await u.admin.query(api.onboarding.erp.datosParaCrearEnErp, args)).registroErp).toEqual(sincronizado);
   });
 });

@@ -49,3 +49,17 @@ export function candidatosNit(documento: string, tipoDocumento?: string | null):
   }
   return candidatos;
 }
+
+/**
+ * Splits a typed NIT into number and DV for sending it to the ERP. An explicit "-D" suffix is
+ * always the DV; without one, a trailing digit is taken as the DV only when the value is 10+
+ * digits long (company NITs have 9) and the digit checks out. The DV is always recomputed, so a
+ * mistyped one never reaches the ERP. Other document types keep all their digits and get no DV.
+ */
+export function separarNitYDv(documento: string, tipoDocumento?: string | null): { nit: string; dv: string | null } {
+  if (!esTipoNit(tipoDocumento)) return { nit: normalizarNit(documento), dv: null };
+  const sufijo = /-\s*\d\s*$/.exec(documento.trim());
+  let nit = normalizarNit(sufijo ? documento.trim().slice(0, sufijo.index) : documento);
+  if (!sufijo && nit.length >= 10 && terminaEnDv(nit)) nit = normalizarNit(nit.slice(0, -1));
+  return { nit, dv: nit ? calcularDvNit(nit) : null };
+}

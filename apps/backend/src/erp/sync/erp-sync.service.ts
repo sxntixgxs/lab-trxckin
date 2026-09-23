@@ -45,6 +45,11 @@ export class ErpSyncService {
     return this.sincronizador !== null;
   }
 
+  clienteErp(): SiesaClient {
+    if (!this.erp) throw new ServiceUnavailableException(ERP_NO_CONFIGURADO);
+    return this.erp;
+  }
+
   private requerirSincronizador(): SincronizadorErp {
     if (!this.sincronizador) throw new ServiceUnavailableException(ERP_NO_CONFIGURADO);
     return this.sincronizador;
@@ -71,6 +76,16 @@ export class ErpSyncService {
 
   sincronizarTodo(origen: OrigenSincronizacion): Promise<ResumenSincronizacion[]> {
     return this.requerirSincronizador().sincronizar({ entidades: ENTIDADES_ERP, empresas: EMPRESAS_ERP, origen });
+  }
+
+  sincronizarNit(opciones: {
+    entidad: EntidadErp;
+    empresa: number;
+    nitErp: string;
+    origen: OrigenSincronizacion;
+    idUsuario?: string | null;
+  }): Promise<ResumenSincronizacion> {
+    return this.requerirSincronizador().sincronizarNit(opciones);
   }
 
   async listarCorridas(opciones: { empresas: readonly number[]; limit: number }): Promise<CorridaVista[]> {

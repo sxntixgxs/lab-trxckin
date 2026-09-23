@@ -97,6 +97,7 @@ import type * as notificationHttp from "../notificationHttp.js";
 import type * as onboarding_correos from "../onboarding/correos.js";
 import type * as onboarding_customers from "../onboarding/customers.js";
 import type * as onboarding_customersPublic from "../onboarding/customersPublic.js";
+import type * as onboarding_erp from "../onboarding/erp.js";
 import type * as onboarding_notificaciones from "../onboarding/notificaciones.js";
 import type * as onboarding_roles from "../onboarding/roles.js";
 import type * as onboarding_searchBackfill from "../onboarding/searchBackfill.js";
@@ -205,6 +206,7 @@ declare const fullApi: ApiFromModules<{
   "onboarding/correos": typeof onboarding_correos;
   "onboarding/customers": typeof onboarding_customers;
   "onboarding/customersPublic": typeof onboarding_customersPublic;
+  "onboarding/erp": typeof onboarding_erp;
   "onboarding/notificaciones": typeof onboarding_notificaciones;
   "onboarding/roles": typeof onboarding_roles;
   "onboarding/searchBackfill": typeof onboarding_searchBackfill;

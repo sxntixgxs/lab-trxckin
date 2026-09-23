@@ -34,8 +34,8 @@ export function literalSiesa(valor: string): string {
 }
 
 /**
- * Minimal SIESA Cloud client: standard queries (`ejecutarconsultaestandar`). Plain class so the
- * CLI can use it without Nest DI.
+ * Minimal SIESA Cloud client: standard queries (`ejecutarconsultaestandar`) and the import
+ * connector (`conectoresimportar`). Plain class so the CLI can use it without Nest DI.
  */
 export class SiesaClient {
   private readonly fetchImpl: typeof fetch;
@@ -75,6 +75,26 @@ export class SiesaClient {
       if (lote.length < this.config.tamanoPagina) return filas;
     }
     throw new ErpError(`La consulta ${consulta.descripcion} superó ${MAX_PAGINAS} páginas.`, null);
+  }
+
+  /**
+   * `conectoresimportar`. Never retried here: a retry after a timeout could apply the import
+   * twice. The ERP upserts by document number, so the caller may safely retry by hand.
+   */
+  async importar(
+    params: { idCompania: string; nombreDocumento: string; idDocumento?: string },
+    documento: unknown,
+  ): Promise<unknown> {
+    const url = new URL(`${this.config.baseUrl}/api/siesa/v3.1/conectoresimportar`);
+    url.searchParams.set("idCompania", params.idCompania);
+    url.searchParams.set("idSistema", "2");
+    if (params.idDocumento) url.searchParams.set("idDocumento", params.idDocumento);
+    url.searchParams.set("nombreDocumento", params.nombreDocumento);
+
+    const respuesta = await this.solicitar(url, { method: "POST", body: JSON.stringify(documento) });
+    const cuerpo = await leerJson(respuesta);
+    if (!respuesta.ok) throw errorDeRespuesta(respuesta.status, cuerpo);
+    return cuerpo;
   }
 
   private async solicitar(url: URL, init: RequestInit): Promise<Response> {

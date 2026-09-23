@@ -80,6 +80,25 @@ describe("SiesaClient retries", () => {
     );
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
+
+  it("never retries an import", async () => {
+    const { cliente, fetchMock } = crearCliente([json(503, { mensaje: "Ocupado" })]);
+    await expect(cliente.importar({ idCompania: "5001", nombreDocumento: "tercero-proveedor" }, {})).rejects.toMatchObject({ status: 503 });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns the import body and posts to conectoresimportar", async () => {
+    const { cliente, fetchMock } = crearCliente([json(200, { codigo: 0, detalle: [{ f200_id: "1" }] })]);
+    await expect(cliente.importar({ idCompania: "5001", nombreDocumento: "tercero-cliente" }, { a: 1 })).resolves.toEqual({
+      codigo: 0,
+      detalle: [{ f200_id: "1" }],
+    });
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [URL, RequestInit];
+    expect(url.pathname).toBe("/api/siesa/v3.1/conectoresimportar");
+    expect(url.searchParams.get("nombreDocumento")).toBe("tercero-cliente");
+    expect(init.method).toBe("POST");
+    expect(init.body).toBe(JSON.stringify({ a: 1 }));
+  });
 });
 
 describe("literalSiesa", () => {
