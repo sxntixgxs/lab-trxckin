@@ -3,7 +3,18 @@ import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { internalQuery, type MutationCtx, type QueryCtx } from "./_generated/server";
 // actor* args are overwritten with the authenticated caller (see lib/serverActor.ts).
-import { mutationConActor as mutation, queryConActor as query } from "./lib/serverActor";
+import {
+  mutationConActor as mutation,
+  queryConActor as query,
+  queryConActorIds,
+} from "./lib/serverActor";
+import { RUTAS_SISTEMA } from "../lib/rutas-sistema";
+import {
+  actorPuedeVerEmpresa,
+  actorTienePermiso,
+  requireActor as requireBillingActor,
+  type BillingActor,
+} from "./lib/billingAuth";
 import {
   assertCentrosCostoIdentityTransitionForEmpresa,
   type CentroCostoDistribucionRow,
@@ -630,6 +641,26 @@ async function usuarioEsGerenciaFinancieraConfiguradaEmpresa(
 ) {
   const config = await getGerenciaFinancieraConfig(ctx, empresa);
   return configIncludesUser(config, actorUserId);
+}
+
+/**
+ * Role holders of a company's reimbursement flow (Gerencia Financiera, revisor, contador,
+ * Eventos DIAN) or full-access users: the only ones whose review / reassign dialogs list
+ * the configured staff of that company.
+ */
+async function actorParticipaReembolsosEmpresa(
+  ctx: QueryCtx,
+  actor: BillingActor,
+  empresa: number
+) {
+  if (actor.hasFullAccess) return true;
+  const permisos = await getPermisosEmpresa(ctx, empresa, actor.usuarioId);
+  return (
+    permisos.canManage ||
+    permisos.canReviewReembolso ||
+    permisos.canReviewContabilidad ||
+    permisos.canReviewEventosDian
+  );
 }
 
 async function assertCanManage(
@@ -3265,10 +3296,18 @@ export async function crearMovimientoCajaMenorInterno(
   };
 }
 
+// Read by the Gerencia Financiera settings panel: admins and that company's Gerencia only.
 export const obtenerRolesConfig = query({
   args: { empresa: v.optional(v.number()) },
   handler: async (ctx, args) => {
     const empresa = normalizeEmpresa(args.empresa);
+    const actor = await requireBillingActor(ctx);
+    if (
+      !actor.hasFullAccess &&
+      !(await usuarioEsGerenciaFinancieraConfiguradaEmpresa(ctx, empresa, actor.usuarioId))
+    ) {
+      return [];
+    }
     const config = await getGerenciaFinancieraConfig(ctx, empresa);
     return config ? [config] : [];
   },
@@ -3332,8 +3371,17 @@ export const obtenerConfigCajaMenorEmpresa = query({
     permitirSaldoNegativo: v.boolean(),
   }),
   handler: async (ctx, args) => {
+    const empresa = normalizeEmpresa(args.empresa);
+    // Company setting for its managers (custodians get the flag with their funds).
+    const actor = await requireBillingActor(ctx);
+    const puedeVer =
+      actor.hasFullAccess ||
+      (actorTienePermiso(actor, RUTAS_SISTEMA.FINANZAS_CAJAS_MENORES) &&
+        actorPuedeVerEmpresa(actor, empresa)) ||
+      (await usuarioEsGerenciaFinancieraConfiguradaEmpresa(ctx, empresa, actor.usuarioId));
+    if (!puedeVer) return { permitirSaldoNegativo: false };
     return {
-      permitirSaldoNegativo: await empresaPermiteSaldoNegativo(ctx, normalizeEmpresa(args.empresa)),
+      permitirSaldoNegativo: await empresaPermiteSaldoNegativo(ctx, empresa),
     };
   },
 });
@@ -3463,7 +3511,9 @@ async function obtenerCajasAsignadasDisponiblesData(
   return { cajas, permitirSaldoNegativo };
 }
 
-export const obtenerCajasAsignadasDisponiblesV2 = query({
+// The funds offered are always the caller's own: `userId` is overwritten with the
+// authenticated user's id (kept in the signature for existing clients).
+export const obtenerCajasAsignadasDisponiblesV2 = queryConActorIds(["userId"])({
   args: cajasAsignadasDisponiblesArgs,
   returns: v.object({
     cajas: v.array(v.any()),
@@ -3781,7 +3831,10 @@ export const listarContadoresImpuestosConfigurados = query({
     })
   ),
   handler: async (ctx, args) => {
-    return await getContadoresImpuestosConfigurados(ctx, normalizeEmpresa(args.empresa));
+    const empresa = normalizeEmpresa(args.empresa);
+    const actor = await requireBillingActor(ctx);
+    if (!(await actorParticipaReembolsosEmpresa(ctx, actor, empresa))) return [];
+    return await getContadoresImpuestosConfigurados(ctx, empresa);
   },
 });
 
@@ -3795,7 +3848,10 @@ export const listarEventosDianConfigurados = query({
     })
   ),
   handler: async (ctx, args) => {
-    return await getEventosDianConfigurados(ctx, normalizeEmpresa(args.empresa));
+    const empresa = normalizeEmpresa(args.empresa);
+    const actor = await requireBillingActor(ctx);
+    if (!(await actorParticipaReembolsosEmpresa(ctx, actor, empresa))) return [];
+    return await getEventosDianConfigurados(ctx, empresa);
   },
 });
 
@@ -6685,6 +6741,8 @@ export const eliminarAdjuntoBorradorReembolsoCajaMenor = mutation({
 });
 
 /** Removes a storage object only when its draft row could not be created. */
+const VENTANA_ARCHIVO_FALLIDO_MS = 15 * 60 * 1000;
+
 export const eliminarArchivoFallidoReembolsoCajaMenor = mutation({
   args: {
     reembolsoId: v.id("cajasMenoresReembolsos"),
@@ -6703,6 +6761,13 @@ export const eliminarArchivoFallidoReembolsoCajaMenor = mutation({
       (adjunto) => String(adjunto.storageId) === String(args.storageId)
     );
     if (existing) return null;
+
+    // Only the file of an upload that just failed: an older storage id may belong to another
+    // record, so this cleanup must not delete arbitrary files.
+    const metadata = await ctx.db.system.get("_storage", args.storageId);
+    if (!metadata || Date.now() - metadata._creationTime > VENTANA_ARCHIVO_FALLIDO_MS) {
+      return null;
+    }
 
     try {
       await ctx.storage.delete(args.storageId);
@@ -7099,7 +7164,10 @@ export const listarRevisoresCajaMenorConfigurados = query({
     })
   ),
   handler: async (ctx, args) => {
-    return await getRevisoresCajaMenorConfigurados(ctx, normalizeEmpresa(args.empresa), {
+    const empresa = normalizeEmpresa(args.empresa);
+    const actor = await requireBillingActor(ctx);
+    if (!(await actorParticipaReembolsosEmpresa(ctx, actor, empresa))) return [];
+    return await getRevisoresCajaMenorConfigurados(ctx, empresa, {
       includeZero: true,
     });
   },

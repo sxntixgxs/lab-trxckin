@@ -2,12 +2,12 @@
 
 import aggregateTest from "@convex-dev/aggregate/test";
 import { convexTest } from "convex-test";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import schema from "./schema";
-import { actingAsActorArgs } from "../test-utils/convexActingAs";
+import { actingAsActorArgs, DEFAULT_ACTOR_ID_KEYS } from "../test-utils/convexActingAs";
 import { asUser } from "../test-utils/onboardingActors";
 
 const modules = import.meta.glob("./**/*.*s");
@@ -109,7 +109,8 @@ function makeTest() {
   aggregateTest.register(t, "cajaMenorReembolsosActivosCaja");
   aggregateTest.register(t, "cajaMenorReembolsosActivosResponsable");
   aggregateTest.register(t, "cajaMenorReembolsosActivosCustodio");
-  return actingAsActorArgs(t);
+  // `userId` of obtenerCajasAsignadasDisponiblesV2 is also the caller (queryConActorIds).
+  return actingAsActorArgs(t, [...DEFAULT_ACTOR_ID_KEYS, "userId"]);
 }
 
 async function seedRevisoresCajaMenorPonderados(
@@ -3022,9 +3023,11 @@ describe("Contabilidad (Impuestos) reembolso workflow", () => {
     });
     expect(empresas).toContain(EMPRESA);
 
-    const listado = await t.query(api.cajasMenores.listarContadoresImpuestosConfigurados, {
+    // The configured staff lists are for the reimbursement role holders.
+    const contador = await asUser(t, { id: CONTADOR.usuarioId });
+    const listado = (await contador.query(api.cajasMenores.listarContadoresImpuestosConfigurados, {
       empresa: EMPRESA,
-    });
+    })) as Array<{ usuarioId: string }>;
     expect(listado.map((contador) => contador.usuarioId)).toContain(CONTADOR.usuarioId);
   });
 
@@ -3233,9 +3236,10 @@ describe("Eventos DIAN reembolso workflow", () => {
     await seedConfigs(t);
     await seedEventosDian(t, [EVENTOS_DIAN, EVENTOS_DIAN_B]);
 
-    const listado = await t.query(api.cajasMenores.listarEventosDianConfigurados, {
+    const eventosDian = await asUser(t, { id: EVENTOS_DIAN.usuarioId });
+    const listado = (await eventosDian.query(api.cajasMenores.listarEventosDianConfigurados, {
       empresa: EMPRESA,
-    });
+    })) as Array<{ usuarioId: string }>;
     expect(listado.map((usuario) => usuario.usuarioId)).toEqual([
       EVENTOS_DIAN.usuarioId,
       EVENTOS_DIAN_B.usuarioId,
@@ -3253,9 +3257,9 @@ describe("Eventos DIAN reembolso workflow", () => {
       }
     });
 
-    const legacyOnly = await t.query(api.cajasMenores.listarEventosDianConfigurados, {
+    const legacyOnly = (await eventosDian.query(api.cajasMenores.listarEventosDianConfigurados, {
       empresa: EMPRESA,
-    });
+    })) as Array<{ usuarioId: string }>;
     expect(legacyOnly.map((usuario) => usuario.usuarioId)).toContain(EVENTOS_DIAN.usuarioId);
   });
 
@@ -4628,6 +4632,76 @@ describe("caja menor: autorización y consistencia de la bandeja", () => {
     centroCostoNombre: "Centro Costo",
   };
 
+  test("obtenerCajasAsignadasDisponiblesV2 devuelve siempre las cajas de quien consulta", async () => {
+    const t = makeTest();
+    await seedConfigs(t);
+    await seedCaja(t, [LIDER.actorUserId]);
+
+    const otro = await asUser(t, { id: OTRO_USUARIO.actorUserId });
+    const ajenas = (await otro.query(api.cajasMenores.obtenerCajasAsignadasDisponiblesV2, {
+      empresa: EMPRESA,
+      userId: LIDER.actorUserId,
+    })) as { cajas: unknown[] };
+    expect(ajenas.cajas).toEqual([]);
+
+    // The proxy runs this one as LIDER (the userId arg is the caller).
+    const propias = (await t.query(api.cajasMenores.obtenerCajasAsignadasDisponiblesV2, {
+      empresa: EMPRESA,
+      userId: LIDER.actorUserId,
+    })) as { cajas: unknown[] };
+    expect(propias.cajas).toHaveLength(1);
+  });
+
+  test("configuración y personal configurado: roles del flujo, Gerencia o administradores", async () => {
+    const t = makeTest();
+    await seedConfigs(t);
+    await t.mutation(api.cajasMenores.configurarPermitirSaldoNegativo, {
+      empresa: EMPRESA,
+      permitirSaldoNegativo: true,
+      ...GERENCIA,
+    });
+
+    const ajeno = await asUser(t, {
+      id: OTRO_USUARIO.actorUserId,
+      permisos: ["billing/inbox"],
+      empresas: [EMPRESA],
+    });
+    for (const lista of [
+      api.cajasMenores.listarContadoresImpuestosConfigurados,
+      api.cajasMenores.listarEventosDianConfigurados,
+      api.cajasMenores.listarRevisoresCajaMenorConfigurados,
+      api.cajasMenores.obtenerRolesConfig,
+    ]) {
+      expect(await ajeno.query(lista, { empresa: EMPRESA })).toEqual([]);
+    }
+    expect(
+      await ajeno.query(api.cajasMenores.obtenerConfigCajaMenorEmpresa, { empresa: EMPRESA }),
+    ).toEqual({ permitirSaldoNegativo: false });
+
+    const revisor = await asUser(t, { id: REVISOR.actorUserId });
+    expect(
+      (await revisor.query(api.cajasMenores.listarContadoresImpuestosConfigurados, {
+        empresa: EMPRESA,
+      })) as unknown[],
+    ).not.toHaveLength(0);
+    const gerencia = await asUser(t, { id: GERENCIA.actorUserId });
+    expect(
+      (await gerencia.query(api.cajasMenores.obtenerRolesConfig, { empresa: EMPRESA })) as unknown[],
+    ).toHaveLength(1);
+    const cajasMenores = await asUser(t, {
+      id: "gestor-cajas",
+      permisos: ["finance/petty-cash"],
+      empresas: [EMPRESA],
+    });
+    expect(
+      await cajasMenores.query(api.cajasMenores.obtenerConfigCajaMenorEmpresa, { empresa: EMPRESA }),
+    ).toEqual({ permitirSaldoNegativo: true });
+
+    await expect(
+      t.query(api.cajasMenores.obtenerRolesConfig, { empresa: EMPRESA }),
+    ).rejects.toThrow("No autenticado");
+  });
+
   test("marcar Caja Menor exige al dueño de la revisión y a un custodio de la caja", async () => {
     const t = makeTest();
     await seedConfigs(t);
@@ -4692,5 +4766,38 @@ describe("caja menor: autorización y consistencia de la bandeja", () => {
     ).rejects.toThrow("No tienes asignada esta tarea.");
     const asignacion = await t.run(async (ctx) => ctx.db.get("facturacionAsignaciones", asignacionId));
     expect(asignacion?.estado).toBe("pendiente");
+  });
+
+  test("eliminarArchivoFallido solo borra un archivo recién subido", async () => {
+    const t = makeTest();
+    await seedConfigs(t);
+    const cajaMenorId = await seedCaja(t);
+    const { reembolsoId } = await seedReembolsoPendienteRevision(t, cajaMenorId, "archivo-fallido");
+    const store = async (contenido: string) =>
+      (await t.run(async (ctx) =>
+        ctx.storage.store(new Blob([contenido], { type: "application/pdf" })),
+      )) as Id<"_storage">;
+
+    const reciente = await store("subida fallida");
+    await t.mutation(api.cajasMenores.eliminarArchivoFallidoReembolsoCajaMenor, {
+      reembolsoId,
+      storageId: reciente,
+      ...REVISOR,
+    });
+    expect(await t.run(async (ctx) => ctx.db.system.get("_storage", reciente))).toBeNull();
+
+    const antiguo = await store("archivo de otro registro");
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      vi.setSystemTime(Date.now() + 60 * 60 * 1000);
+      await t.mutation(api.cajasMenores.eliminarArchivoFallidoReembolsoCajaMenor, {
+        reembolsoId,
+        storageId: antiguo,
+        ...REVISOR,
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+    expect(await t.run(async (ctx) => ctx.db.system.get("_storage", antiguo))).not.toBeNull();
   });
 });
