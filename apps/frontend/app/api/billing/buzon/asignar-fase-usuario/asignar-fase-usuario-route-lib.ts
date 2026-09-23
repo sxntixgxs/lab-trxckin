@@ -78,6 +78,7 @@ async function listarUsuariosConfiguradosPorClave(args: {
     {
       clave: args.clave,
       empresas: [args.empresaId],
+      secret: args.secret,
     },
   )) as ConfiguracionUsuariosResponse;
   const empresaUsuarios = rows[String(args.empresaId)] ?? [];

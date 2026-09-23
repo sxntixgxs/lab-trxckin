@@ -68,10 +68,34 @@ export function actorTienePermiso(actor: BillingActor, permiso: string): boolean
   return actor.hasFullAccess || actor.permisos.includes("*") || actor.permisos.includes(permiso);
 }
 
+export function actorTieneAlgunPermiso(actor: BillingActor, permisos: readonly string[]): boolean {
+  return permisos.some((permiso) => actorTienePermiso(actor, permiso));
+}
+
 /** Empresa scope: full-access / all-companies actors see everything, others only their empresas. */
 export function actorPuedeVerEmpresa(actor: BillingActor, empresa: number | undefined | null): boolean {
   if (actor.hasFullAccess || actor.accesoTodasEmpresas) {
     return true;
   }
   return typeof empresa === "number" && actor.empresas.includes(empresa);
+}
+
+/**
+ * Requires one of `permisos` (route permissions, see lib/rutas-sistema.ts) and, when
+ * `empresa` is given, that the caller can see that company.
+ */
+export async function requirePermisoEmpresa(
+  ctx: QueryCtx | MutationCtx,
+  permisos: string | readonly string[],
+  empresa?: number,
+): Promise<BillingActor> {
+  const actor = await requireActor(ctx);
+  const lista = typeof permisos === "string" ? [permisos] : permisos;
+  if (!actorTieneAlgunPermiso(actor, lista)) {
+    throw new Error(`Unauthorized: se requiere ${lista.join(" o ")}`);
+  }
+  if (empresa !== undefined && !actorPuedeVerEmpresa(actor, empresa)) {
+    throw new Error("Empresa no autorizada.");
+  }
+  return actor;
 }

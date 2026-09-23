@@ -3,6 +3,7 @@
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 
+import { actingAsActorArgs } from "../test-utils/convexActingAs";
 import { api } from "./_generated/api";
 import schema from "./schema";
 
@@ -20,7 +21,8 @@ const ACTOR = {
 };
 
 function makeTest() {
-  return convexTest(schema, modules);
+  // Workflow mutations run as their actorUserId (the assignee seeded below).
+  return actingAsActorArgs(convexTest(schema, modules));
 }
 
 async function seedFacturaConAsignacion(

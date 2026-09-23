@@ -3,6 +3,8 @@
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 
+import { actingAsActorArgs } from "../test-utils/convexActingAs";
+import { asUser } from "../test-utils/onboardingActors";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
@@ -42,7 +44,13 @@ const LORENA = {
 const ALLIANZ_NIT = "860026182";
 
 function makeTest() {
-  return convexTest(schema, modules);
+  // Workflow mutations run as their actorUserId (identity-derived actor, see lib/serverActor.ts).
+  return actingAsActorArgs(convexTest(schema, modules));
+}
+
+/** Billing settings user of the tested company. */
+async function configurador(t: ReturnType<typeof makeTest>) {
+  return await asUser(t, { id: "config-1", permisos: ["billing/settings"], empresas: [EMPRESA] });
 }
 
 function normalizeNit(value: string) {
@@ -193,7 +201,7 @@ describe("facturacion causacion asignacion", () => {
     const t = makeTest();
     await seedAnalistasCausacion(t, [LORENA, ANALISTA_B], 0);
 
-    await t.mutation(api.facturacionConfiguracion.guardarProveedorCausacion, {
+    await (await configurador(t)).mutation(api.facturacionConfiguracion.guardarProveedorCausacion, {
       empresa: EMPRESA,
       proveedorNit: ALLIANZ_NIT,
       proveedorNombre: "Allianz Seguros",
@@ -233,7 +241,7 @@ describe("facturacion causacion asignacion", () => {
     const t = makeTest();
     await seedAnalistasCausacion(t, [LORENA, ANALISTA_B], 0);
 
-    await t.mutation(api.facturacionConfiguracion.guardarProveedorCausacion, {
+    await (await configurador(t)).mutation(api.facturacionConfiguracion.guardarProveedorCausacion, {
       empresa: EMPRESA,
       proveedorNit: ALLIANZ_NIT,
       proveedorNombre: "Allianz Seguros",
@@ -279,7 +287,7 @@ describe("facturacion causacion asignacion", () => {
     const t = makeTest();
     await seedAnalistasCausacion(t, [ANALISTA_A, ANALISTA_B]);
 
-    await t.mutation(api.facturacionConfiguracion.guardarProveedorCausacion, {
+    await (await configurador(t)).mutation(api.facturacionConfiguracion.guardarProveedorCausacion, {
       empresa: EMPRESA,
       proveedorNit: ALLIANZ_NIT,
       proveedorNombre: "Allianz Seguros",
@@ -289,7 +297,7 @@ describe("facturacion causacion asignacion", () => {
     });
 
     await expect(
-      t.mutation(api.facturacionConfiguracion.guardarProveedorCausacion, {
+      (await configurador(t)).mutation(api.facturacionConfiguracion.guardarProveedorCausacion, {
         empresa: EMPRESA,
         proveedorNit: ALLIANZ_NIT,
         proveedorNombre: "Allianz Seguros",
@@ -304,7 +312,7 @@ describe("facturacion causacion asignacion", () => {
     const t = makeTest();
     await seedAnalistasCausacion(t, [ANALISTA_A, ANALISTA_B]);
 
-    await t.mutation(api.facturacionConfiguracion.guardarProveedorCausacion, {
+    await (await configurador(t)).mutation(api.facturacionConfiguracion.guardarProveedorCausacion, {
       empresa: EMPRESA,
       proveedorNit: ALLIANZ_NIT,
       proveedorNombre: "Allianz Seguros",
@@ -314,7 +322,7 @@ describe("facturacion causacion asignacion", () => {
     });
 
     await expect(
-      t.mutation(api.facturacionConfiguracion.guardarAnalistasCausacion, {
+      (await configurador(t)).mutation(api.facturacionConfiguracion.guardarAnalistasCausacion, {
         empresa: EMPRESA,
         usuarios: [{ ...ANALISTA_B, peso: 100 }],
       })
@@ -335,13 +343,13 @@ describe("facturacion causacion asignacion", () => {
     });
 
     await expect(
-      t.mutation(api.facturacionConfiguracion.guardarRevisoresCajaMenor, {
+      (await configurador(t)).mutation(api.facturacionConfiguracion.guardarRevisoresCajaMenor, {
         empresa: EMPRESA,
         usuarios: [{ ...ANALISTA_A, peso: 60 }, ANALISTA_B],
       }),
     ).rejects.toThrow(/debe sumar 100/i);
 
-    await t.mutation(api.facturacionConfiguracion.guardarRevisoresCajaMenor, {
+    await (await configurador(t)).mutation(api.facturacionConfiguracion.guardarRevisoresCajaMenor, {
       empresa: EMPRESA,
       usuarios: [ANALISTA_A, ANALISTA_B],
     });

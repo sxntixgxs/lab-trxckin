@@ -6,6 +6,9 @@ import {
   type QueryCtx,
 } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
+import { requireActor } from "./lib/billingAuth";
+import { actorTieneAsignacionPendiente } from "./lib/facturacionAccess";
+import { normalizeEmail } from "./lib/normalize";
 
 type AdjuntoConUrl = Doc<"facturacionAdjuntos"> & { url: string | null };
 
@@ -87,6 +90,11 @@ export const listarPorFacturas = query({
   },
 });
 
+/**
+ * Support files are added from the inbox by whoever is working the invoice (a pending
+ * assignment on it) or by a full-access user. The uploader comes from the caller's identity;
+ * the `subidoPor*` args are still accepted for compatibility but ignored.
+ */
 export const crear = mutation({
   args: {
     facturaId: v.id("facturacionFacturas"),
@@ -103,9 +111,23 @@ export const crear = mutation({
     ctx: MutationCtx,
     args: CrearAdjuntoArgs,
   ): Promise<Id<"facturacionAdjuntos">> => {
+    const actor = await requireActor(ctx);
     const factura = await ctx.db.get("facturacionFacturas", args.facturaId);
     if (!factura) throw new Error("Factura no encontrada");
+    if (args.asignacionId) {
+      const asignacion = await ctx.db.get("facturacionAsignaciones", args.asignacionId);
+      if (!asignacion || asignacion.facturaId !== args.facturaId) {
+        throw new Error("La asignación no corresponde a esta factura.");
+      }
+    }
+    if (!actor.hasFullAccess && !(await actorTieneAsignacionPendiente(ctx, actor, args.facturaId))) {
+      throw new Error("No tienes asignada esta factura.");
+    }
+    if (!(await ctx.db.system.get("_storage", args.storageId))) {
+      throw new Error("Archivo no encontrado.");
+    }
 
+    const subidoPorEmail = normalizeEmail(actor.email);
     const id = await ctx.db.insert("facturacionAdjuntos", {
       facturaId: args.facturaId,
       empresa: factura.empresa ?? 1,
@@ -114,9 +136,9 @@ export const crear = mutation({
       nombre: args.nombre,
       ...(args.mimeType ? { mimeType: args.mimeType } : {}),
       ...(typeof args.size === "number" ? { size: args.size } : {}),
-      ...(args.subidoPorUserId ? { subidoPorUserId: args.subidoPorUserId } : {}),
-      subidoPorNombre: args.subidoPorNombre,
-      subidoPorEmail: args.subidoPorEmail.toLowerCase(),
+      subidoPorUserId: actor.usuarioId,
+      subidoPorNombre: actor.nombre,
+      subidoPorEmail,
       creadoEn: Date.now(),
     });
 
@@ -130,9 +152,9 @@ export const crear = mutation({
         facturaId: args.facturaId,
         ...(args.asignacionId ? { asignacionId: args.asignacionId } : {}),
         empresa: factura.empresa ?? 1,
-        ...(args.subidoPorUserId ? { actorUserId: args.subidoPorUserId } : {}),
-        actorNombre: args.subidoPorNombre,
-        actorEmail: args.subidoPorEmail.toLowerCase(),
+        actorUserId: actor.usuarioId,
+        actorNombre: actor.nombre,
+        actorEmail: subidoPorEmail,
         accion: "adjuntar",
         comentario: `Adjuntó ${args.nombre}`,
         estadoAnterior: tarea.estado,
@@ -145,6 +167,7 @@ export const crear = mutation({
   },
 });
 
+/** The uploader, anyone currently working the invoice, or a full-access user may delete. */
 export const eliminar = mutation({
   args: {
     adjuntoId: v.id("facturacionAdjuntos"),
@@ -153,8 +176,21 @@ export const eliminar = mutation({
     ctx: MutationCtx,
     args: EliminarAdjuntoArgs,
   ): Promise<null> => {
+    const actor = await requireActor(ctx);
     const adjunto = await ctx.db.get("facturacionAdjuntos", args.adjuntoId);
     if (!adjunto) throw new Error("Adjunto no encontrado");
+
+    const esAutor =
+      (adjunto.subidoPorUserId !== undefined && adjunto.subidoPorUserId === actor.usuarioId) ||
+      (normalizeEmail(actor.email) !== "" &&
+        normalizeEmail(adjunto.subidoPorEmail) === normalizeEmail(actor.email));
+    if (
+      !actor.hasFullAccess &&
+      !esAutor &&
+      !(await actorTieneAsignacionPendiente(ctx, actor, adjunto.facturaId))
+    ) {
+      throw new Error("No puedes eliminar este adjunto.");
+    }
 
     try {
       await ctx.storage.delete(adjunto.storageId);

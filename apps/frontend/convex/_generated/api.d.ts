@@ -51,6 +51,7 @@ import type * as lib_colombiaHolidays from "../lib/colombiaHolidays.js";
 import type * as lib_convexOutboundUrl from "../lib/convexOutboundUrl.js";
 import type * as lib_crucesDocumentosInternos from "../lib/crucesDocumentosInternos.js";
 import type * as lib_env from "../lib/env.js";
+import type * as lib_facturacionAccess from "../lib/facturacionAccess.js";
 import type * as lib_facturacionAnticipoDueno from "../lib/facturacionAnticipoDueno.js";
 import type * as lib_facturacionBusinessTime from "../lib/facturacionBusinessTime.js";
 import type * as lib_facturacionCausacion from "../lib/facturacionCausacion.js";
@@ -156,6 +157,7 @@ declare const fullApi: ApiFromModules<{
   "lib/convexOutboundUrl": typeof lib_convexOutboundUrl;
   "lib/crucesDocumentosInternos": typeof lib_crucesDocumentosInternos;
   "lib/env": typeof lib_env;
+  "lib/facturacionAccess": typeof lib_facturacionAccess;
   "lib/facturacionAnticipoDueno": typeof lib_facturacionAnticipoDueno;
   "lib/facturacionBusinessTime": typeof lib_facturacionBusinessTime;
   "lib/facturacionCausacion": typeof lib_facturacionCausacion;

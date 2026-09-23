@@ -7,6 +7,12 @@ import {
   type QueryCtx,
 } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
+import { RUTAS_SISTEMA } from "../lib/rutas-sistema";
+import { isValidServerSecret } from "./lib/auth";
+import {
+  actorPuedeVerEmpresa,
+  requirePermisoEmpresa,
+} from "./lib/billingAuth";
 import { normalizePeajesProviderNit } from "./lib/peajes";
 import { normalizeEmail, normalizeEmpresa } from "./lib/normalize";
 
@@ -124,6 +130,23 @@ const CLAVES_USUARIO_INDEXADAS = new Set<string>([
 
 function normalizeProveedorNit(value?: string) {
   return normalizePeajesProviderNit(value);
+}
+
+/**
+ * Billing settings are edited from /billing/settings: the caller needs that permission and
+ * access to the company being configured. The audit fields come from the caller's identity;
+ * the `actualizadoPor*` args are still accepted for compatibility but ignored.
+ */
+async function requireConfiguradorFacturacion(ctx: MutationCtx, empresa: number) {
+  const actor = await requirePermisoEmpresa(
+    ctx,
+    RUTAS_SISTEMA.FACTURACION_CONFIGURACION,
+    empresa
+  );
+  return {
+    actualizadoPorUserId: actor.usuarioId,
+    actualizadoPorNombre: actor.nombre,
+  };
 }
 
 async function getAnalistasCausacionActivos(
@@ -375,6 +398,7 @@ export const listar = query({
   args: { empresa: v.optional(v.number()) },
   handler: async (ctx, args) => {
     const empresa = normalizeEmpresa(args.empresa);
+    await requirePermisoEmpresa(ctx, RUTAS_SISTEMA.FACTURACION_CONFIGURACION, empresa);
     const scoped = await ctx.db
       .query("facturacionConfiguracion")
       .withIndex("by_empresa", (q) => q.eq("empresa", empresa))
@@ -435,12 +459,25 @@ export const listarCuentasRecepcionInterno = internalQuery({
   },
 });
 
+/**
+ * Role pickers of the inbox (and the Next assign-phase route, which calls it server-side
+ * with `secret`). Browser callers need the inbox or settings permission. The inbox asks for
+ * the companies of the invoices assigned to the user, which may be outside their own
+ * companies, so an explicit list is honoured; without it only visible companies are returned.
+ */
 export const listarUsuariosPorClave = query({
   args: {
     clave: claveUsuariosListaValidator,
     empresas: v.optional(v.array(v.number())),
+    secret: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const actor = isValidServerSecret(args.secret)
+      ? null
+      : await requirePermisoEmpresa(ctx, [
+          RUTAS_SISTEMA.FACTURACION_BUZON,
+          RUTAS_SISTEMA.FACTURACION_CONFIGURACION,
+        ]);
     const out: Record<string, ReturnType<typeof getUsuariosLista>> = {};
 
     if (args.empresas) {
@@ -500,6 +537,12 @@ export const listarUsuariosPorClave = query({
       out[String(empresa)] = getUsuariosLista(config);
     }
 
+    if (actor) {
+      for (const empresa of Object.keys(out)) {
+        if (!actorPuedeVerEmpresa(actor, Number(empresa))) delete out[empresa];
+      }
+    }
+
     return out;
   },
 });
@@ -516,6 +559,7 @@ export const guardarUsuario = mutation({
   },
   handler: async (ctx, args) => {
     const empresa = normalizeEmpresa(args.empresa);
+    const auditoria = await requireConfiguradorFacturacion(ctx, empresa);
     const existing = await getExisting(ctx, empresa, args.clave);
 
     const payload = {
@@ -526,11 +570,11 @@ export const guardarUsuario = mutation({
       nombre: args.nombre.trim(),
       email: args.email.toLowerCase(),
       actualizadoEn: Date.now(),
-      ...(args.actualizadoPorUserId
-        ? { actualizadoPorUserId: args.actualizadoPorUserId }
+      ...(auditoria.actualizadoPorUserId
+        ? { actualizadoPorUserId: auditoria.actualizadoPorUserId }
         : {}),
-      ...(args.actualizadoPorNombre
-        ? { actualizadoPorNombre: args.actualizadoPorNombre }
+      ...(auditoria.actualizadoPorNombre
+        ? { actualizadoPorNombre: auditoria.actualizadoPorNombre }
         : {}),
     };
 
@@ -553,8 +597,8 @@ export const guardarUsuario = mutation({
           email: args.email,
         },
       ],
-      actualizadoPorUserId: args.actualizadoPorUserId,
-      actualizadoPorNombre: args.actualizadoPorNombre,
+      actualizadoPorUserId: auditoria.actualizadoPorUserId,
+      actualizadoPorNombre: auditoria.actualizadoPorNombre,
     });
 
     return configId;
@@ -571,6 +615,7 @@ export const guardarUsuariosLista = mutation({
   },
   handler: async (ctx, args) => {
     const empresa = normalizeEmpresa(args.empresa);
+    const auditoria = await requireConfiguradorFacturacion(ctx, empresa);
     if (args.usuarios.length === 0) {
       throw new Error("Configura al menos un usuario.");
     }
@@ -597,11 +642,11 @@ export const guardarUsuariosLista = mutation({
       tipo: "usuarios_lista" as const,
       usuarios,
       actualizadoEn: Date.now(),
-      ...(args.actualizadoPorUserId
-        ? { actualizadoPorUserId: args.actualizadoPorUserId }
+      ...(auditoria.actualizadoPorUserId
+        ? { actualizadoPorUserId: auditoria.actualizadoPorUserId }
         : {}),
-      ...(args.actualizadoPorNombre
-        ? { actualizadoPorNombre: args.actualizadoPorNombre }
+      ...(auditoria.actualizadoPorNombre
+        ? { actualizadoPorNombre: auditoria.actualizadoPorNombre }
         : {}),
     };
 
@@ -618,8 +663,8 @@ export const guardarUsuariosLista = mutation({
       clave: args.clave,
       tipo: "usuarios_lista",
       usuarios,
-      actualizadoPorUserId: args.actualizadoPorUserId,
-      actualizadoPorNombre: args.actualizadoPorNombre,
+      actualizadoPorUserId: auditoria.actualizadoPorUserId,
+      actualizadoPorNombre: auditoria.actualizadoPorNombre,
     });
 
     return configId;
@@ -636,6 +681,7 @@ export const guardarGerencias = mutation({
   },
   handler: async (ctx, args) => {
     const empresa = normalizeEmpresa(args.empresa);
+    const auditoria = await requireConfiguradorFacturacion(ctx, empresa);
     if (args.usuarios.length === 0) {
       throw new Error("Configura al menos un usuario de gerencia.");
     }
@@ -682,11 +728,11 @@ export const guardarGerencias = mutation({
       tipo: "usuarios_lista" as const,
       usuarios,
       actualizadoEn: Date.now(),
-      ...(args.actualizadoPorUserId
-        ? { actualizadoPorUserId: args.actualizadoPorUserId }
+      ...(auditoria.actualizadoPorUserId
+        ? { actualizadoPorUserId: auditoria.actualizadoPorUserId }
         : {}),
-      ...(args.actualizadoPorNombre
-        ? { actualizadoPorNombre: args.actualizadoPorNombre }
+      ...(auditoria.actualizadoPorNombre
+        ? { actualizadoPorNombre: auditoria.actualizadoPorNombre }
         : {}),
     };
 
@@ -703,8 +749,8 @@ export const guardarGerencias = mutation({
       clave: "gerencia",
       tipo: "usuarios_lista",
       usuarios,
-      actualizadoPorUserId: args.actualizadoPorUserId,
-      actualizadoPorNombre: args.actualizadoPorNombre,
+      actualizadoPorUserId: auditoria.actualizadoPorUserId,
+      actualizadoPorNombre: auditoria.actualizadoPorNombre,
     });
 
     return configId;
@@ -720,6 +766,7 @@ export const guardarAnalistasCausacion = mutation({
   },
   handler: async (ctx, args) => {
     const empresa = normalizeEmpresa(args.empresa);
+    const auditoria = await requireConfiguradorFacturacion(ctx, empresa);
     if (args.usuarios.length === 0) {
       throw new Error("Configura al menos un analista de causación.");
     }
@@ -786,11 +833,11 @@ export const guardarAnalistasCausacion = mutation({
       usuariosPonderados: usuarios,
       distribucionCursor: 0,
       actualizadoEn: Date.now(),
-      ...(args.actualizadoPorUserId
-        ? { actualizadoPorUserId: args.actualizadoPorUserId }
+      ...(auditoria.actualizadoPorUserId
+        ? { actualizadoPorUserId: auditoria.actualizadoPorUserId }
         : {}),
-      ...(args.actualizadoPorNombre
-        ? { actualizadoPorNombre: args.actualizadoPorNombre }
+      ...(auditoria.actualizadoPorNombre
+        ? { actualizadoPorNombre: auditoria.actualizadoPorNombre }
         : {}),
     };
 
@@ -810,8 +857,8 @@ export const guardarAnalistasCausacion = mutation({
       clave: "analista_causacion",
       tipo: "usuarios_ponderados",
       usuarios,
-      actualizadoPorUserId: args.actualizadoPorUserId,
-      actualizadoPorNombre: args.actualizadoPorNombre,
+      actualizadoPorUserId: auditoria.actualizadoPorUserId,
+      actualizadoPorNombre: auditoria.actualizadoPorNombre,
     });
 
     return configId;
@@ -827,6 +874,7 @@ export const guardarRechazosDian = mutation({
   },
   handler: async (ctx, args) => {
     const empresa = normalizeEmpresa(args.empresa);
+    const auditoria = await requireConfiguradorFacturacion(ctx, empresa);
     if (args.usuarios.length === 0) {
       throw new Error("Configura al menos un usuario de Rechazos DIAN.");
     }
@@ -873,11 +921,11 @@ export const guardarRechazosDian = mutation({
       usuariosPonderados: usuarios,
       distribucionCursor: 0,
       actualizadoEn: Date.now(),
-      ...(args.actualizadoPorUserId
-        ? { actualizadoPorUserId: args.actualizadoPorUserId }
+      ...(auditoria.actualizadoPorUserId
+        ? { actualizadoPorUserId: auditoria.actualizadoPorUserId }
         : {}),
-      ...(args.actualizadoPorNombre
-        ? { actualizadoPorNombre: args.actualizadoPorNombre }
+      ...(auditoria.actualizadoPorNombre
+        ? { actualizadoPorNombre: auditoria.actualizadoPorNombre }
         : {}),
     };
 
@@ -897,8 +945,8 @@ export const guardarRechazosDian = mutation({
       clave: "rechazos_dian",
       tipo: "usuarios_ponderados",
       usuarios,
-      actualizadoPorUserId: args.actualizadoPorUserId,
-      actualizadoPorNombre: args.actualizadoPorNombre,
+      actualizadoPorUserId: auditoria.actualizadoPorUserId,
+      actualizadoPorNombre: auditoria.actualizadoPorNombre,
     });
 
     return configId;
@@ -914,6 +962,7 @@ export const guardarRevisoresCajaMenor = mutation({
   },
   handler: async (ctx, args) => {
     const empresa = normalizeEmpresa(args.empresa);
+    const auditoria = await requireConfiguradorFacturacion(ctx, empresa);
     if (args.usuarios.length === 0) {
       throw new Error("Configura al menos un Revisor Caja Menor.");
     }
@@ -960,11 +1009,11 @@ export const guardarRevisoresCajaMenor = mutation({
       usuariosPonderados: usuarios,
       distribucionCursor: 0,
       actualizadoEn: Date.now(),
-      ...(args.actualizadoPorUserId
-        ? { actualizadoPorUserId: args.actualizadoPorUserId }
+      ...(auditoria.actualizadoPorUserId
+        ? { actualizadoPorUserId: auditoria.actualizadoPorUserId }
         : {}),
-      ...(args.actualizadoPorNombre
-        ? { actualizadoPorNombre: args.actualizadoPorNombre }
+      ...(auditoria.actualizadoPorNombre
+        ? { actualizadoPorNombre: auditoria.actualizadoPorNombre }
         : {}),
     };
 
@@ -984,8 +1033,8 @@ export const guardarRevisoresCajaMenor = mutation({
       clave: "revisor_caja_menor",
       tipo: "usuarios_ponderados",
       usuarios,
-      actualizadoPorUserId: args.actualizadoPorUserId,
-      actualizadoPorNombre: args.actualizadoPorNombre,
+      actualizadoPorUserId: auditoria.actualizadoPorUserId,
+      actualizadoPorNombre: auditoria.actualizadoPorNombre,
     });
 
     return configId;
@@ -1002,6 +1051,7 @@ export const guardarCuentaRecepcion = mutation({
   },
   handler: async (ctx, args) => {
     const empresa = normalizeEmpresa(args.empresa);
+    const auditoria = await requireConfiguradorFacturacion(ctx, empresa);
     const valor = args.valor.trim().toLowerCase();
 
     if (!args.sincronizacionGraphDeshabilitada && !valor) {
@@ -1017,11 +1067,11 @@ export const guardarCuentaRecepcion = mutation({
       sincronizacionGraphDeshabilitada:
         args.sincronizacionGraphDeshabilitada,
       actualizadoEn: Date.now(),
-      ...(args.actualizadoPorUserId
-        ? { actualizadoPorUserId: args.actualizadoPorUserId }
+      ...(auditoria.actualizadoPorUserId
+        ? { actualizadoPorUserId: auditoria.actualizadoPorUserId }
         : {}),
-      ...(args.actualizadoPorNombre
-        ? { actualizadoPorNombre: args.actualizadoPorNombre }
+      ...(auditoria.actualizadoPorNombre
+        ? { actualizadoPorNombre: auditoria.actualizadoPorNombre }
         : {}),
     };
 
@@ -1052,6 +1102,7 @@ export const listarProveedoresCausacion = query({
   ),
   handler: async (ctx, args) => {
     const empresa = normalizeEmpresa(args.empresa);
+    await requirePermisoEmpresa(ctx, RUTAS_SISTEMA.FACTURACION_CONFIGURACION, empresa);
     const rows = await ctx.db
       .query("facturacionCausacionProveedorAnalistas")
       .withIndex("by_empresa", (q) => q.eq("empresa", empresa))
@@ -1096,6 +1147,7 @@ export const guardarProveedorCausacion = mutation({
   returns: v.id("facturacionCausacionProveedorAnalistas"),
   handler: async (ctx, args) => {
     const empresa = normalizeEmpresa(args.empresa);
+    const auditoria = await requireConfiguradorFacturacion(ctx, empresa);
     const proveedorNit = args.proveedorNit.trim();
     const proveedorNombre = args.proveedorNombre.trim();
     const proveedorNitNormalizado = normalizeProveedorNit(proveedorNit);
@@ -1141,11 +1193,11 @@ export const guardarProveedorCausacion = mutation({
       analistaNombre: analista.nombre.trim(),
       analistaEmail: normalizeEmail(analista.email),
       actualizadoEn: now,
-      ...(args.actualizadoPorUserId
-        ? { actualizadoPorUserId: args.actualizadoPorUserId }
+      ...(auditoria.actualizadoPorUserId
+        ? { actualizadoPorUserId: auditoria.actualizadoPorUserId }
         : {}),
-      ...(args.actualizadoPorNombre
-        ? { actualizadoPorNombre: args.actualizadoPorNombre }
+      ...(auditoria.actualizadoPorNombre
+        ? { actualizadoPorNombre: auditoria.actualizadoPorNombre }
         : {}),
     };
 
@@ -1171,6 +1223,7 @@ export const eliminarProveedorCausacion = mutation({
     if (!existing) {
       throw new Error("Proveedor no encontrado.");
     }
+    await requireConfiguradorFacturacion(ctx, normalizeEmpresa(existing.empresa));
     await ctx.db.delete("facturacionCausacionProveedorAnalistas", args.id);
     return null;
   },

@@ -8,6 +8,7 @@ import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import schema from "./schema";
 import { actingAsActorArgs } from "../test-utils/convexActingAs";
+import { asUser } from "../test-utils/onboardingActors";
 
 const modules = import.meta.glob("./**/*.*s");
 
@@ -394,8 +395,11 @@ async function seedFacturaConTarea(
     estado: "revision_lider" | "legalizada" | "reembolso_caja_menor" | "causacion";
     total?: number;
     empresa?: number;
+    /** Leader who owns the task and its revision_lider assignment (default LIDER). */
+    lider?: { actorUserId: string; actorNombre: string; actorEmail: string };
   }
 ) {
+  const lider = args.lider ?? LIDER;
   return await t.run(async (ctx) => {
     const now = NOW + Number(args.suffix.replace(/\D/g, "") || 0);
     const empresa = args.empresa ?? EMPRESA;
@@ -420,12 +424,12 @@ async function seedFacturaConTarea(
       empresa,
       estado: args.estado,
       categoria: "administracion",
-      asignadoAUserId: LIDER.actorUserId,
-      asignadoANombre: LIDER.actorNombre,
-      asignadoAEmail: LIDER.actorEmail,
-      liderProcesoUserId: LIDER.actorUserId,
-      liderProcesoNombre: LIDER.actorNombre,
-      liderProcesoEmail: LIDER.actorEmail,
+      asignadoAUserId: lider.actorUserId,
+      asignadoANombre: lider.actorNombre,
+      asignadoAEmail: lider.actorEmail,
+      liderProcesoUserId: lider.actorUserId,
+      liderProcesoNombre: lider.actorNombre,
+      liderProcesoEmail: lider.actorEmail,
       creadoEn: now,
       actualizadoEn: now,
     });
@@ -441,9 +445,9 @@ async function seedFacturaConTarea(
         estado: "pendiente",
         rol: "lider",
         grupoId,
-        asignadoAUserId: LIDER.actorUserId,
-        asignadoANombre: LIDER.actorNombre,
-        asignadoAEmail: LIDER.actorEmail,
+        asignadoAUserId: lider.actorUserId,
+        asignadoANombre: lider.actorNombre,
+        asignadoAEmail: lider.actorEmail,
         fechaAsignacion: now,
         creadoEn: now,
         actualizadoEn: now,
@@ -4433,9 +4437,11 @@ describe("bandeja reembolso caja menor", () => {
     const t = makeTest();
     await seedConfigs(t);
     const cajaMenorId = await seedCaja(t, [JULIETH.actorUserId, JUAN.actorUserId]);
+    // Julieth reviews the invoice (her assignment) and is a custodian of the fund.
     const { asignacionId } = await seedFacturaConTarea(t, {
       suffix: "bandeja-real-flow",
       estado: "revision_lider",
+      lider: JULIETH,
     });
 
     await t.mutation(api.facturacionTareas.marcarEsLegalizacionCajaMenor, {
@@ -4607,5 +4613,84 @@ describe("bandeja reembolso caja menor", () => {
     expect(snapshot.movimientos.find((row) => row._id === ids.anuladoId)?.disponibleEnBandeja).toBe(
       false
     );
+  });
+});
+
+describe("caja menor: autorización y consistencia de la bandeja", () => {
+  const MARCA_BASE = {
+    esLegalizacionCajaMenor: true,
+    nit: "900123456",
+    nombreEmpresa: "Proveedor Caja",
+    concepto: "Papelería",
+    fechaPago: "2026-06-02",
+    centroCostoId: "1:1:CC-1",
+    centroCostoCodigo: "CC-1",
+    centroCostoNombre: "Centro Costo",
+  };
+
+  test("marcar Caja Menor exige al dueño de la revisión y a un custodio de la caja", async () => {
+    const t = makeTest();
+    await seedConfigs(t);
+    const cajaMenorId = await seedCaja(t, [JUAN.actorUserId]);
+    const { tareaId, asignacionId } = await seedFacturaConTarea(t, {
+      suffix: "auth-marca",
+      estado: "revision_lider",
+    });
+    const args = { ...MARCA_BASE, tareaId, asignacionId, cajaMenorId };
+
+    // Juan is a custodian but the review belongs to Lider: sending Lider's actor args does not help.
+    const juan = await asUser(t, { id: JUAN.actorUserId });
+    await expect(
+      juan.mutation(api.facturacionTareas.marcarEsLegalizacionCajaMenor, { ...args, ...LIDER }),
+    ).rejects.toThrow("No tienes asignada esta tarea.");
+    // Lider owns the review but is not a custodian of that fund.
+    await expect(
+      t.mutation(api.facturacionTareas.marcarEsLegalizacionCajaMenor, { ...args, ...LIDER }),
+    ).rejects.toThrow("Sólo un custodio asignado puede usar esta Caja Menor.");
+
+    const snapshot = await getSnapshot(t);
+    expect(snapshot.movimientos).toHaveLength(0);
+    expect(snapshot.tareas[0].estado).toBe("revision_lider");
+  });
+
+  test("legalizar con Caja Menor desde Contabilidad exige al contador asignado", async () => {
+    const t = makeTest();
+    await seedConfigs(t);
+    const { tareaId, facturaId } = await seedFacturaConTarea(t, {
+      suffix: "auth-legaliza",
+      estado: "causacion",
+    });
+    const asignacionId = await t.run(async (ctx) => {
+      const id = await ctx.db.insert("facturacionAsignaciones", {
+        facturaId,
+        tareaId,
+        empresa: EMPRESA,
+        fase: "revision_impuestos",
+        estado: "pendiente",
+        rol: "contador_impuestos",
+        grupoId: `revision_impuestos:${String(facturaId)}`,
+        asignadoAUserId: CONTADOR.usuarioId,
+        asignadoANombre: CONTADOR.nombre,
+        asignadoAEmail: CONTADOR.email,
+        fechaAsignacion: NOW,
+        creadoEn: NOW,
+        actualizadoEn: NOW,
+      });
+      await ctx.db.patch("facturacionTareas", tareaId, {
+        estado: "revision_impuestos",
+        currentAsignacionId: id,
+      });
+      return id;
+    });
+
+    await expect(
+      t.mutation(api.facturacionTareas.legalizarCajaMenorFactura, {
+        asignacionId,
+        comentario: "Legalizar",
+        ...OTRO_USUARIO,
+      }),
+    ).rejects.toThrow("No tienes asignada esta tarea.");
+    const asignacion = await t.run(async (ctx) => ctx.db.get("facturacionAsignaciones", asignacionId));
+    expect(asignacion?.estado).toBe("pendiente");
   });
 });

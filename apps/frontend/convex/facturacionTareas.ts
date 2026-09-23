@@ -6,10 +6,12 @@ import type { Doc, Id } from "./_generated/dataModel";
 import {
   internalMutation,
   type MutationCtx,
-  mutation,
   type QueryCtx,
   query,
 } from "./_generated/server";
+// actor* args of public mutations are overwritten with the authenticated caller (see
+// lib/serverActor.ts); functions that declare `secret` are server-to-server and untouched.
+import { mutationConActor as mutation, queryConActorIds } from "./lib/serverActor";
 import {
   anularMovimientosCajaMenorFacturaInterno,
   crearMovimientoCajaMenorInterno,
@@ -98,8 +100,15 @@ import {
 } from "./lib/valorLegalizableAnticipo";
 import { fallbackContactEmail, SYSTEM_ACTOR_EMAIL } from "./lib/env";
 import { requireServerSecret } from "./lib/auth";
-import { requireActor as requireBillingActor } from "./lib/billingAuth";
+import {
+  actorPuedeVerEmpresa,
+  actorTienePermiso,
+  requireActor as requireBillingActor,
+  type BillingActor,
+} from "./lib/billingAuth";
+import { actorEsAsignado } from "./lib/facturacionAccess";
 import { normalizeEmail, normalizeEmpresa } from "./lib/normalize";
+import { RUTAS_SISTEMA } from "../lib/rutas-sistema";
 
 const DEFAULT_EMPRESA = 1;
 
@@ -1992,13 +2001,84 @@ async function resolverActorAsignacion(
   asignacion: Doc<"facturacionAsignaciones">
 ): Promise<{ actorUserId: string; actorNombre: string; actorEmail: string }> {
   const actor = await requireBillingActor(ctx);
-  const esAsignado =
-    (asignacion.asignadoAUserId && asignacion.asignadoAUserId === actor.usuarioId) ||
-    normalizeEmail(asignacion.asignadoAEmail) === normalizeEmail(actor.email);
-  if (!esAsignado && !actor.hasFullAccess) {
+  if (!actorEsAsignado(actor, asignacion) && !actor.hasFullAccess) {
     throw new Error("No tienes asignada esta tarea.");
   }
   return { actorUserId: actor.usuarioId, actorNombre: actor.nombre, actorEmail: actor.email };
+}
+
+/**
+ * `getTareaFromAsignacion` for public workflow mutations: the pending assignment must also
+ * belong to the caller (or the caller has full access). Server-to-server paths, which have
+ * no identity and authorize the session in the Next route, use `getTareaFromAsignacion`.
+ */
+async function getTareaFromAsignacionDelActor(
+  ctx: MutationCtx,
+  asignacionId: Id<"facturacionAsignaciones">
+): Promise<{
+  asignacion: Doc<"facturacionAsignaciones">;
+  tarea: Doc<"facturacionTareas">;
+  empresa: number;
+}> {
+  const resultado = await getTareaFromAsignacion(ctx, asignacionId);
+  await resolverActorAsignacion(ctx, resultado.asignacion);
+  return resultado;
+}
+
+/**
+ * Task-level actions of the invoice detail panel, which the UI only offers for tasks
+ * without assignments (older tasks) to users with the invoices permission. Tasks that run
+ * on assignments must be handled from the inbox; otherwise the caller must own the task,
+ * have the invoices permission within its company, or have full access.
+ */
+async function assertActorOperaTareaSinAsignaciones(
+  ctx: MutationCtx,
+  tarea: Doc<"facturacionTareas">
+): Promise<BillingActor> {
+  const actor = await requireBillingActor(ctx);
+  const asignacion = await ctx.db
+    .query("facturacionAsignaciones")
+    .withIndex("by_facturaId", (q) => q.eq("facturaId", tarea.facturaId))
+    .first();
+  if (asignacion) {
+    throw new Error("Gestiona esta factura desde Mi Buzón.");
+  }
+  const puedeGestionar =
+    actor.hasFullAccess ||
+    actorEsAsignado(actor, tarea) ||
+    (actorTienePermiso(actor, RUTAS_SISTEMA.FACTURACION_FACTURAS) &&
+      actorPuedeVerEmpresa(actor, normalizeEmpresa(tarea.empresa)));
+  if (!puedeGestionar) {
+    throw new Error("No tienes asignada esta tarea.");
+  }
+  return actor;
+}
+
+/**
+ * Special-flag toggles (advance / petty cash) run on the task's active assignment, which
+ * must belong to the caller. Unmarking without an active assignment is left to the task's
+ * current owner or whoever marked the flag. Full-access users may always act.
+ */
+function assertActorMarcaTarea(
+  actor: BillingActor,
+  args: {
+    tarea: Doc<"facturacionTareas">;
+    asignacionActiva: Doc<"facturacionAsignaciones"> | null;
+    marcador?: { userId?: string; email?: string };
+  }
+) {
+  if (actor.hasFullAccess) return;
+  const permitido = args.asignacionActiva
+    ? actorEsAsignado(actor, args.asignacionActiva)
+    : actorEsAsignado(actor, args.tarea) ||
+      (args.marcador !== undefined &&
+        actorEsAsignado(actor, {
+          asignadoAUserId: args.marcador.userId,
+          asignadoAEmail: args.marcador.email,
+        }));
+  if (!permitido) {
+    throw new Error("No tienes asignada esta tarea.");
+  }
 }
 
 async function getTareaFromAsignacion(
@@ -3684,7 +3764,11 @@ export const listar = query({
   },
 });
 
-export const resumenParaBuzon = query({
+// The inbox is always the caller's own: `asignadoAUserId` is overwritten with the
+// authenticated user's id (the arg is kept so existing clients keep validating).
+const queryBuzonDelActor = queryConActorIds(["asignadoAUserId"]);
+
+export const resumenParaBuzon = queryBuzonDelActor({
   args: {
     asignadoAUserId: v.string(),
     empresa: v.optional(v.number()),
@@ -3694,7 +3778,7 @@ export const resumenParaBuzon = query({
   },
 });
 
-export const listarParaBuzon = query({
+export const listarParaBuzon = queryBuzonDelActor({
   args: {
     asignadoAUserId: v.string(),
     empresa: v.optional(v.number()),
@@ -3945,7 +4029,7 @@ export const legalizarCajaMenorFactura = mutation({
     ...actorValidator,
   },
   handler: async (ctx, args) => {
-    const { asignacion, tarea, empresa } = await getTareaFromAsignacion(ctx, args.asignacionId);
+    const { asignacion, tarea, empresa } = await getTareaFromAsignacionDelActor(ctx, args.asignacionId);
     if (asignacion.fase !== "revision_impuestos" || tarea.estado !== "revision_impuestos") {
       throw new Error(
         "La factura debe estar en Contabilidad para completar y legalizar con Caja Menor."
@@ -3985,7 +4069,7 @@ export const cerrarNotaCreditoAsignacion = mutation({
     ...actorValidator,
   },
   handler: async (ctx, args) => {
-    const { asignacion, tarea, empresa } = await getTareaFromAsignacion(ctx, args.asignacionId);
+    const { asignacion, tarea, empresa } = await getTareaFromAsignacionDelActor(ctx, args.asignacionId);
     await cerrarNotaCreditoDesdeAsignacion(ctx, {
       asignacion,
       tarea,
@@ -4004,7 +4088,7 @@ export const cerrarFacturaRecepcionAsignacion = mutation({
     ...actorValidator,
   },
   handler: async (ctx, args) => {
-    const { asignacion, tarea, empresa } = await getTareaFromAsignacion(ctx, args.asignacionId);
+    const { asignacion, tarea, empresa } = await getTareaFromAsignacionDelActor(ctx, args.asignacionId);
     await cerrarFacturaRecepcionDesdeAsignacion(ctx, {
       asignacion,
       tarea,
@@ -4024,7 +4108,7 @@ export const asignarLideres = mutation({
     ...actorValidator,
   },
   handler: async (ctx, args) => {
-    const { asignacion, tarea, empresa } = await getTareaFromAsignacion(ctx, args.asignacionId);
+    const { asignacion, tarea, empresa } = await getTareaFromAsignacionDelActor(ctx, args.asignacionId);
     if (asignacion.fase !== "recepcion" || tarea.estado !== "recepcion") {
       throw new Error("La factura no está pendiente de asignación por recepción.");
     }
@@ -4114,7 +4198,7 @@ export const completarRevisionLider = mutation({
     ...actorValidator,
   },
   handler: async (ctx, args) => {
-    const { asignacion, tarea, empresa } = await getTareaFromAsignacion(ctx, args.asignacionId);
+    const { asignacion, tarea, empresa } = await getTareaFromAsignacionDelActor(ctx, args.asignacionId);
     if (asignacion.fase !== "revision_lider" || tarea.estado !== "revision_lider") {
       throw new Error("La factura ya no está en revisión de líderes.");
     }
@@ -4203,7 +4287,7 @@ export const asignarJefeDirecto = mutation({
     ...actorValidator,
   },
   handler: async (ctx, args) => {
-    const { asignacion, tarea, empresa } = await getTareaFromAsignacion(ctx, args.asignacionId);
+    const { asignacion, tarea, empresa } = await getTareaFromAsignacionDelActor(ctx, args.asignacionId);
     if (asignacion.fase !== "revision_lider" || tarea.estado !== "revision_lider") {
       throw new Error("La factura ya no está en revisión de líder.");
     }
@@ -4235,7 +4319,7 @@ export const completarJefeDirecto = mutation({
     ...actorValidator,
   },
   handler: async (ctx, args) => {
-    const { asignacion, tarea, empresa } = await getTareaFromAsignacion(ctx, args.asignacionId);
+    const { asignacion, tarea, empresa } = await getTareaFromAsignacionDelActor(ctx, args.asignacionId);
     if (asignacion.fase !== "jefe_directo" || tarea.estado !== "jefe_directo") {
       throw new Error("La factura ya no está en revisión de jefe directo.");
     }
@@ -4278,7 +4362,7 @@ export const asignarOtroLider = mutation({
     ...actorValidator,
   },
   handler: async (ctx, args) => {
-    const { asignacion, tarea, empresa } = await getTareaFromAsignacion(ctx, args.asignacionId);
+    const { asignacion, tarea, empresa } = await getTareaFromAsignacionDelActor(ctx, args.asignacionId);
     if (asignacion.fase !== "revision_lider" || tarea.estado !== "revision_lider") {
       throw new Error("La factura ya no está en revisión de líderes.");
     }
@@ -4373,7 +4457,7 @@ export const asignarPar = mutation({
     ...actorValidator,
   },
   handler: async (ctx, args) => {
-    const { asignacion, tarea, empresa } = await getTareaFromAsignacion(ctx, args.asignacionId);
+    const { asignacion, tarea, empresa } = await getTareaFromAsignacionDelActor(ctx, args.asignacionId);
     const fasesPermitidas = [
       "causacion",
       "revision_impuestos",
@@ -4509,7 +4593,7 @@ export const guardarValorContableFactura = mutation({
     ...actorValidator,
   },
   handler: async (ctx, args) => {
-    const { asignacion, tarea } = await getTareaFromAsignacion(ctx, args.asignacionId);
+    const { asignacion, tarea } = await getTareaFromAsignacionDelActor(ctx, args.asignacionId);
 
     const factura = await ctx.db.get("facturacionFacturas", tarea.facturaId);
     if (!factura) throw new Error("Factura no encontrada.");
@@ -4541,7 +4625,7 @@ export const completarCausacion = mutation({
     ...causacionArg,
   },
   handler: async (ctx, args) => {
-    const { asignacion, tarea, empresa } = await getTareaFromAsignacion(ctx, args.asignacionId);
+    const { asignacion, tarea, empresa } = await getTareaFromAsignacionDelActor(ctx, args.asignacionId);
     if (asignacion.fase !== "causacion" || tarea.estado !== "causacion") {
       throw new Error("La factura ya no está en causación.");
     }
@@ -4637,7 +4721,7 @@ export const reenviarAImpuestos = mutation({
     ...causacionArg,
   },
   handler: async (ctx, args) => {
-    const { asignacion, tarea, empresa } = await getTareaFromAsignacion(ctx, args.asignacionId);
+    const { asignacion, tarea, empresa } = await getTareaFromAsignacionDelActor(ctx, args.asignacionId);
     if (asignacion.fase !== "causacion" || tarea.estado !== "causacion") {
       throw new Error("La factura ya no está en corrección de causación.");
     }
@@ -4727,7 +4811,7 @@ export const completarRevisionImpuestos = mutation({
     ...causacionArg,
   },
   handler: async (ctx, args) => {
-    const { asignacion, tarea, empresa } = await getTareaFromAsignacion(ctx, args.asignacionId);
+    const { asignacion, tarea, empresa } = await getTareaFromAsignacionDelActor(ctx, args.asignacionId);
     if (asignacion.fase !== "revision_impuestos" || tarea.estado !== "revision_impuestos") {
       throw new Error("La factura ya no está en revisión de impuestos.");
     }
@@ -4812,7 +4896,7 @@ export const enviarContadorAGerencia = mutation({
     ...causacionArg,
   },
   handler: async (ctx, args) => {
-    const { asignacion, tarea, empresa } = await getTareaFromAsignacion(ctx, args.asignacionId);
+    const { asignacion, tarea, empresa } = await getTareaFromAsignacionDelActor(ctx, args.asignacionId);
     if (asignacion.fase !== "revision_impuestos" || tarea.estado !== "revision_impuestos") {
       throw new Error("La factura ya no está en revisión de contador.");
     }
@@ -4878,7 +4962,7 @@ export const completarEventosDian = mutation({
     ...causacionArg,
   },
   handler: async (ctx, args) => {
-    const { asignacion, tarea, empresa } = await getTareaFromAsignacion(ctx, args.asignacionId);
+    const { asignacion, tarea, empresa } = await getTareaFromAsignacionDelActor(ctx, args.asignacionId);
     if (asignacion.fase !== "eventos_dian" || tarea.estado !== "eventos_dian") {
       throw new Error("La factura ya no está en Eventos DIAN.");
     }
@@ -4996,7 +5080,7 @@ export const avanzarFasesContablesConsecutivas = mutation({
       throw new Error("Escribe una observación para dejar trazabilidad.");
     }
 
-    const { asignacion, tarea, empresa } = await getTareaFromAsignacion(ctx, args.asignacionId);
+    const { asignacion, tarea, empresa } = await getTareaFromAsignacionDelActor(ctx, args.asignacionId);
     if (
       (asignacion.fase !== "causacion" && asignacion.fase !== "revision_impuestos") ||
       tarea.estado !== asignacion.fase
@@ -5372,7 +5456,7 @@ export const devolverAFase = mutation({
     ...actorValidator,
   },
   handler: async (ctx, args) => {
-    const { asignacion, tarea } = await getTareaFromAsignacion(ctx, args.asignacionId);
+    const { asignacion, tarea } = await getTareaFromAsignacionDelActor(ctx, args.asignacionId);
     if (isEstadoTerminalFacturacion(tarea.estado)) {
       throw new Error("No se puede devolver una factura cerrada.");
     }
@@ -5423,7 +5507,7 @@ export const solicitarRechazoDianAsignacion = mutation({
     ...actorValidator,
   },
   handler: async (ctx, args) => {
-    const { asignacion, tarea, empresa } = await getTareaFromAsignacion(ctx, args.asignacionId);
+    const { asignacion, tarea, empresa } = await getTareaFromAsignacionDelActor(ctx, args.asignacionId);
     const factura = await ctx.db.get("facturacionFacturas", tarea.facturaId);
     if (!factura) throw new Error("Factura no encontrada.");
     const causacionCambio = await aplicarCausacionEnFactura(ctx, {
@@ -5456,7 +5540,7 @@ export const confirmarRechazoDianAsignacion = mutation({
     ...actorValidator,
   },
   handler: async (ctx, args) => {
-    const { asignacion, tarea, empresa } = await getTareaFromAsignacion(ctx, args.asignacionId);
+    const { asignacion, tarea, empresa } = await getTareaFromAsignacionDelActor(ctx, args.asignacionId);
     await confirmarRechazoDian(ctx, {
       tarea,
       asignacion,
@@ -5475,7 +5559,7 @@ export const aprobarGerencia = mutation({
     ...actorValidator,
   },
   handler: async (ctx, args) => {
-    const { asignacion, tarea, empresa } = await getTareaFromAsignacion(ctx, args.asignacionId);
+    const { asignacion, tarea, empresa } = await getTareaFromAsignacionDelActor(ctx, args.asignacionId);
     // Actor derived server-side; client-sent actor* args are ignored.
     const actor = await resolverActorAsignacion(ctx, asignacion);
     if (asignacion.fase !== "gerencia" || tarea.estado !== "gerencia") {
@@ -5645,7 +5729,7 @@ export const registrarPagoAsignacion = mutation({
     ...actorValidator,
   },
   handler: async (ctx, args) => {
-    const { asignacion, tarea, empresa } = await getTareaFromAsignacion(ctx, args.asignacionId);
+    const { asignacion, tarea, empresa } = await getTareaFromAsignacionDelActor(ctx, args.asignacionId);
     if (asignacion.fase !== "revision_tesoreria" || tarea.estado !== "revision_tesoreria") {
       throw new Error("La factura debe estar en revisión de tesorería.");
     }
@@ -5742,7 +5826,7 @@ export const registrarPagoParcialAsignacion = mutation({
       throw new Error("El monto del pago parcial debe ser mayor a cero.");
     }
 
-    const { asignacion, tarea, empresa } = await getTareaFromAsignacion(ctx, args.asignacionId);
+    const { asignacion, tarea, empresa } = await getTareaFromAsignacionDelActor(ctx, args.asignacionId);
     if (asignacion.fase !== "revision_tesoreria" || tarea.estado !== "revision_tesoreria") {
       throw new Error("La factura debe estar en revisión de tesorería.");
     }
@@ -5819,6 +5903,7 @@ export const aceptarFactura = mutation({
   handler: async (ctx, args) => {
     const tarea = await ctx.db.get("facturacionTareas", args.tareaId);
     if (!tarea) throw new Error("Tarea no encontrada");
+    await assertActorOperaTareaSinAsignaciones(ctx, tarea);
     if (tarea.estado !== "revision_lider") {
       throw new Error("La factura ya no está en revisión del líder");
     }
@@ -5862,6 +5947,7 @@ export const rechazarFactura = mutation({
   handler: async (ctx, args) => {
     const tarea = await ctx.db.get("facturacionTareas", args.tareaId);
     if (!tarea) throw new Error("Tarea no encontrada");
+    await assertActorOperaTareaSinAsignaciones(ctx, tarea);
     if (tarea.estado !== "revision_lider") {
       throw new Error("La factura ya no está en revisión del líder");
     }
@@ -5897,6 +5983,7 @@ export const enviarACausacion = mutation({
   handler: async (ctx, args) => {
     const tarea = await ctx.db.get("facturacionTareas", args.tareaId);
     if (!tarea) throw new Error("Tarea no encontrada");
+    await assertActorOperaTareaSinAsignaciones(ctx, tarea);
     if (tarea.estado !== "aceptada" && tarea.estado !== "revision_lider") {
       throw new Error("La factura debe estar aceptada para pasar a análisis");
     }
@@ -5921,6 +6008,7 @@ export const enviarATesoreria = mutation({
   handler: async (ctx, args) => {
     const tarea = await ctx.db.get("facturacionTareas", args.tareaId);
     if (!tarea) throw new Error("Tarea no encontrada");
+    await assertActorOperaTareaSinAsignaciones(ctx, tarea);
     if (tarea.estado !== "causacion") {
       throw new Error("La factura debe estar en análisis para pasar a tesorería");
     }
@@ -6054,6 +6142,7 @@ export const agregarComentario = mutation({
   handler: async (ctx, args) => {
     const tarea = await ctx.db.get("facturacionTareas", args.tareaId);
     if (!tarea) throw new Error("Tarea no encontrada");
+    await assertActorOperaTareaSinAsignaciones(ctx, tarea);
 
     await registrarAprobacion(ctx, {
       tareaId: tarea._id,
@@ -6152,6 +6241,14 @@ export const marcarEsLegalizacionAnticipo = mutation({
     if (!args.esLegalizacionAnticipo && asignacion && !asignacionActivaValida) {
       throw new Error("No se encontró la asignación activa para desmarcar el anticipo.");
     }
+    assertActorMarcaTarea(await requireBillingActor(ctx), {
+      tarea,
+      asignacionActiva: asignacionActivaValida ? asignacion : null,
+      marcador: {
+        userId: factura.anticipoLiderUserId,
+        email: factura.anticipoLiderEmail,
+      },
+    });
 
     const marcadorUserId = asignacion?.asignadoAUserId ?? args.actorUserId;
     const marcadorNombre = asignacion?.asignadoANombre ?? args.actorNombre;
@@ -6360,6 +6457,14 @@ export const marcarEsLegalizacionCajaMenor = mutation({
     ) {
       throw new Error("No se encontró la revisión activa para Caja Menor.");
     }
+    assertActorMarcaTarea(await requireBillingActor(ctx), {
+      tarea,
+      asignacionActiva: requiereAsignacionActiva ? asignacion : null,
+      marcador: {
+        userId: factura.cajaMenorMarcadorUserId,
+        email: factura.cajaMenorMarcadorEmail,
+      },
+    });
 
     const now = Date.now();
     if (!args.esLegalizacionCajaMenor) {
@@ -6519,6 +6624,7 @@ export const reasignar = mutation({
   handler: async (ctx, args) => {
     const tarea = await ctx.db.get("facturacionTareas", args.tareaId);
     if (!tarea) throw new Error("Tarea no encontrada");
+    await assertActorOperaTareaSinAsignaciones(ctx, tarea);
     if (isEstadoTerminalFacturacion(tarea.estado)) {
       throw new Error("No se puede reasignar una tarea cerrada");
     }

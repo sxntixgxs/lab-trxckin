@@ -96,3 +96,15 @@ export function mutationConActorIds(userIdKeys: readonly string[]): typeof rawMu
       ? (rawMutation as (d: unknown) => unknown)(def)
       : (rawMutation as (d: unknown) => unknown)(wrap(def, userIdKeys))) as unknown as typeof rawMutation;
 }
+
+/**
+ * Like `queryConActor`, but also overwrites the given "whose data" user id args
+ * (e.g. `asignadoAUserId`, `userId`) with the caller's Nest user id, so a client can only
+ * read its own inbox / funds.
+ */
+export function queryConActorIds(userIdKeys: readonly string[]): typeof rawQuery {
+  return ((def: AnyDef | AnyDef["handler"]) =>
+    typeof def === "function"
+      ? (rawQuery as (d: unknown) => unknown)(def)
+      : (rawQuery as (d: unknown) => unknown)(wrap(def, userIdKeys))) as unknown as typeof rawQuery;
+}
