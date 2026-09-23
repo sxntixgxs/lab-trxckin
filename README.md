@@ -316,15 +316,40 @@ pnpm test
 
 ## Security notes and known limitations
 
-This is a portfolio project extracted from a real internal tool; hardening is ongoing. Known gaps:
+This is a portfolio project extracted from a real internal tool. The Convex deployment URL ships in the frontend bundle, so any signed-in user can call any public query or mutation with arbitrary arguments: every public Convex function authorizes on the server, and page-level route permissions are only UX.
 
-- **Client-supplied actor args.** Many workflow mutations in `convex/facturacionTareas.ts` still accept `actorEmail`/`actorUserId`-style arguments from the client. The migration path is `requireActor` (`convex/lib/auth.ts`) or the `mutationConActor`/`queryConActor` wrappers in `convex/lib/serverActor.ts`, which overwrite actor args with identity-derived values (already used by petty cash and advances).
-- **Read queries.** Most Convex read queries do not enforce per-user or per-company authorization yet; they rely on page-level route permissions.
-- **Advances.** The *devolver*/*rechazar*/*anular* mutations record the real actor but do not check the actor's role for that step.
+**How authorization works**
+
+- **Actor from the identity, never from args.** `requireActor` (`convex/lib/billingAuth.ts`) loads the caller's synced `users` row. The `mutationConActor` / `queryConActor` / `mutationConActorIds` / `queryConActorIds` wrappers (`convex/lib/serverActor.ts`) overwrite client-sent `actorUserId`/`actorNombre`/`actorEmail`/`actorRol` and "whose data" ids (`asignadoAUserId`, `userId`, `createdById`, ...) with the caller's values. Functions that take `secret` are server-to-server (Next routes via `ConvexHttpClient`) and check `CONVEX_SERVER_SECRET`; when they act for a user, the route passes the session-derived actor.
+- **Route permission + company.** `requirePermisoEmpresa` and `actorPuedeVerEmpresa` apply the same route permissions as the pages (`lib/rutas-sistema.ts`) plus the user's companies.
+- **Workflow ownership.** Invoice workflow mutations act only on the caller's pending assignment (or full access); advances on the owner of the current phase or the configured role; petty cash on the custodian / configured reviewer.
+- **Record-scoped reads.** An invoice is readable with the invoices permission in its company, by anyone who took part in its workflow, or from the petty cash screens when it is a petty cash invoice (`convex/lib/facturacionAccess.ts`). Advances follow the lists' visibility (requester, legalization responsible, current phase owner, company role holders). Unauthorized reads return `null`/`[]` rather than throwing.
+- **Files.** `facturacionStorage.getUrl`/`getUrls` only sign storage ids that belong to an invoice or onboarding inscription the caller can read (`convex/lib/storageAccess.ts`); Convex storage has no owner, so callers name the record.
+
+**Closed in the latest hardening pass** (covered by `convex/*Autorizacion.test.ts`, `convex/onboardingSeguridad.test.ts` and the petty cash workflow tests):
+
+- **Billing settings**: role lists, reception mailbox and the supplier-analyst table need `billing/settings` in the target company; audit fields come from the identity.
+- **Invoice workflow** (`convex/facturacionTareas.ts`): actor args are identity-derived and each mutation verifies the caller owns the assignment. The task-level actions of the invoice detail panel only run for tasks without assignments (as the UI shows them), and the inbox queries always return the caller's own inbox.
+- **Invoice attachments**: added or deleted only by someone working the invoice (or the uploader); lists are scoped like invoice reads.
+- **Read queries**: emails, invoice detail and detail sections, DIAN CUFE lookup, tasks, invoice list/export; advance detail, phases, draft supports and role config; petty cash role config, company config, configured-staff lists and a user's assigned funds.
+- **Advances**: return, reject and annul require the owner of the current phase. Rejection is only possible in review, never after disbursement. A disbursed advance can only be annulled by Gerencia or Tesorería, which voids its invoice crosses and recomputes what those invoices owe; annulment is refused if a crossed invoice already closed. Only Tesorería manages disbursement supports, which never delete files outside the advance. Creating an advance requires `finance/advances/request`, and `/finance/advances/request` is gated by it. Changing roles (`POST /api/finance/advances/configuracion/roles`) requires an administrator or the company's GERENCIA, checked in Convex.
+- **Petty cash**: the custodian check behind marking or legalizing an invoice with petty cash uses the authenticated caller, and failed-upload cleanup only deletes freshly uploaded files.
+- **Onboarding**: the Compras score is recomputed on the server from the raw criteria. "Copiar enlace" rotates the previous links of that step (and rotation no longer misses recent tokens when many revoked ones accumulate). Public uploads and the legal representative's signature re-check the document pair; the sign page now asks for it.
+- **RUT extraction** (`/api/extract-rut`) receives the uploaded file instead of resolving an arbitrary storage id.
+- **Consistency**: `devolverMovimientoABuzon` and the causación recount now write through the petty cash bandeja helpers. Before, they left `disponibleEnBandeja` and the pending-movements aggregate stale, and the recount made the next reimbursement update fail with `DELETE_MISSING_KEY`.
+
+**Known limitations**
+
+- **`/api/convex/storage/[id]`** (the Next proxy behind advance, petty cash and PDF links) still serves any storage id to any signed-in user. It needs the same record scoping as `getUrl`, for example by calling Convex with the user's token and a record context.
+- **Storage ids are not owned.** Mutations that attach a file (invoice attachments, public onboarding documents, advance supports) only check that the id exists, so a caller who learns another file's id could attach it to a record they control.
+- **Onboarding second factor.** `obtenerInscripcionPublica` returns the registered document number to whoever holds the link, so the document re-check is a speed bump rather than a real second factor.
+- **Client-supplied display fields.** A few mutations still store names/emails sent by the client next to verified ids (e.g. the custodian and leader-approval fields of `generarReembolsoCajaMenor`).
+- **Legacy data.** Advances rejected after disbursement before this pass may still hold active invoice crosses, and reimbursements whose aggregate key drifted before the fix need an aggregate repair.
+- **Admin maintenance mutations** such as `limpiarDatosAnticipos` are destructive by design; demo accounts should not have full access.
 - **No rate limiting** on the NestJS API.
 - **Convex → local services.** Convex runs in the cloud, so `FRONTEND_URL`/`BACKEND_URL` pointing at `localhost` will not be reachable from a cloud dev deployment; use a tunnel to test notifications and supplier upserts locally.
 
-What is in place: server-to-server Convex functions require `CONVEX_SERVER_SECRET` (constant-time compare); `/api/notifications/*` only accept the internal key or an HMAC signature with a 5-minute window; Nest verifies WorkOS tokens and guards internal routes with `NEST_INTERNAL_KEY`; user privileges reach Convex only through `POST /api/me` → `users.syncPrivileges`; impersonation uses a dedicated signed cookie; public onboarding links carry random per-inscription tokens (hashed at rest, scoped, rotated on resend, revoked on annulment) and every public mutation re-checks the third party's document number; Resend webhooks are verified with the Svix signature; Helmet, strict DTO validation and fail-fast env checks on Nest.
+Also in place: `/api/notifications/*` only accept the internal key or an HMAC signature with a 5-minute window; Nest verifies WorkOS tokens and guards internal routes with `NEST_INTERNAL_KEY`; user privileges reach Convex only through `POST /api/me` → `users.syncPrivileges`; impersonation uses a dedicated signed cookie; public onboarding links carry random per-inscription tokens (hashed at rest, scoped, rotated on resend and on "Copiar enlace", revoked on annulment); Resend webhooks are verified with the Svix signature; Helmet, strict DTO validation and fail-fast env checks on Nest.
 
 ## My role
 

@@ -86,8 +86,7 @@ Returns and annulment work as for suppliers; see [onboarding.md](onboarding.md).
 
 ## Known limitations
 
-This is a portfolio extraction and hardening is ongoing. These are known and will be addressed before the public demo:
+This is a portfolio extraction and hardening is ongoing. Server-side authorization for this module is described in the README's [security notes](../README.md#security-notes-and-known-limitations). Still open:
 
 - The notification gaps listed above: the customer learns about a rejection only on the status page.
-- "Copiar enlace" issues a new link without revoking earlier ones, and generating an upload URL or signing does not re-check the confirmed document number.
 - Creating the customer in the accounting system is a manual confirmation, and closing emails depend on the browser tab staying open after the confirmation.

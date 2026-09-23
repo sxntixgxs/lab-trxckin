@@ -164,11 +164,8 @@ Thresholds are whole business days per company and phase, with a warning at 80% 
 
 ## Known limitations
 
-This is a portfolio extraction and hardening is ongoing. These are known and will be addressed before the public demo:
+This is a portfolio extraction and hardening is ongoing. Server-side authorization for this module is described in the README's [security notes](../README.md#security-notes-and-known-limitations). Still open:
 
-- Many workflow mutations in `facturacionTareas.ts` still accept actor fields from the client, and most only check that the assignment is pending, not that the caller owns it (`aprobarGerencia` is the exception).
-- The inbox queries take the user id from the browser, and several read queries (`facturacionCorreos.listar`, `getWithTarea`, the CUFE lookup) do not enforce per-user or per-company access.
-- The public mutations in `facturacionConfiguracion.ts` and `facturacionAdjuntos.ts` have no authorization check.
 - "Devolver factura" on the invoice page lets anyone with invoice access to that company reopen paid or closed invoices.
 - There is no DIAN API integration: *Eventos DIAN* and *Rechazos DIAN* are manual steps, and XML signatures are not verified.
 - Toll invoices (*peajes*) are stubbed off in this extraction, and only one ZIP level is unpacked.

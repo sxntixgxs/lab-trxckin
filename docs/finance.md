@@ -70,14 +70,15 @@ While an advance is pending legalization, Gerencia or Tesorería can apply adjus
 
 | From | Action | To | Who |
 | --- | --- | --- | --- |
-| (new) | `crearAnticipo` | II, or III / IV when the manager step is skipped | Any signed-in user |
+| (new) | `crearAnticipo` | II, or III / IV when the manager step is skipped | Users with the request permission |
 | II Aprobación jefe directo | approve / reject | III (covers 100%) or IV / Rechazado | Assigned approver |
 | III Revisión contabilidad | approve (may change *valor contable*) / reject / return | IV Gerencia / Rechazado / II | Contabilidad pool |
 | IV Aprobación gerencia | approve / reject / return | IV Desembolso / Rechazado / III or II | Gerencia |
 | IV Desembolso tesorería | register disbursement / return | V Pendiente legalización / IV Gerencia | Tesorero |
 | V Pendiente legalización | invoice crosses reach the legalizable value | Completado (*Legalizado*) | Billing workflow |
 | Completado | a cross is reverted or an adjustment raises the value | back to V | Billing / adjustments |
-| any | annul | Anulado | Any signed-in user (see limitations) |
+| II to IV Desembolso | annul | Anulado | Owner of the current phase |
+| V Pendiente legalización | annul (voids its invoice crosses; refused if a crossed invoice is closed) | Anulado | Gerencia or Tesorería |
 
 Phase rows (`anticiposFases`) keep the full history of every attempt, including returns. Adjustments (`anticiposAjustes`) enforce limits: a regular increase is capped at the approved value, the result can never drop below what is already legalized, and a stale `valorEsperado` is rejected with "El valor legalizable cambió".
 
@@ -136,11 +137,7 @@ Advance adjustments and legalization reconciliation use integer cents. Petty-cas
 
 ## Known limitations
 
-This is a portfolio extraction and hardening is ongoing. These are known and will be addressed before the public demo:
+This is a portfolio extraction and hardening is ongoing. Server-side authorization for this module is described in the README's [security notes](../README.md#security-notes-and-known-limitations). Still open:
 
-- The advances *devolver*, *rechazar* and *anular* mutations record the real actor but do not check the actor's role; rejection is possible after disbursement, and annulment works from any state without reverting invoice crosses.
-- The Tesorería draft-attachment mutations have no role check, and the roles-configuration route only requires the advances permission.
-- Several read queries (`obtenerAnticipoPorId`, `obtenerFasesDeAnticipo`, petty-cash configuration queries) do not enforce per-user or per-company access.
-- The petty-cash entry points in `facturacionTareas.ts` (`marcarEsLegalizacionCajaMenor`, `legalizarCajaMenorFactura`) still accept the actor from the client.
 - Advances do not block self-approval (petty cash does), and the request emails typed in the form are used as recipients.
 - Petty cash sends no email notifications yet, and toll (*peajes*) legalization is not part of this extraction.

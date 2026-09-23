@@ -86,8 +86,8 @@ The required documents depend on the evaluation type, the person type (natural o
 ### Public links
 
 - Links look like `/onboarding/supplier?id=<inscripcionId>&t=<token>`. `FORM` tokens last 30 days and `SIGN` tokens 14 days; staff read-only links last 2 hours and are refused by every mutation.
-- Resending an invitation rotates the token; signing consumes the signing token; returns and annulment revoke tokens; expiry is enforced by a scheduled mutation.
-- Autosave, submission and document re-upload re-check the document type and number the supplier confirmed.
+- Resending an invitation or copying a new link from the board rotates the token; signing consumes the signing token; returns and annulment revoke tokens; expiry is enforced by a scheduled mutation.
+- Autosave, submission, document re-upload, upload URLs and signing re-check the document type and number the supplier confirmed.
 - The public layout sets `noindex` and `no-referrer`.
 
 ### Emails
@@ -133,11 +133,10 @@ Eight criteria (experience, references, portfolio, certificates, guarantees, tec
 
 ## Known limitations
 
-This is a portfolio extraction and hardening is ongoing. These are known and will be addressed before the public demo:
+This is a portfolio extraction and hardening is ongoing. Server-side authorization for this module is described in the README's [security notes](../README.md#security-notes-and-known-limitations). Still open:
 
-- The Compras score is computed in the browser and trusted by the server, and phase V can be confirmed with a *no aceptable* result.
-- "Copiar enlace" issues a new link without revoking earlier ones.
-- The document type and number the supplier confirms are part of the public projection, and generating an upload URL or signing does not re-check them.
+- Phase V can be confirmed with a *no aceptable* result (the score itself is recomputed on the server from the criteria).
+- The document type and number the supplier confirms are part of the public projection, so re-checking them is not a strong second factor.
 - Creating the supplier in the accounting system is a manual confirmation; nothing is written back.
 - Signed forms are re-rendered from current data on each download rather than archived.
 - Closing emails are sent from the browser after the final confirmation; if the tab closes first, they are not sent.

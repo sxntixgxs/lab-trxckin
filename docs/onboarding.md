@@ -44,7 +44,7 @@ flowchart LR
 - **Fase IIA.** The legal representative reviews the PDF and signs. Signing materializes the document review rows and opens both Fase III lanes.
 - **Fase III.** Cumplimiento and Compras review their documents in parallel; rejected documents are re-uploaded by the supplier (form link stays valid) or replaced by the responsable. Cumplimiento can raise PEP/listas, which recomputes the risk and adds missing documents. When both lanes are approved, Fase IV opens assigned to the Cumplimiento tier for the evaluation type.
 - **Fase IV.** Cumplimiento approves (→ Fase V) or rejects with a supplier-facing and an internal motive.
-- **Fase V.** Compras scores the supplier (`evaluarProveedor`) and confirms.
+- **Fase V.** Compras scores the supplier (`evaluarProveedor`, which recomputes the score from the criteria on the server) and confirms.
 - **Fase VI.** Contabilidad confirms creation in the accounting system, optionally with notes and support files; the closing emails (supplier, Financiero with the phase-time PDF) are posted from the browser.
 
 ### Customers
@@ -95,8 +95,8 @@ Every phase mutation re-checks the actor with `requireActorEnFase` (admin, the a
 Public pages are reached only through links of the form `/onboarding/<supplier|customer>[/sign]?id=<inscripcionId>&t=<token>`.
 
 - Tokens are random 256-bit values; only their SHA-256 hash is stored (`onboardingAccessTokens`). Scopes: `FORM` (30 days) and `SIGN` (14 days); read-only viewer links used by staff last 2 hours.
-- Resending an invitation rotates the token; signing consumes the `SIGN` token; anulación and devolución revoke tokens; expiry is materialized by a scheduled mutation. "Copiar enlace" on the board issues a new token without revoking earlier ones.
-- Before editing or uploading, the third party confirms the document type and number registered by the company. The pair is re-checked server-side on autosave, submission and document re-upload (`actualizarInscripcion`, `enviarFormulario`, `cargarDocumentoRevision`); generating an upload URL and signing only require the token.
+- Resending an invitation rotates the token; signing consumes the `SIGN` token; anulación and devolución revoke tokens; expiry is materialized by a scheduled mutation. "Copiar enlace" on the board also rotates the step's earlier links (read-only viewer links do not rotate).
+- Before editing or uploading, the third party confirms the document type and number registered by the company. The pair is re-checked server-side on autosave, submission, document re-upload, upload URLs and signing (`actualizarInscripcion`, `enviarFormulario`, `cargarDocumentoRevision`, `generateUploadUrlPublico`, `firmarFormularioRepresentante`); the signing page asks for it too.
 - Public queries return a projection (no risk inputs or score, no internal motives, no accounting notes) and `null` for invalid links so pages can show "enlace inválido". The projection does include the evaluation type, the PEP flag and the general data section, including the document pair.
 - File URLs for the public pages are issued only for storage ids owned by that inscription.
 
