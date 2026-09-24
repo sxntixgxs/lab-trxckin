@@ -237,7 +237,7 @@ Generate secrets with `openssl rand -hex 32`. Secrets marked **shared** must be 
 | `IMPERSONATE_COOKIE_SECRET` | yes | HMAC key for the impersonation cookie (dedicated) | Generate |
 | `BACKEND_URL` | prod | Nest base URL (defaults to `http://localhost:8000` in dev) | Your deployment |
 | `NEST_INTERNAL_KEY` | for "Crear en ERP" | **Shared** with Nest; `x-internal-key` of `/api/erp/terceros` (server-only) | Same as Nest |
-| `NEXT_PUBLIC_APP_URL` | no | Public URL used in email links (default `http://localhost:3000`) | Your deployment |
+| `NEXT_PUBLIC_APP_URL` | no | Public URL used in email links and as the post-login redirect base (default `http://localhost:3000`) | Your deployment |
 | `NOTIFICATIONS_INTERNAL_KEY` | for email | **Shared** with Convex; `x-notifications-key` header | Generate |
 | `FACTURACION_SLA_DIGEST_SECRET` | for email | **Shared** with Convex; HMAC for SLA digest / sync alerts | Generate |
 | `RESEND_API_KEY` | no | Without it, notification routes skip sending | Resend dashboard |
@@ -251,6 +251,7 @@ Generate secrets with `openssl rand -hex 32`. Secrets marked **shared** must be 
 | Name | Required | Description | Where to get it |
 | --- | --- | --- | --- |
 | `WORKOS_CLIENT_ID` | yes | Verifies WorkOS JWTs (`convex/auth.config.ts`) | WorkOS dashboard |
+| `WORKOS_API_KEY` | prod | Lets `convex deploy` set the AuthKit redirect URI, homepage and CORS (`convex.json` `authKit.prod`) | WorkOS dashboard |
 | `CONVEX_SERVER_SECRET` | yes | **Shared** with Next | Same as Next |
 | `NOTIFICATIONS_INTERNAL_KEY` | for email | **Shared** with Next | Same as Next |
 | `FACTURACION_SLA_DIGEST_SECRET` | for email | **Shared** with Next; signs digest/alert requests | Same as Next |
@@ -310,6 +311,15 @@ Run from the repo root.
 | `pnpm --filter backend erp:sync [--empresa N] [--entidad proveedores\|clientes]` | Sync the ERP catalog now |
 | `pnpm --filter erp-simulator prisma:migrate` / `prisma:seed [--reset]` | Create / load the fake SIESA database |
 | `pnpm --filter frontend convex` | `convex dev` alone |
+
+## Deployment
+
+Production runs on Coolify with the Docker Compose build pack. Convex Cloud and Neon stay managed. On every push to `main`, [`deploy.yml`](.github/workflows/deploy.yml) does the following:
+1. It runs the CI checks and builds the three images (`apps/*/Dockerfile`) at the same time.
+2. Once everything passes, it deploys the Convex functions.
+3. It then deploys that exact commit to Coolify ([`docker-compose.coolify.yml`](docker-compose.coolify.yml)). Migrations and the ERP simulator's seed run on each deploy.
+
+One-time setup, operations and troubleshooting: [docs/deploy-coolify.md](docs/deploy-coolify.md).
 
 ## Project structure
 

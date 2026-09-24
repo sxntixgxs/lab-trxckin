@@ -1,0 +1,20 @@
+# Build context for apps/*/Dockerfile (always built from the repo root). Each image prunes the
+# monorepo down to its own app with `turbo prune --docker`, so this only keeps the context small.
+.git
+.github
+.claude
+.agents
+.cursor
+.vercel
+docs
+**/node_modules
+**/.next
+**/dist
+**/.turbo
+**/coverage
+**/*.tsbuildinfo
+**/next-env.d.ts
+apps/erp-simulator/src/generated
+
+# Local secrets never go into an image.
+**/.env*

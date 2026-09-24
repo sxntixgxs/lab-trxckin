@@ -1,0 +1,111 @@
+# Production stack for Coolify: build pack "Docker Compose", compose location /docker-compose.coolify.yml.
+# Coolify only pulls images. .github/workflows/deploy.yml builds them, pushes them to GHCR and sets
+# IMAGE_TAG to the commit it deploys. Setup, variables and operations: docs/deploy-coolify.md.
+#
+# Variables: `${X:?}` must be filled in Coolify before a deploy. SERVICE_PASSWORD_64_* values are
+# generated once by Coolify and shared by every service that references them (IDs without "_").
+# Only `frontend` gets a domain; the other services are reachable on the internal network only.
+
+services:
+  frontend:
+    image: ghcr.io/sxntixgxs/lab-trxckin-frontend:${IMAGE_TAG:-latest}
+    pull_policy: always
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: "3000"
+      BACKEND_URL: http://backend:8000
+      WORKOS_CLIENT_ID: ${WORKOS_CLIENT_ID:?}
+      WORKOS_API_KEY: ${WORKOS_API_KEY:?}
+      WORKOS_COOKIE_PASSWORD: ${SERVICE_PASSWORD_64_WORKOSCOOKIE}
+      IMPERSONATE_COOKIE_SECRET: ${SERVICE_PASSWORD_64_IMPERSONATE}
+      NEST_INTERNAL_KEY: ${SERVICE_PASSWORD_64_NESTKEY}
+      # Must match the Convex production deployment's variables of the same name.
+      CONVEX_SERVER_SECRET: ${CONVEX_SERVER_SECRET:?}
+      NOTIFICATIONS_INTERNAL_KEY: ${NOTIFICATIONS_INTERNAL_KEY:?}
+      FACTURACION_SLA_DIGEST_SECRET: ${FACTURACION_SLA_DIGEST_SECRET:?}
+      # Optional features: empty turns each one off.
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-}
+      RESEND_WEBHOOK_SECRET: ${RESEND_WEBHOOK_SECRET:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+    # No depends_on on the backend on purpose: if a backend deploy fails, the site (and the
+    # public onboarding forms, which only need Convex) stays up.
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health',{redirect:'manual'}).then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+
+  backend:
+    image: ghcr.io/sxntixgxs/lab-trxckin-backend:${IMAGE_TAG:-latest}
+    pull_policy: always
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      BACKEND_PORT: "8000"
+      DATABASE_URL: ${DATABASE_URL:?}
+      WORKOS_CLIENT_ID: ${WORKOS_CLIENT_ID:?}
+      WORKOS_API_KEY: ${WORKOS_API_KEY:?}
+      NEST_INTERNAL_KEY: ${SERVICE_PASSWORD_64_NESTKEY}
+      # CORS origin. Only the Next server calls the backend, never the browser.
+      FRONTEND_URL: ${APP_URL:?}
+      ERP_BASE_URL: http://erp-simulator:8100
+      ERP_CONNI_KEY: ${SERVICE_PASSWORD_64_CONNIKEY}
+      ERP_CONNI_TOKEN: ${SERVICE_PASSWORD_64_CONNITOKEN}
+      ERP_SYNC_PROGRAMADA: ${ERP_SYNC_PROGRAMADA:-true}
+    depends_on:
+      backend-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8000/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+
+  # One-shot: applies pending migrations before the new backend starts.
+  backend-migrate:
+    image: ghcr.io/sxntixgxs/lab-trxckin-backend:${IMAGE_TAG:-latest}
+    pull_policy: always
+    restart: "no"
+    exclude_from_hc: true
+    command: ["node_modules/.bin/prisma", "migrate", "deploy"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?}
+      # Direct (non-pooled) connection for migrations; empty falls back to DATABASE_URL.
+      DIRECT_URL: ${DIRECT_URL:-}
+
+  erp-simulator:
+    image: ghcr.io/sxntixgxs/lab-trxckin-erp-simulator:${IMAGE_TAG:-latest}
+    pull_policy: always
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      ERP_SIM_PORT: "8100"
+      ERP_SIM_DATABASE_URL: ${ERP_SIM_DATABASE_URL:?}
+      ERP_SIM_CONNI_KEY: ${SERVICE_PASSWORD_64_CONNIKEY}
+      ERP_SIM_CONNI_TOKEN: ${SERVICE_PASSWORD_64_CONNITOKEN}
+    depends_on:
+      erp-simulator-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8100/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+
+  # One-shot: migrations, then the deterministic demo data (only inserts what is missing).
+  erp-simulator-init:
+    image: ghcr.io/sxntixgxs/lab-trxckin-erp-simulator:${IMAGE_TAG:-latest}
+    pull_policy: always
+    restart: "no"
+    exclude_from_hc: true
+    command: ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node_modules/.bin/tsx prisma/seed.ts"]
+    environment:
+      ERP_SIM_DATABASE_URL: ${ERP_SIM_DATABASE_URL:?}
+      # Direct (non-pooled) connection for migrations and the seed; empty falls back to the pooled URL.
+      ERP_SIM_DIRECT_URL: ${ERP_SIM_DIRECT_URL:-}

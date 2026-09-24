@@ -1,0 +1,165 @@
+name: Deploy
+
+# Builds the three images at the same time as the CI checks. On main, once everything passed, it
+# deploys Convex and then the exact same commit to Coolify. Setup: docs/deploy-coolify.md.
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["docs/**", "**/*.md"]
+  pull_request:
+    paths-ignore: ["docs/**", "**/*.md"]
+  workflow_dispatch:
+
+concurrency:
+  # Pull requests only build images, so a newer push cancels the older run. Deploys queue instead.
+  group: ${{ github.event_name == 'pull_request' && format('deploy-pr-{0}', github.ref) || 'deploy-production' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  IMAGE_PREFIX: ghcr.io/sxntixgxs/lab-trxckin
+
+jobs:
+  checks:
+    # Pull requests already run ci.yml on their own.
+    if: github.event_name != 'pull_request'
+    uses: ./.github/workflows/ci.yml
+
+  images:
+    name: image (${{ matrix.app }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [frontend, backend, erp-simulator]
+    env:
+      PUSH: ${{ github.event_name != 'pull_request' }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Public build values
+        id: public
+        env:
+          APP_DOMAIN: ${{ vars.APP_DOMAIN }}
+          CONVEX_URL: ${{ vars.NEXT_PUBLIC_CONVEX_URL }}
+        run: |
+          if [ "$PUSH" = "true" ] && { [ -z "$APP_DOMAIN" ] || [ -z "$CONVEX_URL" ]; }; then
+            echo "::error::Set the APP_DOMAIN and NEXT_PUBLIC_CONVEX_URL repository variables (docs/deploy-coolify.md)."
+            exit 1
+          fi
+          domain="${APP_DOMAIN#https://}"
+          domain="${domain%/}"
+          # Pull request builds only prove that the image builds, so placeholders are enough.
+          echo "app_url=https://${domain:-example.com}" >> "$GITHUB_OUTPUT"
+          echo "convex_url=${CONVEX_URL:-https://placeholder.convex.cloud}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v4
+
+      - if: env.PUSH == 'true'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: apps/${{ matrix.app }}/Dockerfile
+          platforms: linux/amd64
+          push: ${{ env.PUSH == 'true' }}
+          tags: ${{ env.IMAGE_PREFIX }}-${{ matrix.app }}:sha-${{ github.sha }}
+          labels: org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          # Only the frontend Dockerfile declares these (public values, inlined by Next).
+          build-args: |
+            NEXT_PUBLIC_CONVEX_URL=${{ steps.public.outputs.convex_url }}
+            NEXT_PUBLIC_APP_URL=${{ steps.public.outputs.app_url }}
+            NEXT_PUBLIC_WORKOS_REDIRECT_URI=${{ steps.public.outputs.app_url }}/callback
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.app }}
+
+  release:
+    needs: [checks, images]
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://${{ vars.APP_DOMAIN }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --filter frontend
+
+      # Convex first: the new frontend may call functions that only exist from this commit on.
+      - name: Deploy Convex functions
+        working-directory: apps/frontend
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+          # convex.json authKit.prod keeps the WorkOS redirect URI, homepage and CORS on this domain.
+          APP_DOMAIN: ${{ vars.APP_DOMAIN }}
+        run: pnpm exec convex deploy
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@v4
+      - name: Tag images as latest
+        run: |
+          for app in frontend backend erp-simulator; do
+            docker buildx imagetools create --tag "$IMAGE_PREFIX-$app:latest" "$IMAGE_PREFIX-$app:sha-$GITHUB_SHA"
+          done
+
+      - name: Deploy to Coolify
+        env:
+          COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+          COOLIFY_APP_UUID: ${{ secrets.COOLIFY_APP_UUID }}
+        run: |
+          set -euo pipefail
+          api="${COOLIFY_URL%/}/api/v1"
+          auth="Authorization: Bearer $COOLIFY_TOKEN"
+          # Only statuses and Coolify's messages are printed: this repository's logs are public.
+
+          # Pin the compose file to this commit's images, so Coolify runs exactly what was tested.
+          body=$(jq -nc --arg tag "sha-$GITHUB_SHA" '{data: [{key: "IMAGE_TAG", value: $tag, is_preview: false}]}')
+          curl -fsS -o /dev/null -X PATCH "$api/applications/$COOLIFY_APP_UUID/envs/bulk" \
+            -H "$auth" -H "Content-Type: application/json" -d "$body"
+
+          response=$(curl -sS --fail-with-body -X POST "$api/deploy?uuid=$COOLIFY_APP_UUID&force=false" -H "$auth") || {
+            echo "::error::Coolify rejected the deploy: $(jq -r '.message // empty' <<<"$response" 2>/dev/null)"
+            exit 1
+          }
+          deployment=$(jq -r '.deployments[0].deployment_uuid // empty' <<<"$response")
+          if [ -z "$deployment" ]; then
+            echo "::error::Coolify did not queue a deployment: $(jq -r '.deployments[0].message // empty' <<<"$response")"
+            exit 1
+          fi
+
+          for _ in $(seq 1 90); do
+            sleep 10
+            status=$(curl -sS "$api/deployments/$deployment" -H "$auth" | jq -r '.status // empty' || true)
+            echo "Coolify deployment: ${status:-unknown}"
+            case "$status" in
+              finished) exit 0 ;;
+              failed | cancelled-by-user)
+                echo "::error::Coolify deployment $status; its logs are in Coolify."
+                exit 1
+                ;;
+            esac
+          done
+          echo "::error::Coolify deployment still running after 15 minutes."
+          exit 1
