@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { AccessRequestLink } from "@/components/access-request-link";
+import { buttonVariants } from "@/components/ui/button";
 import { ProtectedPage } from "@/components/utils/ProtectedPage";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getAccessRequestUrl } from "@/lib/app-env";
 import { getCurrentBackendUser, userHasPermission } from "@/lib/fetch-backend";
 import { NAV_ITEMS, type NavItem } from "@/lib/nav";
 
@@ -32,6 +35,8 @@ async function DashboardOverview() {
   const sections = NAV_ITEMS.map((item) => ({ item, links: accessibleLinks(item, canAccess) })).filter(
     (section) => section.links.length > 0,
   );
+  // New self-registered accounts (role `member`) only get the dashboard and Perfil.
+  const withoutModules = user !== null && !sections.some(({ item }) => item.id !== "perfil");
 
   return (
     <div className="px-4 pb-10 sm:px-6 lg:px-8">
@@ -44,7 +49,9 @@ async function DashboardOverview() {
         </p>
       </div>
 
-      {sections.length === 0 ? (
+      {withoutModules ? (
+        <SinModulos />
+      ) : sections.length === 0 ? (
         <Card className="mt-6">
           <CardHeader>
             <CardTitle>Sin módulos asignados</CardTitle>
@@ -54,7 +61,9 @@ async function DashboardOverview() {
             </CardDescription>
           </CardHeader>
         </Card>
-      ) : (
+      ) : null}
+
+      {sections.length > 0 ? (
         <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {sections.map(({ item, links }) => {
             const Icon = item.icon;
@@ -88,7 +97,38 @@ async function DashboardOverview() {
             );
           })}
         </div>
-      )}
+      ) : null}
     </div>
+  );
+}
+
+/** Account without modules: says how to get them instead of leaving only the Perfil card. */
+function SinModulos() {
+  const puedeSolicitar = getAccessRequestUrl() !== null;
+
+  return (
+    <Card className="mt-6 border-indigo-200 bg-indigo-50/70 dark:border-indigo-900/60 dark:bg-indigo-950/30">
+      <CardHeader>
+        <CardTitle>Aún no tienes módulos</CardTitle>
+        <CardDescription>
+          Tu cuenta está activa, pero por ahora solo incluye el dashboard y tu perfil.{" "}
+          {puedeSolicitar
+            ? "Solicita acceso indicando el correo con el que te registraste y se activarán los módulos que quieras probar."
+            : "Pide a un administrador que te asigne acceso."}
+        </CardDescription>
+      </CardHeader>
+      {puedeSolicitar ? (
+        <CardContent>
+          <AccessRequestLink
+            newTabLabel="se abre en una pestaña nueva"
+            showHost
+            className={buttonVariants({ size: "sm" })}
+            hostClassName="font-normal opacity-75"
+          >
+            Solicitar acceso
+          </AccessRequestLink>
+        </CardContent>
+      ) : null}
+    </Card>
   );
 }
