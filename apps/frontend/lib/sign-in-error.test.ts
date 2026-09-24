@@ -1,10 +1,15 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { signInErrorMessage, signInErrorResponse } from "./sign-in-error";
 
 describe("signInErrorResponse", () => {
+  beforeEach(() => {
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "");
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllEnvs();
   });
 
   it("sends a callback without a code back to the entry page", () => {
@@ -31,6 +36,17 @@ describe("signInErrorResponse", () => {
 
     expect(response.headers.get("location")).toBe("https://app.example.com/?error=sign-in");
     expect(log).toHaveBeenCalledWith("[auth] sign-in failed", expect.objectContaining({ cause: "invalid_grant" }));
+  });
+
+  it("uses the public app URL behind a proxy, like the success redirect", () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://app.example.com");
+    // Inside the Docker image the request URL carries the server's bind address.
+    const request = new NextRequest("https://0.0.0.0:3000/callback?error=access_denied");
+
+    const response = signInErrorResponse({ request });
+
+    expect(response.headers.get("location")).toBe("https://app.example.com/?error=sign-in");
   });
 
   it("returns a response whose headers AuthKit can still change", () => {
