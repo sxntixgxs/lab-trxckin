@@ -238,6 +238,7 @@ Generate secrets with `openssl rand -hex 32`. Secrets marked **shared** must be 
 | `BACKEND_URL` | prod | Nest base URL (defaults to `http://localhost:8000` in dev) | Your deployment |
 | `NEST_INTERNAL_KEY` | for "Crear en ERP" | **Shared** with Nest; `x-internal-key` of `/api/erp/terceros` (server-only) | Same as Nest |
 | `NEXT_PUBLIC_APP_URL` | no | Public URL used in email links (default `http://localhost:3000`) | Your deployment |
+| `NEXT_PUBLIC_ACCESS_REQUEST_URL` | no | "Request access" link (https only) for people who want modules turned on; hidden when unset; baked in at build time | Your LinkedIn profile or a form |
 | `NOTIFICATIONS_INTERNAL_KEY` | for email | **Shared** with Convex; `x-notifications-key` header | Generate |
 | `FACTURACION_SLA_DIGEST_SECRET` | for email | **Shared** with Convex; HMAC for SLA digest / sync alerts | Generate |
 | `RESEND_API_KEY` | no | Without it, notification routes skip sending | Resend dashboard |
