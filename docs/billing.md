@@ -54,7 +54,7 @@ At any active phase the current owner can return the invoice to an earlier phase
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="diagrams/billing-technical.dark.svg">
-  <img alt="Billing technical diagram: Graph sync, XML parsing and dedupe, invoices and tasks, dashboard read model, SLA digest, Next.js routes, Resend" src="diagrams/billing-technical.svg">
+  <img alt="Billing technical diagram: Microsoft Graph sync, DIAN XML parser and dedupe, invoices and tasks, the dashboard read model and crons in Convex, the Next.js BFF routes, Resend and the NestJS ERP catalog" src="diagrams/billing-technical.svg">
 </picture>
 
 ### Ingestion

@@ -63,7 +63,7 @@ While an advance is pending legalization, Gerencia or Tesorería can apply adjus
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="diagrams/finance-technical.dark.svg">
-  <img alt="Finance technical diagram: advances workspace via the Next.js BFF and Convex projection, petty cash via live Convex subscriptions and aggregates, both linked to the billing workflow" src="diagrams/finance-technical.svg">
+  <img alt="Finance technical diagram: the advances workspace through the Next.js BFF and a Convex projection, supplier search in the NestJS ERP catalog, petty cash through live Convex subscriptions and aggregates, both linked to the billing workflow" src="diagrams/finance-technical.svg">
 </picture>
 
 ### Advances state machine

@@ -53,7 +53,7 @@ Management users can return the process to any completed phase or annul it; ever
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="diagrams/suppliers-technical.dark.svg">
-  <img alt="Supplier onboarding technical diagram: staff board and public pages, token guard, Convex workflow and storage, notification route, Resend and webhook, RUT extraction and catalog lookup" src="diagrams/suppliers-technical.svg">
+  <img alt="Supplier onboarding technical diagram: staff board and public pages, token guard and workflow in Convex, file storage, email route with Resend and its webhook, RUT extraction, and the ERP path through the Next.js BFF, NestJS and the simulated SIESA" src="diagrams/suppliers-technical.svg">
 </picture>
 
 ### Phases
