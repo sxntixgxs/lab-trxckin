@@ -18,10 +18,35 @@ const ubuntuMono = Ubuntu_Mono({
   variable: "--font-ubuntu-mono",
 });
 
+const TITLE = "Lab Trxckin · Finance operations demo";
+const DESCRIPTION =
+  "Live demo of Lab Trxckin, an open-source finance operations platform for a group of companies: supplier e-invoices with approvals and business-day SLAs, employee advances and petty cash, and supplier and customer onboarding. All data is fictional.";
+
+/** Absolute base for the share image; left to Next's own fallback when NEXT_PUBLIC_APP_URL is unset or invalid. */
+function metadataBase(): URL | undefined {
+  try {
+    return process.env.NEXT_PUBLIC_APP_URL ? new URL(process.env.NEXT_PUBLIC_APP_URL) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+// A static PNG in public/: the proxy lets .png through, while a generated image route (no
+// extension) would send crawlers to the WorkOS sign-in. Declared here rather than as
+// app/opengraph-image.png because Turbopack ignores opengraph-image.alt.txt.
+const SHARE_IMAGE = {
+  url: "/og-image.png",
+  width: 1200,
+  height: 630,
+  alt: "Lab Trxckin: finance operations as workflows. A fictional invoice sits on Billing's eight phases, with Contabilidad as its current owner.",
+};
+
 export const metadata: Metadata = {
-  title: "Lab Trxckin · Finance operations demo",
-  description:
-    "Live demo of Lab Trxckin, an open-source finance operations platform for a group of companies: supplier e-invoices with approvals and business-day SLAs, employee advances and petty cash, and supplier and customer onboarding. All data is fictional.",
+  metadataBase: metadataBase(),
+  title: TITLE,
+  description: DESCRIPTION,
+  openGraph: { title: TITLE, description: DESCRIPTION, siteName: "Lab Trxckin", type: "website", images: [SHARE_IMAGE] },
+  twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION, images: [SHARE_IMAGE] },
 };
 
 const PORTFOLIO_URL = "https://www.sxntixgxs.dev";
