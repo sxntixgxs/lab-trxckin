@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import { Ubuntu_Mono } from "next/font/google";
 import { withAuth } from "@workos-inc/authkit-nextjs";
 import { redirect } from "next/navigation";
-import { ArrowUpRight, LogIn, UserPlus } from "lucide-react";
+import { ArrowUpRight, CircleAlert, LogIn, UserPlus } from "lucide-react";
 import { AccessRequestLink, accessRequestHost } from "@/components/access-request-link";
 import { getAccessRequestUrl } from "@/lib/app-env";
 import { DEFAULT_RETURN_PATH, safeReturnPath, signInHref } from "@/lib/return-path";
+import { signInErrorMessage } from "@/lib/sign-in-error";
 import { BillingPanel } from "./_components/entry/billing-panel";
 import { ModuleFragments } from "./_components/entry/module-fragments";
 
@@ -36,6 +37,7 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
     redirect(next ?? DEFAULT_RETURN_PATH);
   }
 
+  const signInError = signInErrorMessage(params.error);
   const requestUrl = getAccessRequestUrl();
   const requestVia = requestUrl && accessRequestHost(requestUrl) === "linkedin.com" ? "Message me on LinkedIn" : "Request access";
 
@@ -70,6 +72,12 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
           </div>
 
           <div className="lg:col-span-4 lg:pt-1">
+            {signInError ? (
+              <p role="alert" className="entry-alert mb-4">
+                <CircleAlert aria-hidden className="mt-0.5 h-4 w-4 shrink-0" />
+                {signInError}
+              </p>
+            ) : null}
             <div className="flex flex-wrap gap-3 [&>a]:flex-auto">
               <a href={signInHref(next)} className="entry-button entry-button-primary">
                 <LogIn aria-hidden className="h-4 w-4" />
