@@ -53,11 +53,11 @@ While an advance is pending legalization, Gerencia or Tesorería can apply adjus
 ### Petty cash
 
 1. **Gerencia Financiera:** creates the box, assigns custodians and sends refills. A box is blocked until the receiver confirms a refill.
-2. **Custodian spends:** either a supplier invoice that a leader (who is a custodian) marks as petty cash in the billing inbox, or a physical receipt registered with its support. The balance must cover it unless negative balances are enabled for the company.
+2. **Custodian spends:** either a supplier invoice that a leader (who is a custodian) marks as petty cash in the billing inbox, which Contabilidad then legalizes in billing, or a physical receipt registered with its support, which billing records too. The balance must cover it unless negative balances are enabled for the company.
 3. **Custodian** (`/billing/petty-cash-reimbursement`): selects pending movements and generates reimbursement `GFN-F006-<year>-<NNNN>`, optionally requiring a leader's approval.
 4. **Revisor:** auto-assigned by weighted rotation; reviews documents, causación and values, then picks the contador.
 5. **Contador → Eventos DIAN → Gerencia Financiera:** each can approve, return with a reason or reject; Gerencia can return to any earlier stage.
-6. **Tesorería:** uploads the payment receipt. The reimbursement is *recibido*, its movements are *reembolsado*, the invoices close as **Legalizada** in billing, and the box balance is restored.
+6. **Tesorería:** uploads the payment receipt. The reimbursement is *recibido*, its movements are *reembolsado* and the box balance is restored. Physical receipts close as **Legalizada** in billing; supplier invoices were already legalized by Contabilidad, and their timeline records the reimbursement.
 
 ## Technical design
 
