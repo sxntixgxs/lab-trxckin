@@ -33,7 +33,12 @@ export function AccessRequestLink({
   return (
     <a href={href} target="_blank" rel="noopener noreferrer" className={cn("inline-flex items-center gap-2", className)}>
       {children}
-      {showHost ? <span className={hostClassName}>{accessRequestHost(href)}</span> : null}
+      {showHost ? (
+        <>
+          {" "}
+          <span className={hostClassName}>{accessRequestHost(href)}</span>
+        </>
+      ) : null}
       <ExternalLink aria-hidden className="h-4 w-4 shrink-0" />
       <span className="sr-only"> ({newTabLabel})</span>
     </a>
