@@ -22,9 +22,9 @@
     },
     "prod": {
       "configure": {
-        "redirectUris": ["https://${buildEnv.VERCEL_PROJECT_PRODUCTION_URL}/callback"],
-        "appHomepageUrl": "https://${buildEnv.VERCEL_PROJECT_PRODUCTION_URL}",
-        "corsOrigins": ["https://${buildEnv.VERCEL_PROJECT_PRODUCTION_URL}"]
+        "redirectUris": ["https://${buildEnv.APP_DOMAIN}/callback"],
+        "appHomepageUrl": "https://${buildEnv.APP_DOMAIN}",
+        "corsOrigins": ["https://${buildEnv.APP_DOMAIN}"]
       }
     }
   }

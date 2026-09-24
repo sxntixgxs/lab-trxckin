@@ -5,9 +5,10 @@ export const SIGN_IN_ERROR = "sign-in";
 
 /**
  * `handleAuth` onError: logs what WorkOS or the code exchange reported and sends the person back
- * to the entry page instead of AuthKit's raw JSON 500. It builds the URL the way AuthKit's own
- * success redirect does (from `request.nextUrl`), and it must be a NextResponse because AuthKit
- * sets no-cache headers on the returned response afterwards.
+ * to the entry page instead of AuthKit's raw JSON 500. It builds the URL the way the success
+ * redirect does (app/callback/route.ts): from NEXT_PUBLIC_APP_URL when set, because behind a proxy
+ * (the Docker image) `request.nextUrl` carries the bind address, else from `request.nextUrl`. It
+ * must be a NextResponse because AuthKit sets no-cache headers on the returned response afterwards.
  */
 export function signInErrorResponse({ error, request }: { error?: unknown; request: NextRequest }): NextResponse {
   const params = request.nextUrl.searchParams;
@@ -17,7 +18,8 @@ export function signInErrorResponse({ error, request }: { error?: unknown; reque
     cause: error instanceof Error ? error.message : error,
   });
 
-  const url = request.nextUrl.clone();
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  const url = appUrl ? new URL(appUrl) : request.nextUrl.clone();
   url.pathname = "/";
   url.search = `?error=${SIGN_IN_ERROR}`;
   return NextResponse.redirect(url);

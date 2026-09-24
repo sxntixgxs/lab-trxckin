@@ -16,6 +16,8 @@ export default authkitMiddleware({
       "/onboarding/:path*",
       // Resend delivery webhooks (Svix-signed inside the route).
       "/api/webhooks/:path*",
+      // Container healthcheck (docker-compose.coolify.yml).
+      "/api/health",
     ],
   },
   redirectUri:
