@@ -80,6 +80,7 @@ jobs:
             NEXT_PUBLIC_CONVEX_URL=${{ steps.public.outputs.convex_url }}
             NEXT_PUBLIC_APP_URL=${{ steps.public.outputs.app_url }}
             NEXT_PUBLIC_WORKOS_REDIRECT_URI=${{ steps.public.outputs.app_url }}/callback
+            NEXT_PUBLIC_ACCESS_REQUEST_URL=${{ vars.NEXT_PUBLIC_ACCESS_REQUEST_URL }}
           cache-from: type=gha,scope=${{ matrix.app }}
           cache-to: type=gha,mode=max,scope=${{ matrix.app }}
 

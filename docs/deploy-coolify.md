@@ -57,7 +57,9 @@ In the steps below, `<APP_DOMAIN>` is the app's domain without a scheme, for exa
 
 Use the production environment of your WorkOS project: its client id and API key.
 
-You don't configure its redirect URI, homepage or CORS origin by hand. Every `convex deploy` sets them to `https://<APP_DOMAIN>` through the `authKit.prod` section of `apps/frontend/convex.json`. If signing out lands on the wrong page, set the sign-out redirect in WorkOS to `https://<APP_DOMAIN>`.
+Every `convex deploy` sets the redirect URI (`https://<APP_DOMAIN>/callback`), the homepage and the CORS origin through the `authKit.prod` section of `apps/frontend/convex.json`. Set two more by hand in the WorkOS dashboard, so people who start on WorkOS or sign out land on the entry page:
+- the sign-in endpoint: `https://<APP_DOMAIN>/sign-in`
+- the sign-out redirect: `https://<APP_DOMAIN>/`
 
 ### 2. Convex production deployment
 
@@ -89,6 +91,12 @@ gh variable set APP_DOMAIN --body "app.example.com"
 
 ```bash
 gh variable set NEXT_PUBLIC_CONVEX_URL --body "https://<name>.convex.cloud"
+```
+
+Optionally, the "Request access" link shown to accounts without modules (https only; hidden when unset). Like the other two, it's baked into the frontend image, so it takes effect on the next deploy:
+
+```bash
+gh variable set NEXT_PUBLIC_ACCESS_REQUEST_URL --body "https://<your-profile-or-form>"
 ```
 
 Secrets live in a `production` environment, and only the release job can read them. Create the environment:

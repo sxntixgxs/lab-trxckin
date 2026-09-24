@@ -4,6 +4,7 @@
 #     --build-arg NEXT_PUBLIC_CONVEX_URL=https://<deployment>.convex.cloud \
 #     --build-arg NEXT_PUBLIC_APP_URL=https://<domain> \
 #     --build-arg NEXT_PUBLIC_WORKOS_REDIRECT_URI=https://<domain>/callback .
+# Optional: --build-arg NEXT_PUBLIC_ACCESS_REQUEST_URL=https://... (the "Request access" link).
 # NEXT_PUBLIC_* values are public and inlined into the bundles at build time; every secret is
 # read at runtime from the container environment (docker-compose.coolify.yml).
 
@@ -34,9 +35,11 @@ COPY --from=pruner /app/out/full/ .
 ARG NEXT_PUBLIC_CONVEX_URL
 ARG NEXT_PUBLIC_APP_URL
 ARG NEXT_PUBLIC_WORKOS_REDIRECT_URI
+ARG NEXT_PUBLIC_ACCESS_REQUEST_URL
 ENV NEXT_PUBLIC_CONVEX_URL=$NEXT_PUBLIC_CONVEX_URL \
     NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL \
     NEXT_PUBLIC_WORKOS_REDIRECT_URI=$NEXT_PUBLIC_WORKOS_REDIRECT_URI \
+    NEXT_PUBLIC_ACCESS_REQUEST_URL=$NEXT_PUBLIC_ACCESS_REQUEST_URL \
     NEXT_DOCKER_BUILD=true
 RUN NODE_OPTIONS=--max-old-space-size=6144 pnpm --filter frontend exec next build
 
