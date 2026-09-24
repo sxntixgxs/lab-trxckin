@@ -1,11 +1,6 @@
 # Finance: employee advances and petty cash
 
-Module guide for [Lab Trxckin](../README.md). All companies, NITs and emails in this repo are fictional demo data.
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="diagrams/finance-operational.dark.svg">
-  <img alt="Finance operational flows: employee advances from request to legalization, and petty cash from spending to reimbursement" src="diagrams/finance-operational.svg">
-</picture>
+Module guide for [Lab Trxckin](../README.md). All companies, NITs and emails in this repo are fictional demo data. Each flow has its swimlane diagram under [How it works](#how-it-works).
 
 ## Context
 
@@ -41,6 +36,11 @@ I designed and built both flows as part of Lab Trxckin: the Convex tables and st
 
 ### Employee advances
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="diagrams/advances-workflow.dark.svg">
+  <img alt="Advances swimlanes: employee, system, approver, Contabilidad, Gerencia Financiera, Tesorería and the billing module, from the request to Legalizado" src="diagrams/advances-workflow.svg">
+</picture>
+
 1. **Employee** (`/finance/advances/request`): looks up the supplier NIT, enters the amount, payment method, maximum legalization date and supports, and chooses an approver (or skips the approval step).
 2. **Direct manager or selected leader:** approves or rejects.
 3. **Contabilidad** (a pool of users): only when the advance covers 100% of the invoice; may correct the *valor contable*, approve, reject or return.
@@ -51,6 +51,11 @@ I designed and built both flows as part of Lab Trxckin: the Convex tables and st
 While an advance is pending legalization, Gerencia or Tesorería can apply adjustments: *corrección de desembolso* (up or down), *reintegro* (the employee returns money) and *cuadre con otros sistemas*. The latest adjustment can be reversed, even after the advance is legalized. Each change emails the stakeholders.
 
 ### Petty cash
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="diagrams/petty-cash-workflow.dark.svg">
+  <img alt="Petty-cash swimlanes: Gerencia Financiera, custodian, billing module, optional leader, revisor, contador, Eventos DIAN and Tesorería, from spending to the restored balance" src="diagrams/petty-cash-workflow.svg">
+</picture>
 
 1. **Gerencia Financiera:** creates the box, assigns custodians and sends refills. A box is blocked until the receiver confirms a refill.
 2. **Custodian spends:** either a supplier invoice that a leader (who is a custodian) marks as petty cash in the billing inbox, which Contabilidad then legalizes in billing, or a physical receipt registered with its support, which billing records too. The balance must cover it unless negative balances are enabled for the company.

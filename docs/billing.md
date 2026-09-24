@@ -3,8 +3,8 @@
 Module guide for [Lab Trxckin](../README.md). All companies, NITs and emails in this repo are fictional demo data.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="diagrams/billing-operational.dark.svg">
-  <img alt="Billing operational flow: supplier email, ingestion, Recepción, process leader, causación, Contabilidad, Eventos DIAN, Gerencia, Tesorería, paid" src="diagrams/billing-operational.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="diagrams/billing-workflow.dark.svg">
+  <img alt="Billing swimlanes: supplier, system, Recepción, process leader, Causación, Contabilidad, Eventos DIAN, Gerencia, Tesorería and Rechazos DIAN, with the hand-offs to advances and petty cash" src="diagrams/billing-workflow.svg">
 </picture>
 
 ## Context

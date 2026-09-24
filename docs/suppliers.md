@@ -3,8 +3,8 @@
 Module guide for [Lab Trxckin](../README.md). All companies, NITs and emails in this repo are fictional demo data. The shared onboarding foundation (roles, access levels, tokens, emails) is described in [onboarding.md](onboarding.md).
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="diagrams/suppliers-operational.dark.svg">
-  <img alt="Supplier onboarding flow: requester, system, supplier contact, legal representative, parallel Cumplimiento and Compras review, tiered approval, Compras evaluation, Contabilidad" src="diagrams/suppliers-operational.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="diagrams/suppliers-workflow.dark.svg">
+  <img alt="Supplier onboarding swimlanes: requester, system, ERP, supplier contact, legal representative, Cumplimiento and Compras in parallel, the Cumplimiento approver, Compras again, Contabilidad and Financiero" src="diagrams/suppliers-workflow.svg">
 </picture>
 
 ## Context

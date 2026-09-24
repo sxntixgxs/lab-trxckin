@@ -23,7 +23,7 @@ An internal finance operations platform for multicompany operation: it ingests s
 
 ## Modules
 
-Each module has a guide with its context, operational and technical diagrams, a code map with links to the source, tests and known limitations.
+Each module has a guide with its context, a swimlane workflow diagram and a technical diagram, a code map with links to the source, tests and known limitations.
 
 | Module | What it covers |
 | --- | --- |
