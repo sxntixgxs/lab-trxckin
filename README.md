@@ -4,6 +4,8 @@ An internal finance operations platform for multicompany operation: it ingests s
 
 > All companies, NITs and emails in this repo are fictional demo data.
 
+**Live demo:** [app.sxntixgxs.dev](https://app.sxntixgxs.dev). Create a free account on the entry page. New accounts start with the dashboard and their profile; I turn modules on by hand when you [message me on LinkedIn](https://www.linkedin.com/in/santiagosandovalt/) with the email you signed up with. The interface is in Spanish, and no demo account gets full access.
+
 **Features**
 
 - **Invoice inbox** — scheduled Microsoft Graph sync (every 2 min) reads DIAN `AttachedDocument` e-invoices from a reception mailbox per company, parses the UBL XML, stores XML/PDF and dedupes; manual XML upload as fallback.
@@ -132,6 +134,7 @@ openssl rand -hex 32
 In the WorkOS dashboard (or let `convex dev` auto-provision AuthKit, see `apps/frontend/convex.json`):
 
 - Add the redirect URI `http://localhost:3000/callback` and homepage `http://localhost:3000`.
+- For a deployment, register `https://<your-host>/callback` as a redirect URI, set the sign-in endpoint to `https://<your-host>/sign-in`, and set the homepage and sign-out redirect to `https://<your-host>/`, so people who sign out or start on WorkOS land on the entry page.
 - Enable sign-up (email/password or your SSO provider) under AuthKit settings.
 - Copy the Client ID and API key into both `apps/frontend/.env.local` and `apps/backend/.env`, and set `WORKOS_COOKIE_PASSWORD` (32+ chars) in the frontend.
 
@@ -238,6 +241,7 @@ Generate secrets with `openssl rand -hex 32`. Secrets marked **shared** must be 
 | `BACKEND_URL` | prod | Nest base URL (defaults to `http://localhost:8000` in dev) | Your deployment |
 | `NEST_INTERNAL_KEY` | for "Crear en ERP" | **Shared** with Nest; `x-internal-key` of `/api/erp/terceros` (server-only) | Same as Nest |
 | `NEXT_PUBLIC_APP_URL` | no | Public URL used in email links (default `http://localhost:3000`) | Your deployment |
+| `NEXT_PUBLIC_ACCESS_REQUEST_URL` | no | "Request access" link (https only) for people who want modules turned on; hidden when unset; baked in at build time | Your LinkedIn profile or a form |
 | `NOTIFICATIONS_INTERNAL_KEY` | for email | **Shared** with Convex; `x-notifications-key` header | Generate |
 | `FACTURACION_SLA_DIGEST_SECRET` | for email | **Shared** with Convex; HMAC for SLA digest / sync alerts | Generate |
 | `RESEND_API_KEY` | no | Without it, notification routes skip sending | Resend dashboard |
@@ -386,6 +390,7 @@ This is a portfolio project extracted from a real internal tool. The Convex depl
 
 **Known limitations**
 
+- **Open sign-up on the public demo.** Anyone can create an account, so "any signed-in user" in these notes means anyone. New accounts start with only the dashboard and their profile; modules are granted on request, and never full access.
 - **`/api/convex/storage/[id]`** (the Next proxy behind advance, petty cash and PDF links) still serves any storage id to any signed-in user. It needs the same record scoping as `getUrl`, for example by calling Convex with the user's token and a record context.
 - **Storage ids are not owned.** Mutations that attach a file (invoice attachments, public onboarding documents, advance supports) only check that the id exists, so a caller who learns another file's id could attach it to a record they control.
 - **Onboarding second factor.** `obtenerInscripcionPublica` returns the registered document number to whoever holds the link, so the document re-check is a speed bump rather than a real second factor.
@@ -395,7 +400,7 @@ This is a portfolio project extracted from a real internal tool. The Convex depl
 - **No rate limiting** on the NestJS API.
 - **Convex → local services.** Convex runs in the cloud, so a `FRONTEND_URL` pointing at `localhost` will not be reachable from a cloud dev deployment; use a tunnel to test notifications locally. (Convex no longer calls Nest: every ERP call goes through the Next BFF.)
 
-Also in place: `/api/notifications/*` only accept the internal key or an HMAC signature with a 5-minute window; Nest verifies WorkOS tokens, checks route permissions and company scope on the ERP catalog routes, and guards internal routes with `NEST_INTERNAL_KEY`; user privileges reach Convex only through `POST /api/me` → `users.syncPrivileges`; impersonation uses a dedicated signed cookie; public onboarding links carry random per-inscription tokens (hashed at rest, scoped, rotated on resend and on "Copiar enlace", revoked on annulment); Resend webhooks are verified with the Svix signature; Helmet, strict DTO validation and fail-fast env checks on Nest.
+Also in place: the entry page's `?next=` and the sign-in route's `returnTo` only accept this app's own page paths (`lib/return-path.ts`), so they cannot redirect elsewhere; `/api/notifications/*` only accept the internal key or an HMAC signature with a 5-minute window; Nest verifies WorkOS tokens, checks route permissions and company scope on the ERP catalog routes, and guards internal routes with `NEST_INTERNAL_KEY`; user privileges reach Convex only through `POST /api/me` → `users.syncPrivileges`; impersonation uses a dedicated signed cookie; public onboarding links carry random per-inscription tokens (hashed at rest, scoped, rotated on resend and on "Copiar enlace", revoked on annulment); Resend webhooks are verified with the Svix signature; Helmet, strict DTO validation and fail-fast env checks on Nest.
 
 ## My role
 

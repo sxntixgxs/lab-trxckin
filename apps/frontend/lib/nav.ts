@@ -143,6 +143,16 @@ export function collectPermissions(items: NavItem[] = NAV_ITEMS): string[] {
   return permissions;
 }
 
+/** Every page the nav links to, without duplicates. */
+export function collectHrefs(items: NavItem[] = NAV_ITEMS): string[] {
+  const hrefs = new Set<string>();
+  for (const item of items) {
+    if (item.href) hrefs.add(item.href);
+    for (const child of item.children ?? []) hrefs.add(child.href);
+  }
+  return [...hrefs];
+}
+
 export function collectPermissionSections(items: NavItem[] = NAV_ITEMS): NavPermissionSection[] {
   return items
     .map((item) => {

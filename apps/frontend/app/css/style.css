@@ -923,3 +923,335 @@ input {
     transition: none !important;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Entry page (app/page.tsx): the signed-out front door. It always sits on the
+   sidebar's navy ground, whatever the theme.
+   --------------------------------------------------------------------------- */
+
+html:has(.entry-page) {
+  color-scheme: dark;
+  background-color: #0b1020;
+  scrollbar-color: rgb(255 255 255 / 0.16) #0b1020;
+}
+
+html:has(.entry-page) body {
+  background-color: #0b1020;
+}
+
+.entry-page {
+  --entry-accent-rgb: 99 102 241;
+  --entry-ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --entry-node-empty: #182038;
+  min-height: 100dvh;
+  color: #e2e8f0;
+  background:
+    radial-gradient(58% 42% at 10% -6%, rgb(var(--entry-accent-rgb) / 0.2), transparent 70%),
+    radial-gradient(40% 32% at 100% 14%, rgb(var(--entry-accent-rgb) / 0.09), transparent 70%),
+    linear-gradient(to bottom, #0b1020, #0e1426 55%, #0b1020);
+}
+
+.entry-page ::selection {
+  background-color: rgb(var(--entry-accent-rgb) / 0.45);
+  color: #ffffff;
+}
+
+.entry-page :is(a, button):focus-visible {
+  outline: 2px solid #a5b4fc;
+  outline-offset: 3px;
+}
+
+.entry-mono {
+  font-family: var(--font-ubuntu-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+/* Actions */
+.entry-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid transparent;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.25;
+  white-space: nowrap;
+  transition:
+    background-color 200ms var(--entry-ease),
+    border-color 200ms var(--entry-ease),
+    color 200ms var(--entry-ease);
+}
+
+.entry-button-primary {
+  background-color: #4f46e5;
+  color: #ffffff;
+}
+
+.entry-button-primary:hover {
+  background-color: #4338ca;
+}
+
+.entry-button-tonal {
+  background-color: rgb(255 255 255 / 0.06);
+  border-color: rgb(255 255 255 / 0.12);
+  color: #f1f5f9;
+}
+
+.entry-button-tonal:hover {
+  background-color: rgb(255 255 255 / 0.1);
+  border-color: rgb(255 255 255 / 0.2);
+}
+
+.entry-button-outline {
+  border-color: rgb(165 180 252 / 0.35);
+  color: #e0e7ff;
+}
+
+.entry-button-outline:hover {
+  background-color: rgb(var(--entry-accent-rgb) / 0.12);
+  border-color: rgb(165 180 252 / 0.6);
+}
+
+.entry-alert {
+  display: flex;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgb(251 113 133 / 0.4);
+  background-color: rgb(244 63 94 / 0.1);
+  color: #fecdd3;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  padding: 0.625rem 0.875rem;
+}
+
+.entry-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #cbd5e1;
+  text-decoration: underline;
+  text-decoration-color: rgb(203 213 225 / 0.3);
+  text-underline-offset: 4px;
+  transition:
+    color 200ms var(--entry-ease),
+    text-decoration-color 200ms var(--entry-ease);
+}
+
+.entry-link:hover {
+  color: #ffffff;
+  text-decoration-color: rgb(255 255 255 / 0.7);
+}
+
+/* Board */
+.entry-panel {
+  border-radius: 1rem;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  background:
+    linear-gradient(135deg, rgb(var(--entry-accent-rgb) / 0.07), transparent 45%),
+    rgb(255 255 255 / 0.04);
+}
+
+/* Same 1px top-edge line as the dashboard hero, on the page's own accent. */
+.entry-accent-line {
+  background: linear-gradient(90deg, transparent, rgb(var(--entry-accent-rgb) / 0.78), transparent);
+}
+
+.entry-fictional {
+  border-radius: 9999px;
+  border: 1px solid rgb(252 211 77 / 0.35);
+  background-color: rgb(252 211 77 / 0.08);
+  color: #fcd34d;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  padding: 0.125rem 0.625rem;
+}
+
+/* Billing phase line: eight stations on one track that never wraps. */
+.entry-billing {
+  --entry-step: 180ms;
+  --entry-delay: 350ms;
+  --entry-travel: calc(var(--entry-current) * var(--entry-step));
+}
+
+.entry-phase-line {
+  position: relative;
+  /* cqw units let the "now" light travel with translate instead of animating `left`. */
+  container-type: inline-size;
+}
+
+.entry-phase-line > ol {
+  z-index: 1;
+}
+
+.entry-phase-track,
+.entry-phase-fill {
+  position: absolute;
+  top: 5px;
+  left: calc(100% / 16);
+  height: 2px;
+  border-radius: 9999px;
+}
+
+.entry-phase-track {
+  right: calc(100% / 16);
+  background-color: rgb(255 255 255 / 0.12);
+}
+
+.entry-phase-fill {
+  width: calc(var(--entry-current) * 100% / 8);
+  background-color: #818cf8;
+  transform-origin: left center;
+}
+
+.entry-now-light {
+  position: absolute;
+  z-index: 2;
+  top: 6px;
+  left: calc((var(--entry-current) + 0.5) * 100% / 8);
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border-radius: 9999px;
+  background-color: #c7d2fe;
+  box-shadow:
+    0 0 0 4px rgb(var(--entry-accent-rgb) / 0.3),
+    0 4px 22px 2px rgb(var(--entry-accent-rgb) / 0.55);
+}
+
+.entry-node {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  border-radius: 9999px;
+  background-color: var(--entry-node-empty);
+  box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.25);
+}
+
+.entry-station[data-state="done"] .entry-node {
+  background-color: #818cf8;
+  box-shadow: none;
+}
+
+.entry-station[data-state="current"] .entry-node {
+  visibility: hidden;
+}
+
+.entry-sla-segment {
+  width: 1.75rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background-color: rgb(255 255 255 / 0.12);
+}
+
+.entry-sla-segment[data-filled] {
+  background-color: #818cf8;
+}
+
+/* Sibling fragments */
+.entry-step::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: -50%;
+  right: 50%;
+  height: 1px;
+  background-color: rgb(255 255 255 / 0.14);
+}
+
+.entry-step:first-child::before {
+  display: none;
+}
+
+.entry-step:is([data-state="done"], [data-state="current"])::before {
+  background-color: #818cf8;
+}
+
+.entry-step-node {
+  position: relative;
+  width: 9px;
+  height: 9px;
+  border-radius: 9999px;
+  background-color: var(--entry-node-empty);
+  box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.25);
+}
+
+.entry-step[data-state="done"] .entry-step-node {
+  background-color: #818cf8;
+  box-shadow: none;
+}
+
+.entry-step[data-state="current"] .entry-step-node {
+  background-color: #e0e7ff;
+  box-shadow: 0 2px 8px 1px rgb(var(--entry-accent-rgb) / 0.7);
+}
+
+.entry-doc {
+  width: 0.75rem;
+  height: 0.375rem;
+  border-radius: 9999px;
+  background-color: rgb(255 255 255 / 0.12);
+}
+
+.entry-doc[data-approved] {
+  background-color: #6ee7b7;
+}
+
+/* The one authored moment: the "now" light travels to the current owner, the
+   passed stations light up behind it, then the SLA meter settles. Everything
+   is already in its final state without motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .entry-phase-fill {
+    animation: entry-fill var(--entry-travel) linear var(--entry-delay) both;
+  }
+
+  .entry-now-light {
+    animation:
+      entry-travel var(--entry-travel) linear var(--entry-delay) both,
+      entry-land 420ms var(--entry-ease) calc(var(--entry-delay) + var(--entry-travel)) both;
+  }
+
+  .entry-station[data-state="done"] .entry-node {
+    animation: entry-node 220ms var(--entry-ease) calc(var(--entry-delay) + var(--i) * var(--entry-step)) both;
+  }
+
+  .entry-sla-segment[data-filled] {
+    animation: entry-segment 280ms var(--entry-ease) calc(var(--entry-delay) + var(--entry-travel) + 160ms + var(--i) * 140ms) both;
+  }
+}
+
+@keyframes entry-fill {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+/* Separate `translate` and `scale` properties, so the travel and the landing never override each other. */
+@keyframes entry-travel {
+  from {
+    translate: calc(var(--entry-current) * -12.5cqw) 0;
+  }
+}
+
+@keyframes entry-land {
+  from {
+    scale: 0.7;
+  }
+}
+
+@keyframes entry-node {
+  from {
+    background-color: var(--entry-node-empty);
+    box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.25);
+  }
+}
+
+@keyframes entry-segment {
+  from {
+    background-color: rgb(255 255 255 / 0.12);
+  }
+}
