@@ -3,8 +3,8 @@
 Module guide for [Lab Trxckin](../README.md). All companies, NITs and emails in this repo are fictional demo data. The shared onboarding foundation (roles, access levels, tokens, emails) is described in [onboarding.md](onboarding.md), and the supplier variant in [suppliers.md](suppliers.md).
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="diagrams/customers-operational.dark.svg">
-  <img alt="Customer onboarding flow: commercial responsable, system, customer, legal representative, document review, tiered approval, Contabilidad, closing emails" src="diagrams/customers-operational.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="diagrams/customers-workflow.dark.svg">
+  <img alt="Customer onboarding swimlanes: commercial responsable, system, ERP, customer, legal representative, Cumplimiento, the Cumplimiento approver and Contabilidad" src="diagrams/customers-workflow.svg">
 </picture>
 
 ## Context
@@ -46,7 +46,7 @@ I built the module on top of the shared onboarding foundation as part of Lab Trx
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="diagrams/customers-technical.dark.svg">
-  <img alt="Customer onboarding technical diagram: staff board and public pages, token guard, Convex workflow and storage, notification route, Resend and webhook, RUT extraction" src="diagrams/customers-technical.svg">
+  <img alt="Customer onboarding technical diagram: staff board and public pages, token guard and workflow in Convex, file storage, email route with Resend and its webhook, RUT extraction, and the ERP path through the Next.js BFF, NestJS and the simulated SIESA" src="diagrams/customers-technical.svg">
 </picture>
 
 ### Phases

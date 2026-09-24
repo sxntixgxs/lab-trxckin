@@ -23,7 +23,7 @@ An internal finance operations platform for multicompany operation: it ingests s
 
 ## Modules
 
-Each module has a guide with its context, operational and technical diagrams, a code map with links to the source, tests and known limitations.
+Each module has a guide with its context, a swimlane workflow diagram and a technical diagram, a code map with links to the source, tests and known limitations.
 
 | Module | What it covers |
 | --- | --- |
@@ -34,6 +34,13 @@ Each module has a guide with its context, operational and technical diagrams, a 
 | [ERP catalog](docs/erp.md) | Clientes/proveedores synced from the (simulated) SIESA ERP, existence checks, "Crear en ERP" |
 
 Shared onboarding foundation: [docs/onboarding.md](docs/onboarding.md). Mailbox setup: [docs/billing-azure-setup.md](docs/billing-azure-setup.md).
+
+The modules hand work to each other instead of duplicating it: billing legalizes advances and petty-cash invoices, petty cash reuses billing's roles, and the ERP catalog serves onboarding, advances and billing's settings.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/modules-map.dark.svg">
+  <img alt="Module map: mailboxes feed billing; billing exchanges invoices with advances and petty cash; billing settings, advances and both onboarding modules read the ERP catalog; onboarding creates terceros in SIESA, which syncs back into the catalog" src="docs/diagrams/modules-map.svg">
+</picture>
 
 ## Architecture
 

@@ -1,11 +1,6 @@
 # Finance: employee advances and petty cash
 
-Module guide for [Lab Trxckin](../README.md). All companies, NITs and emails in this repo are fictional demo data.
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="diagrams/finance-operational.dark.svg">
-  <img alt="Finance operational flows: employee advances from request to legalization, and petty cash from spending to reimbursement" src="diagrams/finance-operational.svg">
-</picture>
+Module guide for [Lab Trxckin](../README.md). All companies, NITs and emails in this repo are fictional demo data. Each flow has its swimlane diagram under [How it works](#how-it-works).
 
 ## Context
 
@@ -41,6 +36,11 @@ I designed and built both flows as part of Lab Trxckin: the Convex tables and st
 
 ### Employee advances
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="diagrams/advances-workflow.dark.svg">
+  <img alt="Advances swimlanes: employee, system, approver, Contabilidad, Gerencia Financiera, Tesorería and the billing module, from the request to Legalizado" src="diagrams/advances-workflow.svg">
+</picture>
+
 1. **Employee** (`/finance/advances/request`): looks up the supplier NIT, enters the amount, payment method, maximum legalization date and supports, and chooses an approver (or skips the approval step).
 2. **Direct manager or selected leader:** approves or rejects.
 3. **Contabilidad** (a pool of users): only when the advance covers 100% of the invoice; may correct the *valor contable*, approve, reject or return.
@@ -52,18 +52,23 @@ While an advance is pending legalization, Gerencia or Tesorería can apply adjus
 
 ### Petty cash
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="diagrams/petty-cash-workflow.dark.svg">
+  <img alt="Petty-cash swimlanes: Gerencia Financiera, custodian, billing module, optional leader, revisor, contador, Eventos DIAN and Tesorería, from spending to the restored balance" src="diagrams/petty-cash-workflow.svg">
+</picture>
+
 1. **Gerencia Financiera:** creates the box, assigns custodians and sends refills. A box is blocked until the receiver confirms a refill.
-2. **Custodian spends:** either a supplier invoice that a leader (who is a custodian) marks as petty cash in the billing inbox, or a physical receipt registered with its support. The balance must cover it unless negative balances are enabled for the company.
+2. **Custodian spends:** either a supplier invoice that a leader (who is a custodian) marks as petty cash in the billing inbox, which Contabilidad then legalizes in billing, or a physical receipt registered with its support, which billing records too. The balance must cover it unless negative balances are enabled for the company.
 3. **Custodian** (`/billing/petty-cash-reimbursement`): selects pending movements and generates reimbursement `GFN-F006-<year>-<NNNN>`, optionally requiring a leader's approval.
 4. **Revisor:** auto-assigned by weighted rotation; reviews documents, causación and values, then picks the contador.
 5. **Contador → Eventos DIAN → Gerencia Financiera:** each can approve, return with a reason or reject; Gerencia can return to any earlier stage.
-6. **Tesorería:** uploads the payment receipt. The reimbursement is *recibido*, its movements are *reembolsado*, the invoices close as **Legalizada** in billing, and the box balance is restored.
+6. **Tesorería:** uploads the payment receipt. The reimbursement is *recibido*, its movements are *reembolsado* and the box balance is restored. Physical receipts close as **Legalizada** in billing; supplier invoices were already legalized by Contabilidad, and their timeline records the reimbursement.
 
 ## Technical design
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="diagrams/finance-technical.dark.svg">
-  <img alt="Finance technical diagram: advances workspace via the Next.js BFF and Convex projection, petty cash via live Convex subscriptions and aggregates, both linked to the billing workflow" src="diagrams/finance-technical.svg">
+  <img alt="Finance technical diagram: the advances workspace through the Next.js BFF and a Convex projection, supplier search in the NestJS ERP catalog, petty cash through live Convex subscriptions and aggregates, both linked to the billing workflow" src="diagrams/finance-technical.svg">
 </picture>
 
 ### Advances state machine

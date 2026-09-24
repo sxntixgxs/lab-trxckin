@@ -3,8 +3,8 @@
 Module guide for [Lab Trxckin](../README.md). All companies, NITs and emails in this repo are fictional demo data. The shared onboarding foundation (roles, access levels, tokens, emails) is described in [onboarding.md](onboarding.md).
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="diagrams/suppliers-operational.dark.svg">
-  <img alt="Supplier onboarding flow: requester, system, supplier contact, legal representative, parallel Cumplimiento and Compras review, tiered approval, Compras evaluation, Contabilidad" src="diagrams/suppliers-operational.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="diagrams/suppliers-workflow.dark.svg">
+  <img alt="Supplier onboarding swimlanes: requester, system, ERP, supplier contact, legal representative, Cumplimiento and Compras in parallel, the Cumplimiento approver, Compras again, Contabilidad and Financiero" src="diagrams/suppliers-workflow.svg">
 </picture>
 
 ## Context
@@ -53,7 +53,7 @@ Management users can return the process to any completed phase or annul it; ever
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="diagrams/suppliers-technical.dark.svg">
-  <img alt="Supplier onboarding technical diagram: staff board and public pages, token guard, Convex workflow and storage, notification route, Resend and webhook, RUT extraction and catalog lookup" src="diagrams/suppliers-technical.svg">
+  <img alt="Supplier onboarding technical diagram: staff board and public pages, token guard and workflow in Convex, file storage, email route with Resend and its webhook, RUT extraction, and the ERP path through the Next.js BFF, NestJS and the simulated SIESA" src="diagrams/suppliers-technical.svg">
 </picture>
 
 ### Phases

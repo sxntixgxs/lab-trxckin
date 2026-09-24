@@ -3,8 +3,8 @@
 Module guide for [Lab Trxckin](../README.md). All companies, NITs and emails in this repo are fictional demo data.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="diagrams/billing-operational.dark.svg">
-  <img alt="Billing operational flow: supplier email, ingestion, Recepción, process leader, causación, Contabilidad, Eventos DIAN, Gerencia, Tesorería, paid" src="diagrams/billing-operational.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="diagrams/billing-workflow.dark.svg">
+  <img alt="Billing swimlanes: supplier, system, Recepción, process leader, Causación, Contabilidad, Eventos DIAN, Gerencia, Tesorería and Rechazos DIAN, with the hand-offs to advances and petty cash" src="diagrams/billing-workflow.svg">
 </picture>
 
 ## Context
@@ -41,7 +41,7 @@ I designed and built the module end to end as part of Lab Trxckin: the Convex da
 1. **Supplier:** emails the e-invoice to the reception mailbox configured on `/billing/settings`.
 2. **System:** within about two minutes it imports the attachments (ZIPs unpacked one level), parses the XML, files the invoice under the company whose NIT is the customer, stores XML/PDF/supporting documents and opens a task in **Recepción**. Emails it cannot process appear on `/billing/emails` with the reason and a retry button; if Azure is not configured, anyone with access can upload the XML on `/billing/upload`.
 3. **Recepción:** assigns one or more **process leaders** from *Mi Buzón*.
-4. **Process leader:** confirms the goods or service were received. The invoice moves on once *every* assigned leader has approved. A leader can also mark it as an **advance legalization** (crossed against pending advances in the process's bag) or as **petty cash** (it leaves for the reimbursement flow and ends *Legalizada*), add another leader, or return it.
+4. **Process leader:** confirms the goods or service were received. The invoice moves on once *every* assigned leader has approved. A leader can also mark it as an **advance legalization** (crossed against pending advances in the process's bag) or as **petty cash** (it still goes through causación, Contabilidad legalizes it with petty cash, and the movement waits in the custodian's box for the next reimbursement), add another leader, return it, or reject it (**Rechazada**).
 5. **Causación analyst:** picked automatically by a fixed supplier-NIT rule or weighted rotation. Records causación (FP number), adjusts the *valor contable* and records internal-document crosses, then sends it to Contabilidad. If the same person also holds the next roles, one action skips ahead while still writing auditable placeholder assignments.
 6. **Contabilidad:** tax review, then Eventos DIAN or straight to Gerencia.
 7. **Eventos DIAN:** a manual DIAN step; forwards to Gerencia or legalizes an invoice that is fully covered.
@@ -54,7 +54,7 @@ At any active phase the current owner can return the invoice to an earlier phase
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="diagrams/billing-technical.dark.svg">
-  <img alt="Billing technical diagram: Graph sync, XML parsing and dedupe, invoices and tasks, dashboard read model, SLA digest, Next.js routes, Resend" src="diagrams/billing-technical.svg">
+  <img alt="Billing technical diagram: Microsoft Graph sync, DIAN XML parser and dedupe, invoices and tasks, the dashboard read model and crons in Convex, the Next.js BFF routes, Resend and the NestJS ERP catalog" src="diagrams/billing-technical.svg">
 </picture>
 
 ### Ingestion
@@ -76,14 +76,14 @@ One task per invoice, many assignments grouped per phase, and an append-only aud
 | Phase | Who acts | Main actions |
 | --- | --- | --- |
 | `recepcion` | Recepción users | Assign leader(s) · close · DIAN rejection |
-| `revision_lider` | Assigned leaders | Approve (all must) · mark advance · mark petty cash · add leader · return |
+| `revision_lider` | Assigned leaders | Approve (all must) · mark advance · mark petty cash · add leader · return · reject |
 | `causacion` | Analyst (NIT rule or weighted rotation) | Send to Contabilidad · skip ahead · peer handoff · return |
 | `revision_impuestos` | Contabilidad | To Eventos DIAN · direct to Gerencia · legalize with petty cash · return |
 | `eventos_dian` | Eventos DIAN | To Gerencia · legalize · return |
 | `gerencia` | Gerencia | Approve to Tesorería · reroute to any phase and user · return |
 | `revision_tesoreria` | Tesorero | Partial payment · confirm paid · confirm without disbursement |
 | `pendiente_rechazar_dian` | Rechazos DIAN | Confirm DIAN rejection |
-| `reembolso_caja_menor` | Petty-cash chain | Reimbursement paid → `legalizada` |
+| `reembolso_caja_menor` | Petty-cash chain | Physical receipts recorded in billing → `legalizada` once reimbursed |
 
 Final states: `pagada`, `legalizada`, `cerrada`, `rechazada`, `rechazada_dian`, `nota_credito_cerrada`. Every transition closes the previous assignment, resets the phase clock only on a real phase change, refreshes the dashboard row and emails the new owner.
 
