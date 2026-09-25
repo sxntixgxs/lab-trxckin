@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Ubuntu } from "next/font/google";
-import { withAuth } from "@workos-inc/authkit-nextjs";
 import { ConvexClientProvider } from "@/components/ConvexClientProvider";
 import { Toaster } from "@/components/ui/sonner";
+import { rootLayoutAccessToken } from "@/lib/root-layout-auth";
 import AppProvider from "@/providers/app-provider";
 import { AppQueryClientProvider } from "@/providers/query-client-provider";
 import Theme from "@/providers/theme-provider";
@@ -25,7 +25,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { accessToken } = await withAuth();
+  const accessToken = await rootLayoutAccessToken();
   return (
     <html lang="es" suppressHydrationWarning>
       <body
