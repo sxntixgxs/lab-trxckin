@@ -113,6 +113,14 @@ import type * as onboarding_suppliersTipos from "../onboarding/suppliersTipos.js
 import type * as onboarding_tokens from "../onboarding/tokens.js";
 import type * as onboarding_validators from "../onboarding/validators.js";
 import type * as users from "../users.js";
+import type * as workforce_api from "../workforce/api.js";
+import type * as workforce_attendance from "../workforce/attendance.js";
+import type * as workforce_catalog from "../workforce/catalog.js";
+import type * as workforce_closures from "../workforce/closures.js";
+import type * as workforce_common from "../workforce/common.js";
+import type * as workforce_demo from "../workforce/demo.js";
+import type * as workforce_scheduling from "../workforce/scheduling.js";
+import type * as workforce_snapshot from "../workforce/snapshot.js";
 
 import type {
   ApiFromModules,
@@ -226,6 +234,14 @@ declare const fullApi: ApiFromModules<{
   "onboarding/tokens": typeof onboarding_tokens;
   "onboarding/validators": typeof onboarding_validators;
   users: typeof users;
+  "workforce/api": typeof workforce_api;
+  "workforce/attendance": typeof workforce_attendance;
+  "workforce/catalog": typeof workforce_catalog;
+  "workforce/closures": typeof workforce_closures;
+  "workforce/common": typeof workforce_common;
+  "workforce/demo": typeof workforce_demo;
+  "workforce/scheduling": typeof workforce_scheduling;
+  "workforce/snapshot": typeof workforce_snapshot;
 }>;
 
 /**

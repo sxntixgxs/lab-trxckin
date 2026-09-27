@@ -21,10 +21,11 @@ It is the public extraction of an internal tool that ran in production. Each wor
 
 ## Operating Context
 
-- Four modules on one platform:
+- Modules on one platform:
   - **Billing:** supplier e-invoices, from the Microsoft 365 reception mailboxes to payment.
   - **Finance:** employee advances and petty cash.
   - **Suppliers** and **Customers:** risk-based onboarding against an ERP catalog of third parties (*terceros*).
+  - **Talento humano:** fictional workers and groups, weekly schedules, Colombian time classification, GPS attendance, audited reconciliation and fortnight closure. No monetary payroll.
 - **Multi-company:** users belong to one or more companies. The active company sets the data scope and the app's accent colour.
 - **Access:**
   - Roles and route permissions live in Postgres.

@@ -1,4 +1,5 @@
 import {
+  CalendarClock,
   FileText,
   Handshake,
   LayoutDashboard,
@@ -95,8 +96,21 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
   {
-    id: 'administracion',
-    label: 'Administración',
+    id: "workforce",
+    label: "Talento humano",
+    icon: CalendarClock,
+    children: [
+      { id: "workforce-scheduling", label: "Programación de turnos", href: "/workforce/scheduling", permission: "workforce/scheduling" },
+      { id: "workforce-attendance", label: "Asistencia y cierre", href: "/workforce/attendance", permission: "workforce/attendance" },
+      { id: "workforce-check-in", label: "Marcar asistencia", href: "/workforce/check-in", permission: "workforce/check-in" },
+      { id: "workforce-employees", label: "Trabajadores", href: "/workforce/employees", permission: "workforce/employees" },
+      { id: "workforce-locations", label: "Sedes", href: "/workforce/locations", permission: "workforce/locations" },
+      { id: "workforce-settings", label: "Configuración", href: "/workforce/settings", permission: "workforce/settings" },
+    ],
+  },
+  {
+    id: "administracion",
+    label: "Administración",
     icon: Settings,
     children: [
       {

@@ -19,6 +19,7 @@ An internal finance operations platform for multicompany operation: it ingests s
 - **ERP catalog (simulated SIESA)** — a local clientes/proveedores catalog synced from the ERP (daily, on demand, CLI) decides *inscripción* vs *actualización*, blocks duplicate onboarding processes and feeds supplier lookups; a separate fake-SIESA app with its own database stands in for the real ERP (see [docs/erp.md](docs/erp.md)).
 - **Role/permission-based access per route** — roles and route permissions live in Postgres; nav and pages are filtered by them.
 - **Multi-company** — users are scoped to one or more companies, with an active-company switcher.
+- **Workforce** — fictional employee roster, groups, weekly shift scheduling, Colombian time classification, personal/supervisor GPS attendance, audited corrections and fortnight closure ([guide](docs/workforce.md)).
 - **Admin impersonation** — admins can act as another user (signed cookie, visible banner).
 - **Email notifications** via Resend (React Email templates).
 - **Command palette** — Ctrl/Cmd+K: navigation, company and theme switching, and live search across invoices, advances, onboarding and cost centers.
@@ -34,6 +35,7 @@ Each module has a guide with its context, a swimlane workflow diagram and a tech
 | [Suppliers](docs/suppliers.md) | Risk-based supplier onboarding: public form, e-signature, parallel review, tiered approval, purchasing rubric |
 | [Customers](docs/customers.md) | Customer onboarding with payment terms and tiered approval |
 | [ERP catalog](docs/erp.md) | Clientes/proveedores synced from the (simulated) SIESA ERP, existence checks, "Crear en ERP" |
+| [Workforce](docs/workforce.md) | Employee groups, schedules, planned/actual hours, GPS attendance, review and fortnight closure |
 
 Shared onboarding foundation: [docs/onboarding.md](docs/onboarding.md). Mailbox setup: [docs/billing-azure-setup.md](docs/billing-azure-setup.md).
 
