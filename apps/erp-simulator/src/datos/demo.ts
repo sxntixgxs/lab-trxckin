@@ -20,6 +20,10 @@ export const NITS_DEMO = {
   soloEmpresa2: "901777888",
   /** Customer stored zero-padded by the ERP, in empresa 3 (NIT normalization). */
   nitConCeros: "0890123456",
+  /** Suppliers of the MCP server demo invoices in empresa 2 (apps/frontend/convex/mcp/demo.ts). */
+  drominc: "901555222",
+  quebradaHonda: "900777111",
+  suministrosNevado: "900888333",
 } as const;
 
 type SucursalBase = Partial<SucursalSimulada> &
@@ -194,6 +198,59 @@ export function tercerosDemo(): TerceroSimulado[] {
           email: "comercial@suministros-mineros.example.com",
           telefono: "3015553322",
           direccion: "Carrera 9 # 16-50",
+        }),
+      ],
+    }),
+    juridica(empresa2, {
+      nit: NITS_DEMO.drominc,
+      razonSocial: "Drominc S.A.S.",
+      ciiu: "3312",
+      proveedor: [
+        sucursal({
+          id: "001",
+          descripcion: "Drominc S.A.S.",
+          ciudad: "Medellín",
+          departamento: "Antioquia",
+          tipoProveedor: "001",
+          condicionPago: "C30",
+          email: "facturacion@drominc.example.com",
+          telefono: "3046612200",
+          direccion: "Carrera 48 # 10-45",
+        }),
+      ],
+    }),
+    juridica(empresa2, {
+      nit: NITS_DEMO.quebradaHonda,
+      razonSocial: "Transportes Quebrada Honda S.A.S.",
+      ciiu: "4923",
+      proveedor: [
+        sucursal({
+          id: "001",
+          descripcion: "Transportes Quebrada Honda S.A.S.",
+          ciudad: "Sogamoso",
+          departamento: "Boyacá",
+          tipoProveedor: "002",
+          email: "despachos@quebrada-honda.example.com",
+          telefono: "3187720011",
+          direccion: "Calle 11 # 14-20",
+        }),
+      ],
+    }),
+    juridica(empresa2, {
+      nit: NITS_DEMO.suministrosNevado,
+      razonSocial: "Suministros El Nevado S.A.S.",
+      ciiu: "4659",
+      proveedor: [
+        sucursal({
+          id: "001",
+          descripcion: "Suministros El Nevado S.A.S.",
+          ciudad: "Manizales",
+          departamento: "Caldas",
+          tipoProveedor: "001",
+          condicionPago: "CON",
+          email: "pedidos@suministros-nevado.example.com",
+          telefono: "3113349080",
+          direccion: "Avenida Santander # 58-12",
         }),
       ],
     }),

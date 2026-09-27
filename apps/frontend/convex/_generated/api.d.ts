@@ -70,6 +70,7 @@ import type * as lib_facturacionPeajesContabilidad from "../lib/facturacionPeaje
 import type * as lib_facturacionReportState from "../lib/facturacionReportState.js";
 import type * as lib_facturacionTiempos from "../lib/facturacionTiempos.js";
 import type * as lib_globalSearch from "../lib/globalSearch.js";
+import type * as lib_mcpScope from "../lib/mcpScope.js";
 import type * as lib_money from "../lib/money.js";
 import type * as lib_normalize from "../lib/normalize.js";
 import type * as lib_notaCreditoRelacion from "../lib/notaCreditoRelacion.js";
@@ -95,6 +96,8 @@ import type * as lib_storageAccess from "../lib/storageAccess.js";
 import type * as lib_valorAPagar from "../lib/valorAPagar.js";
 import type * as lib_valorContable from "../lib/valorContable.js";
 import type * as lib_valorLegalizableAnticipo from "../lib/valorLegalizableAnticipo.js";
+import type * as mcp_demo from "../mcp/demo.js";
+import type * as mcp_lectura from "../mcp/lectura.js";
 import type * as notificacionesAnticipos from "../notificacionesAnticipos.js";
 import type * as notificacionesFacturacion from "../notificacionesFacturacion.js";
 import type * as notificationHttp from "../notificationHttp.js";
@@ -191,6 +194,7 @@ declare const fullApi: ApiFromModules<{
   "lib/facturacionReportState": typeof lib_facturacionReportState;
   "lib/facturacionTiempos": typeof lib_facturacionTiempos;
   "lib/globalSearch": typeof lib_globalSearch;
+  "lib/mcpScope": typeof lib_mcpScope;
   "lib/money": typeof lib_money;
   "lib/normalize": typeof lib_normalize;
   "lib/notaCreditoRelacion": typeof lib_notaCreditoRelacion;
@@ -216,6 +220,8 @@ declare const fullApi: ApiFromModules<{
   "lib/valorAPagar": typeof lib_valorAPagar;
   "lib/valorContable": typeof lib_valorContable;
   "lib/valorLegalizableAnticipo": typeof lib_valorLegalizableAnticipo;
+  "mcp/demo": typeof mcp_demo;
+  "mcp/lectura": typeof mcp_lectura;
   notificacionesAnticipos: typeof notificacionesAnticipos;
   notificacionesFacturacion: typeof notificacionesFacturacion;
   notificationHttp: typeof notificationHttp;
