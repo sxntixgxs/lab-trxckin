@@ -10,7 +10,7 @@ An internal finance operations platform for multicompany operation: it ingests s
 
 - **Invoice inbox** — scheduled Microsoft Graph sync (every 2 min) reads DIAN `AttachedDocument` e-invoices from a reception mailbox per company, parses the UBL XML, stores XML/PDF and dedupes; manual XML upload as fallback.
 - **DIAN validation** — reconcile the DIAN export (XLSX) against ingested invoices.
-- **Approval workflow** — tasks assigned per process/owner, returns and rejections, credit-note linking, business-hours SLA tracking (Colombian holidays) and a daily SLA email digest.
+- **Approval workflow** — tasks assigned per process/owner, returns and rejections, credit-note linking, business-day SLA tracking (Colombian holidays) and a daily SLA email digest.
 - **Accounting causation** — causation step with cost-center distribution and internal-document cross-checks.
 - **Advances (*anticipos*)** — request → direct-manager approval → accounting review → management approval → treasury disbursement → legalization, with adjustments and email notifications.
 - **Petty cash (*cajas menores*)** — cash boxes, movements and reimbursements that flow into the invoice workflow.
@@ -23,6 +23,12 @@ An internal finance operations platform for multicompany operation: it ingests s
 - **Admin impersonation** — admins can act as another user (signed cookie, visible banner).
 - **Email notifications** via Resend (React Email templates).
 - **Command palette** — Ctrl/Cmd+K: navigation, company and theme switching, and live search across invoices, advances, onboarding and cost centers.
+
+## AI features
+
+- **In-app assistant** ([docs/assistant.md](docs/assistant.md)) — an authenticated chat (Convex Agent, streamed answers in Spanish or English, dictation) whose read-only tools search and summarize billing, onboarding, advances and petty cash through the existing authorization helpers, with per-user rate limits.
+- **MCP server for agents** ([docs/mcp-server.md](docs/mcp-server.md)) — `apps/mcp-server` lets any Model Context Protocol client (Claude Desktop, Claude Code, a custom agent) call tools on the real system: invoice status with its approval phase, owners and SLA in Colombian business days; pending approvals, oldest first; employee advance balances; and supplier search over the ERP catalog. It is **read-only** and **scoped on the server**: dedicated credentials, the allowed companies set in the Convex and API environments (never in the client), zod-validated input and small typed outputs.
+- **Evals for the RUT extraction** ([docs/rut-evals.md](docs/rut-evals.md)) — 20 synthetic RUTs (clean, scanned, rotated, low-resolution, missing fields) with golden answers. The checks run cheapest first: schema, the DIAN check digit, field accuracy, then cost and latency per model. Pull requests replay recorded responses against thresholds; a manual run calls the models live. What the evals changed: the route's primary model had been retired (every call failed over), and a prompt rule made Gemini drop the NIT's last digit on scans. After the fix: **98.3% field accuracy, 0 check-digit errors, US$0.0006 per document, p95 1.9 s**, with a different-vendor fallback measured and gated too.
 
 ## Modules
 
