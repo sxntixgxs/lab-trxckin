@@ -16,7 +16,7 @@ export type CompaniaSimulada = {
 export const INSTANCIAS_SIMULADAS = ["5001", "5002"] as const;
 
 export const COMPANIAS_SIMULADAS: readonly CompaniaSimulada[] = [
-  { idInstancia: "5001", cia: 1, razonSocial: "Andes Logística S.A.S.", nit: "900000001", appEmpresa: 1 },
+  { idInstancia: "5001", cia: 1, razonSocial: "Andes Logística S.A.S.", nit: "1005153789", appEmpresa: 1 },
   { idInstancia: "5002", cia: 1, razonSocial: "Cordillera Minería S.A.S.", nit: "900000002", appEmpresa: 2 },
   { idInstancia: "5001", cia: 7, razonSocial: "Pacífico Ingeniería S.A.S.", nit: "900000003", appEmpresa: 3 },
   { idInstancia: "5001", cia: 13, razonSocial: "Altiplano Holding S.A.S.", nit: "900000004", appEmpresa: 4 },

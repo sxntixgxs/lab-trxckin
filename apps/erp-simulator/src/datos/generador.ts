@@ -12,7 +12,7 @@ export const TERCEROS_GENERADOS_POR_COMPANIA = 120;
  */
 export const NITS_RESERVADOS: ReadonlySet<string> = new Set([
   "900123456", // ACME Colombia S.A.S.
-  "900000001",
+  "1005153789",
   "900000002",
   "900000003",
   "900000004",

@@ -67,7 +67,7 @@ describe("parseDianXlsxBuffer", () => {
           "21-07-2026 10:00:00",
           "900123",
           "Emisor SA",
-          "900000001",
+          "1005153789",
           "ANDES LOGISTICA",
           19000,
           0,

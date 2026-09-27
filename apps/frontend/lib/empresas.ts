@@ -21,7 +21,7 @@ export const EMPRESAS_MAP: Record<number, EmpresaInfo> = {
     id: 1,
     nombre: "Andes Logística S.A.S.",
     nombreCorto: "Andes",
-    nit: "900000001",
+    nit: "1005153789",
     color: "#e21c21",
     bgColor: "bg-red-100",
     textColor: "text-red-700",

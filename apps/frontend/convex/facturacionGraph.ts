@@ -167,7 +167,7 @@ function getExtension(name: string | undefined) {
 function isPeajesProveedorNit(value?: string) {
   return isPeajesProviderNit(value);
 }
-// 900.000.001-1 => 900000001
+// 900.000.001-1 => 1005153789
 function normalizeNitForMatch(value?: string) {
   const base = (value ?? "").split("-")[0] ?? "";
   return base.replace(/\D/g, "").replace(/^0+/, "");
