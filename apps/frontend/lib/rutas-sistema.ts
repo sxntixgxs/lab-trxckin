@@ -1,4 +1,10 @@
 export const RUTAS_SISTEMA = {
+  WORKFORCE_SCHEDULING: "workforce/scheduling",
+  WORKFORCE_ATTENDANCE: "workforce/attendance",
+  WORKFORCE_CHECK_IN: "workforce/check-in",
+  WORKFORCE_EMPLOYEES: "workforce/employees",
+  WORKFORCE_LOCATIONS: "workforce/locations",
+  WORKFORCE_SETTINGS: "workforce/settings",
   FACTURACION_DASHBOARD: "billing/dashboard",
   FACTURACION_BUZON: "billing/inbox",
   FACTURACION_FACTURAS: "billing/invoices",

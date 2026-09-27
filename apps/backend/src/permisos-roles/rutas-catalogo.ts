@@ -19,6 +19,12 @@ export const ALLOWED_RUTAS = [
   "finance/advances/request",
   "suppliers/onboarding",
   "customers/onboarding",
+  "workforce/scheduling",
+  "workforce/attendance",
+  "workforce/check-in",
+  "workforce/employees",
+  "workforce/locations",
+  "workforce/settings",
 ] as const;
 
 export type AllowedRuta = (typeof ALLOWED_RUTAS)[number];
