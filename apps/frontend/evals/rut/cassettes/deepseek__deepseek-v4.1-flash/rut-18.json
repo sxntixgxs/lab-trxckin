@@ -1,0 +1,74 @@
+{
+  "case": "rut-18",
+  "requested_model": "deepseek/deepseek-v4.1-flash",
+  "recorded_at": "2026-09-27T21:50:20.794Z",
+  "input": {
+    "file": "document.png",
+    "media_type": "image/png",
+    "sha256": "a148e98d39c65e7ec8afe36716d3b1067e168df6d07942592f637f861997dd5a"
+  },
+  "prompt_sha256": "e4af20497fd02df685cd0cecda49b25f237a14e9e24b4063250ed1276c3dd529",
+  "model": "deepseek/deepseek-v4.1-flash",
+  "latency_ms": 4705,
+  "outcome": "ok",
+  "usage": {
+    "promptTokens": 909,
+    "completionTokens": 1425,
+    "costUsd": 0.0019827,
+    "costSource": "provider"
+  },
+  "response": {
+    "id": "gen-1790545820-5Snd8qJlvL31sgvmgIHO",
+    "object": "chat.completion",
+    "created": 1790545820,
+    "model": "deepseek/deepseek-v4.1-flash",
+    "provider": "Together",
+    "system_fingerprint": "default",
+    "service_tier": null,
+    "choices": [
+      {
+        "index": 0,
+        "logprobs": null,
+        "finish_reason": "stop",
+        "native_finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "{\n  \"nit\": \"800456123\",\n  \"dv\": \"6\",\n  \"tipo_contribuyente\": \"natural\",\n  \"razon_social\": null,\n  \"tipo_documento\": \"13\",\n  \"numero_identificacion\": \"80456123\",\n  \"primer_apellido\": \"CARDENAS\",\n  \"segundo_apellido\": \"RUIZ\",\n  \"primer_nombre\": \"MIGUEL\",\n  \"actividad_principal_codigo\": \"0111\",\n  \"actividad_secundaria_codigo\": \"0162\",\n  \"departamento\": \"HUILA\",\n  \"municipio\": \"NEIVA\",\n  \"direccion\": \"CL 8 15 42\",\n  \"nombre_representante_legal\": null\n}",
+          "refusal": null,
+          "reasoning": "1.  **Analyze the Request**:\n    *   Input: An image of a DIAN RUT document.\n    *   Output: A valid JSON object.\n    *   Constraints: No markdown, no explanation, raw JSON. If empty/not present, `null`. `tipo_contribuyente` must be \"natural\" or \"juridica\". `nit` from box 5, `dv` from box 6. Codes as strings. Extract specific fields.\n\n2.  **Extract Fields from Image**:\n    *   `nit` (Box 5): `800456123`\n    *   `dv` (Box 6): `6`\n    *   `tipo_contribuyente` (Box 24): \"Persona natural o sucesión iliquida\" -> \"natural\"\n    *   `razon_social` (Box 35): Empty -> `null`\n    *   `tipo_documento` (Box 26): \"Cédula de Ciudadanía\" -> \"Cédula de Ciudadanía\" (or just the code? The prompt says \"Return codes as strings\". It doesn't specify if it wants the code or string for this, but typically `tipo_documento` might refer to the text or code. Box 26 says \"Cédula de Ciudadanía\" and \"13\". I'll output \"13\" if it means code, or \"Cédula de Ciudadanía\" if it means text. Let's look at the prompt: \"For \"tipo_contribuyente\": return either 'natural' or 'juridica'\". For other fields, I'll return what's in the box. `tipo_documento` box has '13' in the Cód. field and 'Cédula de Ciudadanía' in the text field. Let's return \"Cédula de Ciudadanía\" or maybe \"13\". Let's stick to the string representation. The prompt says \"Return codes as strings\", so \"tipo_documento\" -> \"13\".\n    *   `numero_identificacion` (Box 28): `80456123`\n    *   `primer_apellido` (Box 31): `CARDENAS`\n    *   `segundo_apellido` (Box 32): `RUIZ`\n    *   `primer_nombre` (Box 33): `MIGUEL`\n    *   `actividad_principal_codigo` (Box 46): `0111`\n    *   `actividad_secundaria_codigo` (Box 48): `0162`\n    *   `departamento` (Box 39): `HUILA`\n    *   `municipio` (Box 40): `NEIVA`\n    *   `direccion` (Box 41): `CL 8 15 42`\n    *   `nombre_representante_legal`: Empty since it's a natural person -> `null`\n\n3.  **Refine Extraction**:\n    *   `nit`: \"800456123\"\n    *   `dv`: \"6\"\n    *   `tipo_contribuyente`: \"natural\"\n    *   `razon_social`: null\n    *   `tipo_documento`: \"13\"\n    *   `numero_identificacion`: \"80456123\"\n    *   `primer_apellido`: \"CARDENAS\"\n    *   `segundo_apellido`: \"RUIZ\"\n    *   `primer_nombre`: \"MIGUEL\"\n    *   `actividad_principal_codigo`: \"0111\"\n    *   `actividad_secundaria_codigo`: \"0162\"\n    *   `departamento`: \"HUILA\"\n    *   `municipio`: \"NEIVA\"\n    *   `direccion`: \"CL 8 15 42\"\n    *   `nombre_representante_legal`: null\n\n4.  **Final JSON Construction**:\n    ```json\n    {\n      \"nit\": \"800456123\",\n      \"dv\": \"6\",\n      \"tipo_contribuyente\": \"natural\",\n      \"razon_social\": null,\n      \"tipo_documento\": \"13\",\n      \"numero_identificacion\": \"80456123\",\n      \"primer_apellido\": \"CARDENAS\",\n      \"segundo_apellido\": \"RUIZ\",\n      \"primer_nombre\": \"MIGUEL\",\n      \"actividad_principal_codigo\": \"0111\",\n      \"actividad_secundaria_codigo\": \"0162\",\n      \"departamento\": \"HUILA\",\n      \"municipio\": \"NEIVA\",\n      \"direccion\": \"CL 8 15 42\",\n      \"nombre_representante_legal\": null\n    }\n    ```\n\n5.  **Check against rules**:\n    *   Valid JSON? Yes.\n    *   No markdown, no explanation? Yes.\n    *   Null for empty? Yes.\n    *   `tipo_contribuyente` is \"natural\"? Yes.\n    *   `nit` is exact from box 5 (\"800456123\")? Yes.\n    *   `dv` is exact from box 6 (\"6\")? Yes.\n    *   Codes as strings? Yes (\"13\", \"0111\", etc.).\n    *   `departamento` is name (\"HUILA\")? Yes.\n    *   `municipio` is name (\"NEIVA\")? Yes.\n    *   `direccion` full? Yes (\"CL 8 15 42\").\n    *   `nombre_representante_legal` null? Yes.",
+          "reasoning_details": [
+            {
+              "type": "reasoning.text",
+              "text": "1.  **Analyze the Request**:\n    *   Input: An image of a DIAN RUT document.\n    *   Output: A valid JSON object.\n    *   Constraints: No markdown, no explanation, raw JSON. If empty/not present, `null`. `tipo_contribuyente` must be \"natural\" or \"juridica\". `nit` from box 5, `dv` from box 6. Codes as strings. Extract specific fields.\n\n2.  **Extract Fields from Image**:\n    *   `nit` (Box 5): `800456123`\n    *   `dv` (Box 6): `6`\n    *   `tipo_contribuyente` (Box 24): \"Persona natural o sucesión iliquida\" -> \"natural\"\n    *   `razon_social` (Box 35): Empty -> `null`\n    *   `tipo_documento` (Box 26): \"Cédula de Ciudadanía\" -> \"Cédula de Ciudadanía\" (or just the code? The prompt says \"Return codes as strings\". It doesn't specify if it wants the code or string for this, but typically `tipo_documento` might refer to the text or code. Box 26 says \"Cédula de Ciudadanía\" and \"13\". I'll output \"13\" if it means code, or \"Cédula de Ciudadanía\" if it means text. Let's look at the prompt: \"For \"tipo_contribuyente\": return either 'natural' or 'juridica'\". For other fields, I'll return what's in the box. `tipo_documento` box has '13' in the Cód. field and 'Cédula de Ciudadanía' in the text field. Let's return \"Cédula de Ciudadanía\" or maybe \"13\". Let's stick to the string representation. The prompt says \"Return codes as strings\", so \"tipo_documento\" -> \"13\".\n    *   `numero_identificacion` (Box 28): `80456123`\n    *   `primer_apellido` (Box 31): `CARDENAS`\n    *   `segundo_apellido` (Box 32): `RUIZ`\n    *   `primer_nombre` (Box 33): `MIGUEL`\n    *   `actividad_principal_codigo` (Box 46): `0111`\n    *   `actividad_secundaria_codigo` (Box 48): `0162`\n    *   `departamento` (Box 39): `HUILA`\n    *   `municipio` (Box 40): `NEIVA`\n    *   `direccion` (Box 41): `CL 8 15 42`\n    *   `nombre_representante_legal`: Empty since it's a natural person -> `null`\n\n3.  **Refine Extraction**:\n    *   `nit`: \"800456123\"\n    *   `dv`: \"6\"\n    *   `tipo_contribuyente`: \"natural\"\n    *   `razon_social`: null\n    *   `tipo_documento`: \"13\"\n    *   `numero_identificacion`: \"80456123\"\n    *   `primer_apellido`: \"CARDENAS\"\n    *   `segundo_apellido`: \"RUIZ\"\n    *   `primer_nombre`: \"MIGUEL\"\n    *   `actividad_principal_codigo`: \"0111\"\n    *   `actividad_secundaria_codigo`: \"0162\"\n    *   `departamento`: \"HUILA\"\n    *   `municipio`: \"NEIVA\"\n    *   `direccion`: \"CL 8 15 42\"\n    *   `nombre_representante_legal`: null\n\n4.  **Final JSON Construction**:\n    ```json\n    {\n      \"nit\": \"800456123\",\n      \"dv\": \"6\",\n      \"tipo_contribuyente\": \"natural\",\n      \"razon_social\": null,\n      \"tipo_documento\": \"13\",\n      \"numero_identificacion\": \"80456123\",\n      \"primer_apellido\": \"CARDENAS\",\n      \"segundo_apellido\": \"RUIZ\",\n      \"primer_nombre\": \"MIGUEL\",\n      \"actividad_principal_codigo\": \"0111\",\n      \"actividad_secundaria_codigo\": \"0162\",\n      \"departamento\": \"HUILA\",\n      \"municipio\": \"NEIVA\",\n      \"direccion\": \"CL 8 15 42\",\n      \"nombre_representante_legal\": null\n    }\n    ```\n\n5.  **Check against rules**:\n    *   Valid JSON? Yes.\n    *   No markdown, no explanation? Yes.\n    *   Null for empty? Yes.\n    *   `tipo_contribuyente` is \"natural\"? Yes.\n    *   `nit` is exact from box 5 (\"800456123\")? Yes.\n    *   `dv` is exact from box 6 (\"6\")? Yes.\n    *   Codes as strings? Yes (\"13\", \"0111\", etc.).\n    *   `departamento` is name (\"HUILA\")? Yes.\n    *   `municipio` is name (\"NEIVA\")? Yes.\n    *   `direccion` full? Yes (\"CL 8 15 42\").\n    *   `nombre_representante_legal` null? Yes.",
+              "format": "unknown",
+              "index": 0
+            }
+          ]
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 909,
+      "completion_tokens": 1425,
+      "total_tokens": 2334,
+      "cost": 0.0019827,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.0019827,
+        "upstream_inference_prompt_cost": 0.0002727,
+        "upstream_inference_completions_cost": 0.00171
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 1241,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "nit": "682415",
+  "dv": "9",
+  "tipo_contribuyente": "natural",
+  "razon_social": null,
+  "tipo_documento": "22",
+  "numero_identificacion": "682415",
+  "primer_apellido": "ROSSI",
+  "segundo_apellido": "BIANCHI",
+  "primer_nombre": "MARCO",
+  "actividad_principal_codigo": "5611",
+  "actividad_secundaria_codigo": null,
+  "departamento": "ATLÁNTICO",
+  "municipio": "BARRANQUILLA",
+  "direccion": "CR 53 82 116 AP 5B",
+  "nombre_representante_legal": null,
+  "variant": "clean"
+}

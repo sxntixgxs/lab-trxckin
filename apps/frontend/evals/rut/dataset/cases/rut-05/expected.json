@@ -1,0 +1,18 @@
+{
+  "nit": "890321457",
+  "dv": "9",
+  "tipo_contribuyente": "juridica",
+  "razon_social": "ALIMENTOS DEL VALLE ANDINO S.A.",
+  "tipo_documento": null,
+  "numero_identificacion": null,
+  "primer_apellido": null,
+  "segundo_apellido": null,
+  "primer_nombre": null,
+  "actividad_principal_codigo": "1011",
+  "actividad_secundaria_codigo": "4631",
+  "departamento": "VALLE DEL CAUCA",
+  "municipio": "PALMIRA",
+  "direccion": "CL 42 28 115 BG 3",
+  "nombre_representante_legal": "MARTA LUCÍA CAICEDO LOZANO",
+  "variant": "clean"
+}

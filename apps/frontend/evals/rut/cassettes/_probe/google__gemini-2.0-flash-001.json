@@ -1,0 +1,28 @@
+{
+  "requested_model": "google/gemini-2.0-flash-001",
+  "recorded_at": "2026-09-27T21:49:49.670Z",
+  "input": {
+    "file": "document.pdf",
+    "media_type": "application/pdf",
+    "sha256": "2174e0a2b5a9ffac3e069481c4c7ea8a21fe7f5295950c102003b73a21f388f1"
+  },
+  "prompt_sha256": "e4af20497fd02df685cd0cecda49b25f237a14e9e24b4063250ed1276c3dd529",
+  "model": "google/gemini-2.0-flash-001",
+  "latency_ms": 581,
+  "outcome": "http",
+  "error": "google/gemini-2.0-flash-001: HTTP 404 {\"error\":{\"message\":\"No endpoints found for google/gemini-2.0-flash-001.\",\"code\":404}}",
+  "http_status": 404,
+  "usage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "costUsd": 0,
+    "costSource": "price_table"
+  },
+  "response": {
+    "error": {
+      "message": "No endpoints found for google/gemini-2.0-flash-001.",
+      "code": 404
+    }
+  },
+  "listed_in_models_api": false
+}

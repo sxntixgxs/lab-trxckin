@@ -1,0 +1,74 @@
+{
+  "case": "rut-12",
+  "requested_model": "deepseek/deepseek-v4.1-flash",
+  "recorded_at": "2026-09-27T21:50:09.490Z",
+  "input": {
+    "file": "document.pdf",
+    "media_type": "application/pdf",
+    "sha256": "35860bfa0bc97614d7c615fdfd59daf2d5c730498c8bb74472a7f8f63857e4da"
+  },
+  "prompt_sha256": "e4af20497fd02df685cd0cecda49b25f237a14e9e24b4063250ed1276c3dd529",
+  "model": "deepseek/deepseek-v4.1-flash",
+  "latency_ms": 4237,
+  "outcome": "ok",
+  "usage": {
+    "promptTokens": 1409,
+    "completionTokens": 994,
+    "costUsd": 0.0016155,
+    "costSource": "provider"
+  },
+  "response": {
+    "id": "gen-1790545810-kyI0clsCLlOypLHtxhVv",
+    "object": "chat.completion",
+    "created": 1790545810,
+    "model": "deepseek/deepseek-v4.1-flash",
+    "provider": "Together",
+    "system_fingerprint": "default",
+    "service_tier": null,
+    "choices": [
+      {
+        "index": 0,
+        "logprobs": null,
+        "finish_reason": "stop",
+        "native_finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "{\"nit\": \"94532871\", \"dv\": \"3\", \"tipo_contribuyente\": \"natural\", \"razon_social\": null, \"tipo_documento\": \"Cédula de Ciudadanía\", \"numero_identificacion\": \"94532871\", \"primer_apellido\": \"MORENO\", \"segundo_apellido\": \"CASTAÑO\", \"primer_nombre\": \"WILSON\", \"actividad_principal_codigo\": \"4711\", \"actividad_secundaria_codigo\": null, \"departamento\": \"VALLE DEL CAUCA\", \"municipio\": \"CALI\", \"direccion\": \"CL 5 38 25\", \"nombre_representante_legal\": null}",
+          "refusal": null,
+          "reasoning": "1.  **Analyze the Request:**\n    *   Extract specific fields from the provided DIAN RUT document image.\n    *   Output format: ONLY a valid JSON object. No markdown, no explanations.\n    *   Rules: Use `null` for missing/empty fields. `tipo_contribuyente` must be \"natural\" or \"juridica\". `nit` (box 5) and `dv` (box 6) must be strings, extracted exactly as printed. Return codes as strings. Extract department, municipality, and address exactly as written.\n\n2.  **Extract Data from Image:**\n    *   **nit (Box 5):** `9 4 5 3 2 8 7 1` -> `\"94532871\"`\n    *   **dv (Box 6):** `3` -> `\"3\"`\n    *   **tipo_contribuyente (Box 24):** \"Persona natural o sucesión liquida\" -> `\"natural\"`\n    *   **razon_social (Box 35):** Empty -> `null`\n    *   **tipo_documento (Box 25):** \"Cédula de Ciudadanía\" -> `\"Cédula de Ciudadanía\"`\n    *   **numero_identificacion (Box 26):** `94532871` -> `\"94532871\"`\n    *   **primer_apellido (Box 31):** \"MORENO\" -> `\"MORENO\"`\n    *   **segundo_apellido (Box 32):** \"CASTAÑO\" -> `\"CASTAÑO\"`\n    *   **primer_nombre (Box 33):** \"WILSON\" -> `\"WILSON\"`\n    *   **actividad_principal_codigo (Box 46):** `4711` -> `\"4711\"`\n    *   **actividad_secundaria_codigo (Box 48):** Empty (the grid is empty) -> `null`\n    *   **departamento (Box 39):** \"VALLE DEL CAUCA\" -> `\"VALLE DEL CAUCA\"`\n    *   **municipio (Box 40):** \"CALI\" -> `\"CALI\"`\n    *   **direccion (Box 41):** \"CL 5 38 25\" -> `\"CL 5 38 25\"`\n    *   **nombre_representante_legal (Box 104-107):** Empty spaces -> `null`\n\n3.  **Format as JSON:**\n    Construct the JSON string according to the requested schema and constraints.\n\n4.  **Final Verification:**\n    *   `nit`: \"94532871\" (matches box 5)\n    *   `dv`: \"3\" (matches box 6)\n    *   `tipo_contribuyente`: \"natural\"\n    *   `razon_social`: null\n    *   `tipo_documento`: \"Cédula de Ciudadanía\"\n    *   `numero_identificacion`: \"94532871\"\n    *   `primer_apellido`: \"MORENO\"\n    *   `segundo_apellido`: \"CASTAÑO\"\n    *   `primer_nombre`: \"WILSON\"\n    *   `actividad_principal_codigo`: \"4711\"\n    *   `actividad_secundaria_codigo`: null\n    *   `departamento`: \"VALLE DEL CAUCA\"\n    *   `municipio`: \"CALI\"\n    *   `direccion`: \"CL 5 38 25\"\n    *   `nombre_representante_legal`: null\n\n    All rules followed. Output strictly JSON.",
+          "reasoning_details": [
+            {
+              "type": "reasoning.text",
+              "text": "1.  **Analyze the Request:**\n    *   Extract specific fields from the provided DIAN RUT document image.\n    *   Output format: ONLY a valid JSON object. No markdown, no explanations.\n    *   Rules: Use `null` for missing/empty fields. `tipo_contribuyente` must be \"natural\" or \"juridica\". `nit` (box 5) and `dv` (box 6) must be strings, extracted exactly as printed. Return codes as strings. Extract department, municipality, and address exactly as written.\n\n2.  **Extract Data from Image:**\n    *   **nit (Box 5):** `9 4 5 3 2 8 7 1` -> `\"94532871\"`\n    *   **dv (Box 6):** `3` -> `\"3\"`\n    *   **tipo_contribuyente (Box 24):** \"Persona natural o sucesión liquida\" -> `\"natural\"`\n    *   **razon_social (Box 35):** Empty -> `null`\n    *   **tipo_documento (Box 25):** \"Cédula de Ciudadanía\" -> `\"Cédula de Ciudadanía\"`\n    *   **numero_identificacion (Box 26):** `94532871` -> `\"94532871\"`\n    *   **primer_apellido (Box 31):** \"MORENO\" -> `\"MORENO\"`\n    *   **segundo_apellido (Box 32):** \"CASTAÑO\" -> `\"CASTAÑO\"`\n    *   **primer_nombre (Box 33):** \"WILSON\" -> `\"WILSON\"`\n    *   **actividad_principal_codigo (Box 46):** `4711` -> `\"4711\"`\n    *   **actividad_secundaria_codigo (Box 48):** Empty (the grid is empty) -> `null`\n    *   **departamento (Box 39):** \"VALLE DEL CAUCA\" -> `\"VALLE DEL CAUCA\"`\n    *   **municipio (Box 40):** \"CALI\" -> `\"CALI\"`\n    *   **direccion (Box 41):** \"CL 5 38 25\" -> `\"CL 5 38 25\"`\n    *   **nombre_representante_legal (Box 104-107):** Empty spaces -> `null`\n\n3.  **Format as JSON:**\n    Construct the JSON string according to the requested schema and constraints.\n\n4.  **Final Verification:**\n    *   `nit`: \"94532871\" (matches box 5)\n    *   `dv`: \"3\" (matches box 6)\n    *   `tipo_contribuyente`: \"natural\"\n    *   `razon_social`: null\n    *   `tipo_documento`: \"Cédula de Ciudadanía\"\n    *   `numero_identificacion`: \"94532871\"\n    *   `primer_apellido`: \"MORENO\"\n    *   `segundo_apellido`: \"CASTAÑO\"\n    *   `primer_nombre`: \"WILSON\"\n    *   `actividad_principal_codigo`: \"4711\"\n    *   `actividad_secundaria_codigo`: null\n    *   `departamento`: \"VALLE DEL CAUCA\"\n    *   `municipio`: \"CALI\"\n    *   `direccion`: \"CL 5 38 25\"\n    *   `nombre_representante_legal`: null\n\n    All rules followed. Output strictly JSON.",
+              "format": "unknown",
+              "index": 0
+            }
+          ]
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1409,
+      "completion_tokens": 994,
+      "total_tokens": 2403,
+      "cost": 0.0016155,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.0016155,
+        "upstream_inference_prompt_cost": 0.0004227,
+        "upstream_inference_completions_cost": 0.0011928
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 820,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    }
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "case": "rut-10",
+  "requested_model": "deepseek/deepseek-v4.1-flash",
+  "recorded_at": "2026-09-27T21:50:05.724Z",
+  "input": {
+    "file": "document.pdf",
+    "media_type": "application/pdf",
+    "sha256": "2b4cccd226fa27bc21fc7c5a3a86ff424adbe2066262f9ccdaa4af51c6931769"
+  },
+  "prompt_sha256": "e4af20497fd02df685cd0cecda49b25f237a14e9e24b4063250ed1276c3dd529",
+  "model": "deepseek/deepseek-v4.1-flash",
+  "latency_ms": 7089,
+  "outcome": "ok",
+  "usage": {
+    "promptTokens": 1409,
+    "completionTokens": 1575,
+    "costUsd": 0.0023127,
+    "costSource": "provider"
+  },
+  "response": {
+    "id": "gen-1790545806-ulbnlIi5aRebeUgJ39xQ",
+    "object": "chat.completion",
+    "created": 1790545806,
+    "model": "deepseek/deepseek-v4.1-flash",
+    "provider": "Together",
+    "system_fingerprint": "default",
+    "service_tier": null,
+    "choices": [
+      {
+        "index": 0,
+        "logprobs": null,
+        "finish_reason": "stop",
+        "native_finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "{\n  \"nit\": \"52896147\",\n  \"dv\": \"8\",\n  \"tipo_contribuyente\": \"natural\",\n  \"razon_social\": null,\n  \"tipo_documento\": \"13\",\n  \"numero_identificacion\": \"52896147\",\n  \"primer_apellido\": \"RINCÓN\",\n  \"segundo_apellido\": \"SUAREZ\",\n  \"primer_nombre\": \"DIANA\",\n  \"actividad_principal_codigo\": \"8559\",\n  \"actividad_secundaria_codigo\": \"8523\",\n  \"departamento\": \"BOYACÁ\",\n  \"municipio\": \"TUNJA\",\n  \"direccion\": \"CL 19 10 64\",\n  \"nombre_representante_legal\": null\n}",
+          "refusal": null,
+          "reasoning": "1.  **Analyze the Request**:\n    *   Input: An image of a DIAN RUT (Registro Único Tributario) document.\n    *   Output: A valid JSON object.\n    *   Constraints: No markdown, no explanation, just raw JSON. Use `null` for missing fields.\n    *   Specific Rules:\n        *   `tipo_contribuyente`: \"natural\" or \"juridica\".\n        *   `nit`: Box 5 (Número de Identificación Tributaria) - exact digits.\n        *   `dv`: Box 6 (DV) - exact digit.\n        *   Codes must be strings.\n        *   `departamento`: Extract department name.\n        *   `municipio`: Extract city/municipality name.\n        *   `direccion`: Full address as written.\n        *   `nombre_representante_legal`: Full name if present, else `null` (use `null` for natural person).\n\n2.  **Extract Information from the Image**:\n    *   **NIT (Box 5)**: 5 2 8 9 6 1 4 7 -> `\"52896147\"`\n    *   **DV (Box 6)**: 8 -> `\"8\"`\n    *   **Tipo de contribuyente (Box 24)**: \"Persona natural o sucesión ilíquida\" -> `\"natural\"`\n    *   **Razón social (Box 35)**: Empty -> `null`\n    *   **Tipo de documento (Box 25)**: \"Cédula de Ciudadanía\" (Code 13) -> `\"13\"` (or \"Cédula de Ciudadanía\" if text, but rule says return codes as strings, let's use \"13\" or \"Cédula de Ciudadanía\"). The prompt asks for \"tipo_documento\": null in the template, but says return codes as strings. I'll provide the text \"Cédula de Ciudadanía\" or code \"13\". Let's stick to the text in the box if it's a descriptive field, or code if it's just a code. Box 25 says \"Cédula de Ciudadanía\", Code 13. Let's return \"13\" as per \"Return codes as strings\". *Self-correction*: The template just has `tipo_documento`. I will output \"13\" or \"Cédula de Ciudadanía\". I'll use \"13\".\n    *   **Número de identificación (Box 26)**: 52896147 -> `\"52896147\"`\n    *   **Primer apellido (Box 31)**: RINCÓN -> `\"RINCÓN\"`\n    *   **Segundo apellido (Box 32)**: SUAREZ -> `\"SUAREZ\"`\n    *   **Primer nombre (Box 33)**: DIANA -> `\"DIANA\"`\n    *   **Actividad principal código (Box 46)**: 8559 -> `\"8559\"`\n    *   **Actividad secundaria código (Box 48)**: 8523 -> `\"8523\"`\n    *   **Departamento (Box 39)**: BOYACÁ -> `\"BOYACÁ\"`\n    *   **Municipio (Box 40)**: TUNJA -> `\"TUNJA\"`\n    *   **Dirección principal (Box 41)**: CL 19 10 64 -> `\"CL 19 10 64\"`\n    *   **Nombre representante legal (Box 98-107)**: Empty (Persona natural) -> `null`\n\n3.  **Format the JSON**:\n    *   Check all keys provided in the template.\n    *   Ensure all populated values are strings.\n    *   Ensure missing values are `null`.\n    *   Double check NIT: 52896147 (8 digits). DV: 8. Correct.\n    *   Check `tipo_contribuyente`: \"Persona natural o sucesión ilíquida\" -> \"natural\".\n\n4.  **Final JSON Construction**:\n    ```json\n    {\n      \"nit\": \"52896147\",\n      \"dv\": \"8\",\n      \"tipo_contribuyente\": \"natural\",\n      \"razon_social\": null,\n      \"tipo_documento\": \"13\",\n      \"numero_identificacion\": \"52896147\",\n      \"primer_apellido\": \"RINCÓN\",\n      \"segundo_apellido\": \"SUAREZ\",\n      \"primer_nombre\": \"DIANA\",\n      \"actividad_principal_codigo\": \"8559\",\n      \"actividad_secundaria_codigo\": \"8523\",\n      \"departamento\": \"BOYACÁ\",\n      \"municipio\": \"TUNJA\",\n      \"direccion\": \"CL 19 10 64\",\n      \"nombre_representante_legal\": null\n    }\n    ```\n    Wait, what about \"otros_nombres\" (Box 34: MARCELLA)? The template doesn't ask for it. I will not include it.\n    What about \"tipo_documento\"? The template includes it. Box 25 says \"Cédula de Ciudadanía\" and \"13\". I'll use \"13\".\n    Check for exact text: \"BOYACÁ\" has an accent. \"RINCÓN\" has an accent. \"SUAREZ\" doesn't.\n    Check address: \"CL 19 10 64\".\n\n5.  **Final verification against rules**:\n    - Only valid JSON. No markdown. No explanation.\n    - `null` for missing/empty.\n    - `tipo_contribuyente`: \"natural\" or \"juridica\" (got \"natural\").\n    - `nit`: Box 5 exact digits (got \"52896147\").\n    - `dv`: Box 6 exact digits (got \"8\").\n    - Return codes as strings (Yes, e.g., \"13\", \"8559\").\n    - `departamento`: Department name (got \"BOYACÁ\").\n    - `municipio`: City/municipality name (got \"TUNJA\").\n    - `direccion`: Full address (got \"CL 19 10 64\").\n    - `nombre_representante_legal`: Full name or `null` (got `null` as it's a natural person).",
+          "reasoning_details": [
+            {
+              "type": "reasoning.text",
+              "text": "1.  **Analyze the Request**:\n    *   Input: An image of a DIAN RUT (Registro Único Tributario) document.\n    *   Output: A valid JSON object.\n    *   Constraints: No markdown, no explanation, just raw JSON. Use `null` for missing fields.\n    *   Specific Rules:\n        *   `tipo_contribuyente`: \"natural\" or \"juridica\".\n        *   `nit`: Box 5 (Número de Identificación Tributaria) - exact digits.\n        *   `dv`: Box 6 (DV) - exact digit.\n        *   Codes must be strings.\n        *   `departamento`: Extract department name.\n        *   `municipio`: Extract city/municipality name.\n        *   `direccion`: Full address as written.\n        *   `nombre_representante_legal`: Full name if present, else `null` (use `null` for natural person).\n\n2.  **Extract Information from the Image**:\n    *   **NIT (Box 5)**: 5 2 8 9 6 1 4 7 -> `\"52896147\"`\n    *   **DV (Box 6)**: 8 -> `\"8\"`\n    *   **Tipo de contribuyente (Box 24)**: \"Persona natural o sucesión ilíquida\" -> `\"natural\"`\n    *   **Razón social (Box 35)**: Empty -> `null`\n    *   **Tipo de documento (Box 25)**: \"Cédula de Ciudadanía\" (Code 13) -> `\"13\"` (or \"Cédula de Ciudadanía\" if text, but rule says return codes as strings, let's use \"13\" or \"Cédula de Ciudadanía\"). The prompt asks for \"tipo_documento\": null in the template, but says return codes as strings. I'll provide the text \"Cédula de Ciudadanía\" or code \"13\". Let's stick to the text in the box if it's a descriptive field, or code if it's just a code. Box 25 says \"Cédula de Ciudadanía\", Code 13. Let's return \"13\" as per \"Return codes as strings\". *Self-correction*: The template just has `tipo_documento`. I will output \"13\" or \"Cédula de Ciudadanía\". I'll use \"13\".\n    *   **Número de identificación (Box 26)**: 52896147 -> `\"52896147\"`\n    *   **Primer apellido (Box 31)**: RINCÓN -> `\"RINCÓN\"`\n    *   **Segundo apellido (Box 32)**: SUAREZ -> `\"SUAREZ\"`\n    *   **Primer nombre (Box 33)**: DIANA -> `\"DIANA\"`\n    *   **Actividad principal código (Box 46)**: 8559 -> `\"8559\"`\n    *   **Actividad secundaria código (Box 48)**: 8523 -> `\"8523\"`\n    *   **Departamento (Box 39)**: BOYACÁ -> `\"BOYACÁ\"`\n    *   **Municipio (Box 40)**: TUNJA -> `\"TUNJA\"`\n    *   **Dirección principal (Box 41)**: CL 19 10 64 -> `\"CL 19 10 64\"`\n    *   **Nombre representante legal (Box 98-107)**: Empty (Persona natural) -> `null`\n\n3.  **Format the JSON**:\n    *   Check all keys provided in the template.\n    *   Ensure all populated values are strings.\n    *   Ensure missing values are `null`.\n    *   Double check NIT: 52896147 (8 digits). DV: 8. Correct.\n    *   Check `tipo_contribuyente`: \"Persona natural o sucesión ilíquida\" -> \"natural\".\n\n4.  **Final JSON Construction**:\n    ```json\n    {\n      \"nit\": \"52896147\",\n      \"dv\": \"8\",\n      \"tipo_contribuyente\": \"natural\",\n      \"razon_social\": null,\n      \"tipo_documento\": \"13\",\n      \"numero_identificacion\": \"52896147\",\n      \"primer_apellido\": \"RINCÓN\",\n      \"segundo_apellido\": \"SUAREZ\",\n      \"primer_nombre\": \"DIANA\",\n      \"actividad_principal_codigo\": \"8559\",\n      \"actividad_secundaria_codigo\": \"8523\",\n      \"departamento\": \"BOYACÁ\",\n      \"municipio\": \"TUNJA\",\n      \"direccion\": \"CL 19 10 64\",\n      \"nombre_representante_legal\": null\n    }\n    ```\n    Wait, what about \"otros_nombres\" (Box 34: MARCELLA)? The template doesn't ask for it. I will not include it.\n    What about \"tipo_documento\"? The template includes it. Box 25 says \"Cédula de Ciudadanía\" and \"13\". I'll use \"13\".\n    Check for exact text: \"BOYACÁ\" has an accent. \"RINCÓN\" has an accent. \"SUAREZ\" doesn't.\n    Check address: \"CL 19 10 64\".\n\n5.  **Final verification against rules**:\n    - Only valid JSON. No markdown. No explanation.\n    - `null` for missing/empty.\n    - `tipo_contribuyente`: \"natural\" or \"juridica\" (got \"natural\").\n    - `nit`: Box 5 exact digits (got \"52896147\").\n    - `dv`: Box 6 exact digits (got \"8\").\n    - Return codes as strings (Yes, e.g., \"13\", \"8559\").\n    - `departamento`: Department name (got \"BOYACÁ\").\n    - `municipio`: City/municipality name (got \"TUNJA\").\n    - `direccion`: Full address (got \"CL 19 10 64\").\n    - `nombre_representante_legal`: Full name or `null` (got `null` as it's a natural person).",
+              "format": "unknown",
+              "index": 0
+            }
+          ]
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1409,
+      "completion_tokens": 1575,
+      "total_tokens": 2984,
+      "cost": 0.0023127,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.0023127,
+        "upstream_inference_prompt_cost": 0.0004227,
+        "upstream_inference_completions_cost": 0.00189
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 1392,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    }
+  }
+}

@@ -96,7 +96,7 @@ Hand-offs to the supplier (form invitation, signing request) are **tracked**: Co
 
 ### AI RUT extraction
 
-`/api/extract-rut` sends the RUT (PDF, JPEG or PNG up to 10 MB) to OpenRouter (`google/gemini-2.0-flash-001`, with a fallback model) and asks for 15 JSON fields. The response includes token usage and cost. Without `OPENROUTER_API_KEY` it returns 503 and the modal switches to manual entry.
+`/api/extract-rut` sends the RUT (PDF, JPEG or PNG up to 10 MB) to OpenRouter (`google/gemini-3.1-flash-lite-preview`, falling back to `deepseek/deepseek-v4.1-flash` with the PDF's first page rendered to PNG) and asks for 15 JSON fields, validated with zod. The response includes token usage, cost, the model that answered, latency and `_validation.dv_ok` (the NIT's DIAN check digit). Without `OPENROUTER_API_KEY` it returns 503 and the modal switches to manual entry. Models and prompt are chosen and gated by the [RUT extraction evals](rut-evals.md).
 
 ### Compras rubric
 

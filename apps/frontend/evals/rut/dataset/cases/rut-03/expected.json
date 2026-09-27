@@ -1,0 +1,18 @@
+{
+  "nit": "900874312",
+  "dv": "8",
+  "tipo_contribuyente": "juridica",
+  "razon_social": "TRANSPORTES LA CORDILLERA S.A.S.",
+  "tipo_documento": null,
+  "numero_identificacion": null,
+  "primer_apellido": null,
+  "segundo_apellido": null,
+  "primer_nombre": null,
+  "actividad_principal_codigo": "4923",
+  "actividad_secundaria_codigo": "5229",
+  "departamento": "CALDAS",
+  "municipio": "MANIZALES",
+  "direccion": "AV SANTANDER 58 21",
+  "nombre_representante_legal": "JUAN PABLO OSORIO VALENCIA",
+  "variant": "clean"
+}

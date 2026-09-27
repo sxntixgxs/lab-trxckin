@@ -1,0 +1,74 @@
+{
+  "case": "rut-11",
+  "requested_model": "deepseek/deepseek-v4.1-flash",
+  "recorded_at": "2026-09-27T21:50:08.704Z",
+  "input": {
+    "file": "document.jpg",
+    "media_type": "image/jpeg",
+    "sha256": "df39d4665c3f3d191fbeb1c2b9ecf64c143715d8ec941a94b0ab0d060668490f"
+  },
+  "prompt_sha256": "e4af20497fd02df685cd0cecda49b25f237a14e9e24b4063250ed1276c3dd529",
+  "model": "deepseek/deepseek-v4.1-flash",
+  "latency_ms": 4728,
+  "outcome": "ok",
+  "usage": {
+    "promptTokens": 1409,
+    "completionTokens": 1317,
+    "costUsd": 0.0020031,
+    "costSource": "provider"
+  },
+  "response": {
+    "id": "gen-1790545808-UahpZZmSldzQ6YpQ84hD",
+    "object": "chat.completion",
+    "created": 1790545808,
+    "model": "deepseek/deepseek-v4.1-flash",
+    "provider": "Together",
+    "system_fingerprint": "default",
+    "service_tier": null,
+    "choices": [
+      {
+        "index": 0,
+        "logprobs": null,
+        "finish_reason": "stop",
+        "native_finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "{\n  \"nit\": \"901332957\",\n  \"dv\": \"6\",\n  \"tipo_contribuyente\": \"juridica\",\n  \"razon_social\": \"CAFÉ ALTO DEL QUINDÍO S.A.S.\",\n  \"tipo_documento\": null,\n  \"numero_identificacion\": null,\n  \"primer_apellido\": null,\n  \"segundo_apellido\": null,\n  \"primer_nombre\": null,\n  \"actividad_principal_codigo\": \"0123\",\n  \"actividad_secundaria_codigo\": \"4631\",\n  \"departamento\": \"QUINDIO\",\n  \"municipio\": \"ARMENIA\",\n  \"direccion\": \"CR 14 22 18 LC 2\",\n  \"nombre_representante_legal\": \"GIRALDO ARANGO SEBASTIÁN\"\n}",
+          "refusal": null,
+          "reasoning": "1.  **Analyze the Request:**\n    *   Task: Extract specific fields from an image of a DIAN RUT document.\n    *   Output format: ONLY a valid JSON object. No markdown, no explanations.\n    *   Rules:\n        *   Missing/empty fields -> `null`.\n        *   `tipo_contribuyente`: either \"natural\" or \"juridica\".\n        *   `nit`: Box 5 (copy every digit exactly).\n        *   `dv`: Box 6 (copy exactly).\n        *   Return codes as strings.\n        *   `departamento`: Extract department name.\n        *   `municipio`: Extract city/municipality name.\n        *   `direccion`: Extract full address.\n        *   `nombre_representante_legal`: Extract full name if present (persona jurídica).\n    *   Provided JSON template needs to be filled.\n\n2.  **Analyze the Image (DIAN RUT Document):**\n    *   *Box 5 (NIT):* 901332957\n    *   *Box 6 (DV):* 6\n    *   *Box 24 (Tipo de contribuyente):* Persona jurídica -> \"juridica\"\n    *   *Box 35 (Razón social):* CAFÉ ALTO DEL QUINDÍO S.A.S.\n    *   *Box 25 (Tipo de documento):* [Empty]\n    *   *Box 26 (Número de identificación):* [Empty]\n    *   *Box 31 (Primer apellido):* [Empty]\n    *   *Box 32 (Segundo apellido):* [Empty]\n    *   *Box 33 (Primer nombre):* [Empty]\n    *   *Box 46 (Actividad principal - Código):* 0123\n    *   *Box 48 (Actividad secundaria - Código):* 4631\n    *   *Box 39 (Departamento):* QUINDIO\n    *   *Box 40 (Ciudad/Municipio):* ARMENIA\n    *   *Box 41 (Dirección principal):* CR 14 22 18 LC 2\n    *   *Representante Legal (Section 98-106):*\n        *   Box 98 (Representación): REPRS LEGAL PRIN 18\n        *   Box 104 (Primer apellido): GIRALDO\n        *   Box 105 (Segundo apellido): ARANGO\n        *   Box 106 (Primer nombre): SEBASTIÁN\n        *   Full name: GIRALDO ARANGO SEBASTIÁN\n\n3.  **Map Extracted Data to JSON Template:**\n    *   `nit`: \"901332957\"\n    *   `dv`: \"6\"\n    *   `tipo_contribuyente`: \"juridica\"\n    *   `razon_social`: \"CAFÉ ALTO DEL QUINDÍO S.A.S.\"\n    *   `tipo_documento`: null\n    *   `numero_identificacion`: null\n    *   `primer_apellido`: null\n    *   `segundo_apellido`: null\n    *   `primer_nombre`: null\n    *   `actividad_principal_codigo`: \"0123\"\n    *   `actividad_secundaria_codigo`: \"4631\"\n    *   `departamento`: \"QUINDIO\" (or \"QUINDÍO\" - the document shows \"QUINDIO\", but keeping it as printed is safer, maybe just \"QUINDIO\" based on the image. Let's write \"QUINDIO\" as it's written without accent in the image.)\n    *   `municipio`: \"ARMENIA\"\n    *   `direccion`: \"CR 14 22 18 LC 2\"\n    *   `nombre_representante_legal`: \"GIRALDO ARANGO SEBASTIÁN\" (or \"SEBASTIÁN GIRALDO ARANGO\" - usually names go first, but the document prints Primer Apellido, Segundo Apellido, Primer Nombre. I'll combine them exactly as fields indicate: \"GIRALDO ARANGO SEBASTIÁN\").\n\n4.  **Refine & Validate JSON:**\n    *   Ensure all strings are properly quoted.\n    *   Check for exact matches with the provided instructions.\n    *   Ensure no markdown formatting envelops the final output.\n\n5.  **Final Output Generation:**\n    *   Construct the JSON string.\n    *   Double-check the NIT and DV.\n    *   Double-check the \"juridica\" spelling (the prompt specifies \"juridica\" not \"jurídica\").\n    *   Ensure \"razon_social\" includes accents if present. \"CAFÉ ALTO DEL QUINDÍO S.A.S.\" -> check image. Yes, \"CAFÉ ALTO DEL QUINDÍO S.A.S.\".\n    *   Formatting as strict JSON.",
+          "reasoning_details": [
+            {
+              "type": "reasoning.text",
+              "text": "1.  **Analyze the Request:**\n    *   Task: Extract specific fields from an image of a DIAN RUT document.\n    *   Output format: ONLY a valid JSON object. No markdown, no explanations.\n    *   Rules:\n        *   Missing/empty fields -> `null`.\n        *   `tipo_contribuyente`: either \"natural\" or \"juridica\".\n        *   `nit`: Box 5 (copy every digit exactly).\n        *   `dv`: Box 6 (copy exactly).\n        *   Return codes as strings.\n        *   `departamento`: Extract department name.\n        *   `municipio`: Extract city/municipality name.\n        *   `direccion`: Extract full address.\n        *   `nombre_representante_legal`: Extract full name if present (persona jurídica).\n    *   Provided JSON template needs to be filled.\n\n2.  **Analyze the Image (DIAN RUT Document):**\n    *   *Box 5 (NIT):* 901332957\n    *   *Box 6 (DV):* 6\n    *   *Box 24 (Tipo de contribuyente):* Persona jurídica -> \"juridica\"\n    *   *Box 35 (Razón social):* CAFÉ ALTO DEL QUINDÍO S.A.S.\n    *   *Box 25 (Tipo de documento):* [Empty]\n    *   *Box 26 (Número de identificación):* [Empty]\n    *   *Box 31 (Primer apellido):* [Empty]\n    *   *Box 32 (Segundo apellido):* [Empty]\n    *   *Box 33 (Primer nombre):* [Empty]\n    *   *Box 46 (Actividad principal - Código):* 0123\n    *   *Box 48 (Actividad secundaria - Código):* 4631\n    *   *Box 39 (Departamento):* QUINDIO\n    *   *Box 40 (Ciudad/Municipio):* ARMENIA\n    *   *Box 41 (Dirección principal):* CR 14 22 18 LC 2\n    *   *Representante Legal (Section 98-106):*\n        *   Box 98 (Representación): REPRS LEGAL PRIN 18\n        *   Box 104 (Primer apellido): GIRALDO\n        *   Box 105 (Segundo apellido): ARANGO\n        *   Box 106 (Primer nombre): SEBASTIÁN\n        *   Full name: GIRALDO ARANGO SEBASTIÁN\n\n3.  **Map Extracted Data to JSON Template:**\n    *   `nit`: \"901332957\"\n    *   `dv`: \"6\"\n    *   `tipo_contribuyente`: \"juridica\"\n    *   `razon_social`: \"CAFÉ ALTO DEL QUINDÍO S.A.S.\"\n    *   `tipo_documento`: null\n    *   `numero_identificacion`: null\n    *   `primer_apellido`: null\n    *   `segundo_apellido`: null\n    *   `primer_nombre`: null\n    *   `actividad_principal_codigo`: \"0123\"\n    *   `actividad_secundaria_codigo`: \"4631\"\n    *   `departamento`: \"QUINDIO\" (or \"QUINDÍO\" - the document shows \"QUINDIO\", but keeping it as printed is safer, maybe just \"QUINDIO\" based on the image. Let's write \"QUINDIO\" as it's written without accent in the image.)\n    *   `municipio`: \"ARMENIA\"\n    *   `direccion`: \"CR 14 22 18 LC 2\"\n    *   `nombre_representante_legal`: \"GIRALDO ARANGO SEBASTIÁN\" (or \"SEBASTIÁN GIRALDO ARANGO\" - usually names go first, but the document prints Primer Apellido, Segundo Apellido, Primer Nombre. I'll combine them exactly as fields indicate: \"GIRALDO ARANGO SEBASTIÁN\").\n\n4.  **Refine & Validate JSON:**\n    *   Ensure all strings are properly quoted.\n    *   Check for exact matches with the provided instructions.\n    *   Ensure no markdown formatting envelops the final output.\n\n5.  **Final Output Generation:**\n    *   Construct the JSON string.\n    *   Double-check the NIT and DV.\n    *   Double-check the \"juridica\" spelling (the prompt specifies \"juridica\" not \"jurídica\").\n    *   Ensure \"razon_social\" includes accents if present. \"CAFÉ ALTO DEL QUINDÍO S.A.S.\" -> check image. Yes, \"CAFÉ ALTO DEL QUINDÍO S.A.S.\".\n    *   Formatting as strict JSON.",
+              "format": "unknown",
+              "index": 0
+            }
+          ]
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1409,
+      "completion_tokens": 1317,
+      "total_tokens": 2726,
+      "cost": 0.0020031,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.0020031,
+        "upstream_inference_prompt_cost": 0.0004227,
+        "upstream_inference_completions_cost": 0.0015804
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 1116,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    }
+  }
+}

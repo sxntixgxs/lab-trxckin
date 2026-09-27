@@ -10,7 +10,7 @@ An internal finance operations platform for multicompany operation: it ingests s
 
 - **Invoice inbox** — scheduled Microsoft Graph sync (every 2 min) reads DIAN `AttachedDocument` e-invoices from a reception mailbox per company, parses the UBL XML, stores XML/PDF and dedupes; manual XML upload as fallback.
 - **DIAN validation** — reconcile the DIAN export (XLSX) against ingested invoices.
-- **Approval workflow** — tasks assigned per process/owner, returns and rejections, credit-note linking, business-hours SLA tracking (Colombian holidays) and a daily SLA email digest.
+- **Approval workflow** — tasks assigned per process/owner, returns and rejections, credit-note linking, business-day SLA tracking (Colombian holidays) and a daily SLA email digest.
 - **Accounting causation** — causation step with cost-center distribution and internal-document cross-checks.
 - **Advances (*anticipos*)** — request → direct-manager approval → accounting review → management approval → treasury disbursement → legalization, with adjustments and email notifications.
 - **Petty cash (*cajas menores*)** — cash boxes, movements and reimbursements that flow into the invoice workflow.
@@ -23,6 +23,12 @@ An internal finance operations platform for multicompany operation: it ingests s
 - **Admin impersonation** — admins can act as another user (signed cookie, visible banner).
 - **Email notifications** via Resend (React Email templates).
 - **Command palette** — Ctrl/Cmd+K: navigation, company and theme switching, and live search across invoices, advances, onboarding and cost centers.
+
+## AI features
+
+- **In-app assistant** ([docs/assistant.md](docs/assistant.md)) — an authenticated chat (Convex Agent, streamed answers in Spanish or English, dictation) whose read-only tools search and summarize billing, onboarding, advances and petty cash through the existing authorization helpers, with per-user rate limits.
+- **MCP server for agents** ([docs/mcp-server.md](docs/mcp-server.md)) — `apps/mcp-server` lets any Model Context Protocol client (Claude Desktop, Claude Code, a custom agent) call tools on the real system: invoice status with its approval phase, owners and SLA in Colombian business days; pending approvals, oldest first; employee advance balances; and supplier search over the ERP catalog. It is **read-only** and **scoped on the server**: dedicated credentials, the allowed companies set in the Convex and API environments (never in the client), zod-validated input and small typed outputs.
+- **Evals for the RUT extraction** ([docs/rut-evals.md](docs/rut-evals.md)) — 20 synthetic RUTs (clean, scanned, rotated, low-resolution, missing fields) with golden answers. The checks run cheapest first: schema, the DIAN check digit, field accuracy, then cost and latency per model. Pull requests replay recorded responses against thresholds; a manual run calls the models live. What the evals changed: the route's primary model had been retired (every call failed over), and a prompt rule made Gemini drop the NIT's last digit on scans. After the fix: **98.3% field accuracy, 0 check-digit errors, US$0.0006 per document, p95 1.9 s**, with a different-vendor fallback measured and gated too.
 
 ## Modules
 
@@ -268,6 +274,8 @@ Generate secrets with `openssl rand -hex 32`. Secrets marked **shared** must be 
 | `FACTURACION_GRAPH_MAILBOXES` | no | Comma-separated recipients of ingest alerts | Your team |
 | `MS_TENANT_ID`, `MS_CLIENT_ID`, `MS_CLIENT_SECRET` | for ingest | Graph app for the default tenant (companies 1, 3, 4) | Entra ID app registration |
 | `MS_SECONDARY_TENANT_ID`, `MS_SECONDARY_CLIENT_ID`, `MS_SECONDARY_CLIENT_SECRET` | for ingest | Graph app for the secondary tenant (company 2) | Entra ID app registration |
+| `MCP_READ_SECRET` | for the MCP server | Opens only the read queries in `convex/mcp/lectura.ts`; **shared** with the MCP server's `LAB_MCP_SECRET`. Unset → those queries refuse every call | Generate |
+| `MCP_EMPRESAS` | for the MCP server | Companies the MCP server may read (`2` or `1,2`); unset → none | — |
 
 ### NestJS — `apps/backend/.env`
 
@@ -287,6 +295,8 @@ Generate secrets with `openssl rand -hex 32`. Secrets marked **shared** must be 
 | `BACKEND_PORT` | no | HTTP port (default `8000`) | — |
 | `NODE_ENV` | no | `production` disables Swagger | — |
 | `ENABLE_SWAGGER` | no | `true` forces Swagger in production | — |
+| `MCP_READ_KEY` | for the MCP server | `x-mcp-key` for the read-only `/api/v1/mcp` routes; **shared** with the MCP server's `LAB_MCP_API_KEY`. Unset → 503 | Generate |
+| `MCP_EMPRESAS` | for the MCP server | Companies the MCP server may read from the catalog; unset → none | — |
 
 The backend fails fast at boot if any required variable is missing (`src/config/env.ts`). Without the `ERP_*` connection the catalog stays readable, but nothing syncs.
 
@@ -299,6 +309,16 @@ The backend fails fast at boot if any required variable is missing (`src/config/
 | `ERP_SIM_CONNI_KEY`, `ERP_SIM_CONNI_TOKEN` | yes | `ConniKey` / `ConniToken` it accepts; **shared** with Nest's `ERP_CONNI_*` | Generate |
 | `ERP_SIM_PORT` | no | HTTP port (default `8100`) | — |
 | `NODE_ENV`, `ENABLE_SWAGGER` | no | Swagger (`/docs`) outside production | — |
+
+### MCP server — `apps/mcp-server/.env`
+
+Optional; MCP clients can pass the same variables in their server config instead. See [docs/mcp-server.md](docs/mcp-server.md).
+
+| Name | Required | Description | Where to get it |
+| --- | --- | --- | --- |
+| `LAB_CONVEX_URL` | yes | Convex deployment URL | Same as `NEXT_PUBLIC_CONVEX_URL` |
+| `LAB_MCP_SECRET` | yes | **Shared** with Convex's `MCP_READ_SECRET` | Same as Convex |
+| `LAB_API_URL`, `LAB_MCP_API_KEY` | for `search_suppliers` | NestJS base URL (`http://localhost:8000/api/v1`) and Nest's `MCP_READ_KEY` | Same as Nest |
 
 ## Scripts
 
@@ -317,6 +337,9 @@ Run from the repo root.
 | `pnpm --filter backend erp:sync [--empresa N] [--entidad proveedores\|clientes]` | Sync the ERP catalog now |
 | `pnpm --filter erp-simulator prisma:migrate` / `prisma:seed [--reset]` | Create / load the fake SIESA database |
 | `pnpm --filter frontend convex` | `convex dev` alone |
+| `pnpm eval:rut` | Replay the RUT extraction evals and check the thresholds (`pnpm --filter frontend eval:rut:live` re-records with `OPENROUTER_API_KEY`) |
+| `pnpm --filter mcp-server build` / `inspect` | Build the MCP server / open it in the MCP Inspector |
+| `npx convex run mcp/demo:sembrar '{"empresa": 2}'` / `mcp/demo:limpiar` | Load / remove the MCP demo data (dev deployments; run in `apps/frontend`) |
 
 ## Deployment
 
@@ -345,7 +368,8 @@ apps/
     prisma/                 schema.prisma, migrations/, seed.ts
     scripts/                promote-admin.ts, erp-sync.ts
   erp-simulator/            Fake SIESA (NestJS) with its own Postgres: standard queries, import connector, seed data
-docs/                       module guides (billing, finance, suppliers, customers, erp), onboarding.md, billing-azure-setup.md
+  mcp-server/               Read-only MCP server (stdio) over invoices, approvals, advances and the supplier catalog
+docs/                       module guides (billing, finance, suppliers, customers, erp, mcp-server), rut-evals.md, onboarding.md, billing-azure-setup.md
   diagrams/                 Excalidraw sources (.excalidraw) and light/dark SVG exports
 ```
 
@@ -368,6 +392,8 @@ pnpm test
 - **Frontend**: Vitest with two projects — `convex` (Convex functions tested with `convex-test` in the edge runtime, including the end-to-end onboarding flows) and `app` (Node: API route auth, impersonation, parsers, onboarding payload/webhook validation, risk matrices and report builders).
 - **Backend**: Vitest specs for guards, impersonation, env validation and the ERP integration (client paging/retries, row mapping, sync diff, import document, NIT check digits).
 - **ERP simulator**: Vitest specs for the SIESA filter grammar, pagination, row projection, import validation and the deterministic data generator.
+- **MCP server**: a real MCP client over an in-memory transport (tool list and read-only annotations, input validation, errors, the resource); the Convex side is covered in `convex/mcpLectura.test.ts`.
+- **RUT extraction evals**: `pnpm eval:rut` replays recorded model responses and fails when a threshold breaks; CI runs it on pull requests that touch the extraction ([docs/rut-evals.md](docs/rut-evals.md)).
 - Optional fixture: set `DIAN_XLSX_FIXTURE` to a real DIAN export to run the extra XLSX parser test.
 
 ## Adding a module

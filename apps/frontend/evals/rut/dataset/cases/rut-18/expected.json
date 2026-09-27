@@ -1,0 +1,18 @@
+{
+  "nit": "80456123",
+  "dv": "6",
+  "tipo_contribuyente": "natural",
+  "razon_social": null,
+  "tipo_documento": "13",
+  "numero_identificacion": "80456123",
+  "primer_apellido": "CÁRDENAS",
+  "segundo_apellido": "RUIZ",
+  "primer_nombre": "MIGUEL",
+  "actividad_principal_codigo": "0111",
+  "actividad_secundaria_codigo": "0162",
+  "departamento": "HUILA",
+  "municipio": "NEIVA",
+  "direccion": "CL 8 15 42",
+  "nombre_representante_legal": null,
+  "variant": "lowres"
+}

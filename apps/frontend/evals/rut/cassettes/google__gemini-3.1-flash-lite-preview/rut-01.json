@@ -1,0 +1,74 @@
+{
+  "case": "rut-01",
+  "requested_model": "google/gemini-3.1-flash-lite-preview",
+  "recorded_at": "2026-09-27T21:45:26.038Z",
+  "input": {
+    "file": "document.pdf",
+    "media_type": "application/pdf",
+    "sha256": "2174e0a2b5a9ffac3e069481c4c7ea8a21fe7f5295950c102003b73a21f388f1"
+  },
+  "prompt_sha256": "e4af20497fd02df685cd0cecda49b25f237a14e9e24b4063250ed1276c3dd529",
+  "model": "google/gemini-3.1-flash-lite-preview",
+  "latency_ms": 1378,
+  "outcome": "ok",
+  "usage": {
+    "promptTokens": 910,
+    "completionTokens": 203,
+    "costUsd": 0.000532,
+    "costSource": "provider"
+  },
+  "response": {
+    "id": "gen-1790545526-a32aivDBsq57Im1Cn7Xx",
+    "object": "chat.completion",
+    "created": 1790545526,
+    "model": "google/gemini-3.1-flash-lite-preview",
+    "provider": "Google AI Studio",
+    "system_fingerprint": null,
+    "service_tier": "default",
+    "choices": [
+      {
+        "index": 0,
+        "logprobs": null,
+        "finish_reason": "stop",
+        "native_finish_reason": "STOP",
+        "message": {
+          "role": "assistant",
+          "content": "{\n  \"nit\": \"901245781\",\n  \"dv\": \"4\",\n  \"tipo_contribuyente\": \"juridica\",\n  \"razon_social\": \"DROMINC S.A.S.\",\n  \"tipo_documento\": null,\n  \"numero_identificacion\": null,\n  \"primer_apellido\": null,\n  \"segundo_apellido\": null,\n  \"primer_nombre\": null,\n  \"actividad_principal_codigo\": \"6201\",\n  \"actividad_secundaria_codigo\": \"6202\",\n  \"departamento\": \"ANTIOQUIA\",\n  \"municipio\": \"MEDELLÍN\",\n  \"direccion\": \"CR 43A 7 50 OF 1104\",\n  \"nombre_representante_legal\": \"ANA MARÍA RESTREPO GIL\"\n}",
+          "refusal": null,
+          "reasoning": null,
+          "reasoning_details": [
+            {
+              "type": "reasoning.text",
+              "signature": "EnMKcQFpFH0Ti67vy21nFsHmYv6okmbhWSi8GN0/BjkH3BmIZSuHUJnpUhvkPfbGUAnY6fao7DWpB2GefQo1FtCYk06DGfnHVzIu3IIkHVpw/0OdIwRL+BMbTHNP+BIgNUUbhYs2tRsSk1lI+Z51xGsnKVE0",
+              "format": "google-gemini-v1",
+              "index": 0
+            }
+          ]
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 910,
+      "completion_tokens": 203,
+      "total_tokens": 1113,
+      "cost": 0.000532,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.000532,
+        "upstream_inference_prompt_cost": 0.0002275,
+        "upstream_inference_completions_cost": 0.0003045
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    }
+  }
+}

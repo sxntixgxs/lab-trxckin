@@ -1,0 +1,17 @@
+{
+  "_comment": "Regression gates for the route's two models (lib/rut/models.ts). Primary, gemini-3.1-flash-lite: baseline 2026-09-27 after the NIT/DV prompt fix, two live runs: schema-valid 100%/100%, field accuracy 98.3%/98.3%, DV mismatches 0/0, p95 2.0 s/1.9 s (before the fix: 95.3-97.0% and 5-7 DV mismatches, NIT last-digit drops on image inputs). Fallback, deepseek-v4.1-flash (PDF page 1 rendered by pdf.js, as in the route): one live run, 100% schema-valid, 96.3% accuracy, 4 DV mismatches, p95 12.3 s; its DV gate holds the measured baseline, the target is 0.",
+  "gated_models": {
+    "google/gemini-3.1-flash-lite-preview": {
+      "min_schema_valid_rate": 0.95,
+      "min_overall_field_accuracy": 0.96,
+      "max_dv_mismatches": 0,
+      "max_p95_latency_ms": 10000
+    },
+    "deepseek/deepseek-v4.1-flash": {
+      "min_schema_valid_rate": 0.95,
+      "min_overall_field_accuracy": 0.92,
+      "max_dv_mismatches": 4,
+      "max_p95_latency_ms": 30000
+    }
+  }
+}

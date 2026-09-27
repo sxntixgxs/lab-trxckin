@@ -1,0 +1,74 @@
+{
+  "case": "rut-03",
+  "requested_model": "deepseek/deepseek-v4.1-flash",
+  "recorded_at": "2026-09-27T21:49:50.383Z",
+  "input": {
+    "file": "document.pdf",
+    "media_type": "application/pdf",
+    "sha256": "2ae52d4d7c566dbca1d79b3fa92f1814be0c79a351caf0bde4904924a5c69c93"
+  },
+  "prompt_sha256": "e4af20497fd02df685cd0cecda49b25f237a14e9e24b4063250ed1276c3dd529",
+  "model": "deepseek/deepseek-v4.1-flash",
+  "latency_ms": 10170,
+  "outcome": "ok",
+  "usage": {
+    "promptTokens": 1409,
+    "completionTokens": 1679,
+    "costUsd": 0.0024375,
+    "costSource": "provider"
+  },
+  "response": {
+    "id": "gen-1790545791-TNeoKqeeBMlYddyBMfFm",
+    "object": "chat.completion",
+    "created": 1790545791,
+    "model": "deepseek/deepseek-v4.1-flash",
+    "provider": "Together",
+    "system_fingerprint": "default",
+    "service_tier": null,
+    "choices": [
+      {
+        "index": 0,
+        "logprobs": null,
+        "finish_reason": "stop",
+        "native_finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "{\"nit\": \"900874312\", \"dv\": \"8\", \"tipo_contribuyente\": \"juridica\", \"razon_social\": \"TRANSPORTES LA CORDILLERA S.A.S.\", \"tipo_documento\": null, \"numero_identificacion\": null, \"primer_apellido\": null, \"segundo_apellido\": null, \"primer_nombre\": null, \"actividad_principal_codigo\": \"4923\", \"actividad_secundaria_codigo\": \"5229\", \"departamento\": \"CALDAS\", \"municipio\": \"MANIZALES\", \"direccion\": \"AV SANTANDER 58 21\", \"nombre_representante_legal\": \"OSORIO VALENCIA JUAN PABLO\"}",
+          "refusal": null,
+          "reasoning": "1.  **Analyze the Request:**\n    *   Task: Extract specific fields from the provided image of a DIAN RUT document.\n    *   Output format: ONLY a valid JSON object. No markdown, no explanations.\n    *   Rules:\n        *   Missing/empty fields -> `null`.\n        *   `tipo_contribuyente`: \"natural\" or \"juridica\".\n        *   `nit`: Box 5 (copy exactly as printed).\n        *   `dv`: Box 6 (copy exactly as printed).\n        *   Return codes as strings.\n        *   `departamento`: Department name (e.g., \"CUNDINAMARCA\").\n        *   `municipio`: City/Municipality name.\n        *   `direccion`: Full address as written.\n        *   `nombre_representante_legal`: Full name if present (persona juridica), else `null`.\n\n2.  **Extract Data from Image:**\n    *   **Box 5 (NIT):** `9 0 0 8 7 4 3 1 2` -> `\"900874312\"`\n    *   **Box 6 (DV):** `8` -> `\"8\"`\n    *   **Box 24 (Tipo de contribuyente):** `Persona jurídica` -> `\"juridica\"`\n    *   **Box 35 (Razón social):** `TRANSPORTES LA CORDILLERA S.A.S.` -> `\"TRANSPORTES LA CORDILLERA S.A.S.\"`\n    *   **Tipo de documento (Persona jurídica):** Not applicable/NULL. (There is Box 25 Tipo de documento under IDENTIFICACIÓN, but it's empty/not applicable for the legal entity itself, it's the main identification).\n    *   **Numero de identificacion (Persona jurídica):** The NIT is the identification.\n    *   **Primer apellido:** null\n    *   **Segundo apellido:** null\n    *   **Primer nombre:** null\n    *   **Box 46 (Actividad principal - Código):** `4923` -> `\"4923\"`\n    *   **Box 48 (Actividad secundaria - Código):** `5229` -> `\"5229\"`\n    *   **Box 39 (Departamento):** `CALDAS` -> `\"CALDAS\"`\n    *   **Box 40 (Ciudad/Municipio):** `MANIZALES` -> `\"MANIZALES\"`\n    *   **Box 41 (Dirección principal):** `AV SANTANDER 58 21` -> `\"AV SANTANDER 58 21\"`\n    *   **Representante Legal:** Look at the REPRESENTACIÓN section (Boxes 104-107).\n        *   Box 104: `OSORIO` (Primer apellido)\n        *   Box 105: `VALENCIA` (Segundo apellido)\n        *   Box 106: `JUAN` (Primer nombre)\n        *   Box 107: `PABLO` (Otros nombres)\n        *   Full name: `OSORIO VALENCIA JUAN PABLO` (or in standard format Juan Pablo Osorio Valencia, but usually it's concatenated based on form fields. I'll provide \"OSORIO VALENCIA JUAN PABLO\" as extracted directly, or \"JUAN PABLO OSORIO VALENCIA\". Given the format, \"OSORIO VALENCIA JUAN PABLO\" matches the field order better. Let's read the instruction: \"extract the full name... use null if not found\". Let's just use the text from the boxes: \"OSORIO VALENCIA JUAN PABLO\").\n        *   Wait, the box says \"98. Representación: REPRS LEGAL PRIN 18\", and the fields below are 104, 105, 106, 107. The name is \"OSORIO VALENCIA JUAN PABLO\". Let's format it as \"JUAN PABLO OSORIO VALENCIA\" for natural reading, or strictly keep to field order. Let's just output \"OSORIO VALENCIA JUAN PABLO\".\n\n3.  **Map Data to JSON:**\n    ```json\n    {\n      \"nit\": \"900874312\",\n      \"dv\": \"8\",\n      \"tipo_contribuyente\": \"juridica\",\n      \"razon_social\": \"TRANSPORTES LA CORDILLERA S.A.S.\",\n      \"tipo_documento\": null,\n      \"numero_identificacion\": null,\n      \"primer_apellido\": null,\n      \"segundo_apellido\": null,\n      \"primer_nombre\": null,\n      \"actividad_principal_codigo\": \"4923\",\n      \"actividad_secundaria_codigo\": \"5229\",\n      \"departamento\": \"CALDAS\",\n      \"municipio\": \"MANIZALES\",\n      \"direccion\": \"AV SANTANDER 58 21\",\n      \"nombre_representante_legal\": \"OSORIO VALENCIA JUAN PABLO\"\n    }\n    ```\n\n4.  **Review against Constraints:**\n    *   ONLY valid JSON object. No markdown. No explanation.\n    *   Missing/empty fields use `null`. (tipo_documento, numero_identificacion, etc. are null because it's a persona juridica, and the natural person fields are not applicable/filled).\n    *   `tipo_contribuyente` is \"juridica\".\n    *   NIT and DV exactly as printed.\n    *   Codes are strings.\n    *   `departamento` & `municipio` extracted as names.\n    *   `direccion` exact.\n    *   `nombre_representante_legal` extracted.\n\n5.  **Final Polish:**\n    *   Need to make sure the string for `nombre_representante_legal` is accurate. The form has 104: Primer apellido (OSORIO), 105: Segundo apellido (VALENCIA), 106: Primer nombre (JUAN), 107: Otros nombres (PABLO). Putting them together: \"OSORIO VALENCIA JUAN PABLO\". This is safe and accurate to the document's fields. I'll use this exact string.\n    *   Let's double-check the `tipo_documento` and `numero_identificacion`. The prompt says \"For tipo_documento\": null if missing. For a persona juridica, this is usually null or its NIT. But following the rule, if it's empty or not present, use null. Looking at box 25 and 26, they are empty. So null is correct.\n    *   Everything seems solid.",
+          "reasoning_details": [
+            {
+              "type": "reasoning.text",
+              "text": "1.  **Analyze the Request:**\n    *   Task: Extract specific fields from the provided image of a DIAN RUT document.\n    *   Output format: ONLY a valid JSON object. No markdown, no explanations.\n    *   Rules:\n        *   Missing/empty fields -> `null`.\n        *   `tipo_contribuyente`: \"natural\" or \"juridica\".\n        *   `nit`: Box 5 (copy exactly as printed).\n        *   `dv`: Box 6 (copy exactly as printed).\n        *   Return codes as strings.\n        *   `departamento`: Department name (e.g., \"CUNDINAMARCA\").\n        *   `municipio`: City/Municipality name.\n        *   `direccion`: Full address as written.\n        *   `nombre_representante_legal`: Full name if present (persona juridica), else `null`.\n\n2.  **Extract Data from Image:**\n    *   **Box 5 (NIT):** `9 0 0 8 7 4 3 1 2` -> `\"900874312\"`\n    *   **Box 6 (DV):** `8` -> `\"8\"`\n    *   **Box 24 (Tipo de contribuyente):** `Persona jurídica` -> `\"juridica\"`\n    *   **Box 35 (Razón social):** `TRANSPORTES LA CORDILLERA S.A.S.` -> `\"TRANSPORTES LA CORDILLERA S.A.S.\"`\n    *   **Tipo de documento (Persona jurídica):** Not applicable/NULL. (There is Box 25 Tipo de documento under IDENTIFICACIÓN, but it's empty/not applicable for the legal entity itself, it's the main identification).\n    *   **Numero de identificacion (Persona jurídica):** The NIT is the identification.\n    *   **Primer apellido:** null\n    *   **Segundo apellido:** null\n    *   **Primer nombre:** null\n    *   **Box 46 (Actividad principal - Código):** `4923` -> `\"4923\"`\n    *   **Box 48 (Actividad secundaria - Código):** `5229` -> `\"5229\"`\n    *   **Box 39 (Departamento):** `CALDAS` -> `\"CALDAS\"`\n    *   **Box 40 (Ciudad/Municipio):** `MANIZALES` -> `\"MANIZALES\"`\n    *   **Box 41 (Dirección principal):** `AV SANTANDER 58 21` -> `\"AV SANTANDER 58 21\"`\n    *   **Representante Legal:** Look at the REPRESENTACIÓN section (Boxes 104-107).\n        *   Box 104: `OSORIO` (Primer apellido)\n        *   Box 105: `VALENCIA` (Segundo apellido)\n        *   Box 106: `JUAN` (Primer nombre)\n        *   Box 107: `PABLO` (Otros nombres)\n        *   Full name: `OSORIO VALENCIA JUAN PABLO` (or in standard format Juan Pablo Osorio Valencia, but usually it's concatenated based on form fields. I'll provide \"OSORIO VALENCIA JUAN PABLO\" as extracted directly, or \"JUAN PABLO OSORIO VALENCIA\". Given the format, \"OSORIO VALENCIA JUAN PABLO\" matches the field order better. Let's read the instruction: \"extract the full name... use null if not found\". Let's just use the text from the boxes: \"OSORIO VALENCIA JUAN PABLO\").\n        *   Wait, the box says \"98. Representación: REPRS LEGAL PRIN 18\", and the fields below are 104, 105, 106, 107. The name is \"OSORIO VALENCIA JUAN PABLO\". Let's format it as \"JUAN PABLO OSORIO VALENCIA\" for natural reading, or strictly keep to field order. Let's just output \"OSORIO VALENCIA JUAN PABLO\".\n\n3.  **Map Data to JSON:**\n    ```json\n    {\n      \"nit\": \"900874312\",\n      \"dv\": \"8\",\n      \"tipo_contribuyente\": \"juridica\",\n      \"razon_social\": \"TRANSPORTES LA CORDILLERA S.A.S.\",\n      \"tipo_documento\": null,\n      \"numero_identificacion\": null,\n      \"primer_apellido\": null,\n      \"segundo_apellido\": null,\n      \"primer_nombre\": null,\n      \"actividad_principal_codigo\": \"4923\",\n      \"actividad_secundaria_codigo\": \"5229\",\n      \"departamento\": \"CALDAS\",\n      \"municipio\": \"MANIZALES\",\n      \"direccion\": \"AV SANTANDER 58 21\",\n      \"nombre_representante_legal\": \"OSORIO VALENCIA JUAN PABLO\"\n    }\n    ```\n\n4.  **Review against Constraints:**\n    *   ONLY valid JSON object. No markdown. No explanation.\n    *   Missing/empty fields use `null`. (tipo_documento, numero_identificacion, etc. are null because it's a persona juridica, and the natural person fields are not applicable/filled).\n    *   `tipo_contribuyente` is \"juridica\".\n    *   NIT and DV exactly as printed.\n    *   Codes are strings.\n    *   `departamento` & `municipio` extracted as names.\n    *   `direccion` exact.\n    *   `nombre_representante_legal` extracted.\n\n5.  **Final Polish:**\n    *   Need to make sure the string for `nombre_representante_legal` is accurate. The form has 104: Primer apellido (OSORIO), 105: Segundo apellido (VALENCIA), 106: Primer nombre (JUAN), 107: Otros nombres (PABLO). Putting them together: \"OSORIO VALENCIA JUAN PABLO\". This is safe and accurate to the document's fields. I'll use this exact string.\n    *   Let's double-check the `tipo_documento` and `numero_identificacion`. The prompt says \"For tipo_documento\": null if missing. For a persona juridica, this is usually null or its NIT. But following the rule, if it's empty or not present, use null. Looking at box 25 and 26, they are empty. So null is correct.\n    *   Everything seems solid.",
+              "format": "unknown",
+              "index": 0
+            }
+          ]
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1409,
+      "completion_tokens": 1679,
+      "total_tokens": 3088,
+      "cost": 0.0024375,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.0024375,
+        "upstream_inference_prompt_cost": 0.0004227,
+        "upstream_inference_completions_cost": 0.0020148
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 1499,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    }
+  }
+}

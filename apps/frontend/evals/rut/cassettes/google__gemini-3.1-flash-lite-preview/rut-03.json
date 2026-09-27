@@ -1,0 +1,74 @@
+{
+  "case": "rut-03",
+  "requested_model": "google/gemini-3.1-flash-lite-preview",
+  "recorded_at": "2026-09-27T21:45:26.041Z",
+  "input": {
+    "file": "document.pdf",
+    "media_type": "application/pdf",
+    "sha256": "2ae52d4d7c566dbca1d79b3fa92f1814be0c79a351caf0bde4904924a5c69c93"
+  },
+  "prompt_sha256": "e4af20497fd02df685cd0cecda49b25f237a14e9e24b4063250ed1276c3dd529",
+  "model": "google/gemini-3.1-flash-lite-preview",
+  "latency_ms": 1902,
+  "outcome": "ok",
+  "usage": {
+    "promptTokens": 910,
+    "completionTokens": 223,
+    "costUsd": 0.000562,
+    "costSource": "provider"
+  },
+  "response": {
+    "id": "gen-1790545526-kgyVa2uV9YEn4TP7m5U9",
+    "object": "chat.completion",
+    "created": 1790545526,
+    "model": "google/gemini-3.1-flash-lite-preview",
+    "provider": "Google AI Studio",
+    "system_fingerprint": null,
+    "service_tier": "default",
+    "choices": [
+      {
+        "index": 0,
+        "logprobs": null,
+        "finish_reason": "stop",
+        "native_finish_reason": "STOP",
+        "message": {
+          "role": "assistant",
+          "content": "{\n  \"nit\": \"900874312\",\n  \"dv\": \"8\",\n  \"tipo_contribuyente\": \"juridica\",\n  \"razon_social\": \"TRANSPORTES LA CORDILLERA S.A.S.\",\n  \"tipo_documento\": \"Cédula de Ciudadanía\",\n  \"numero_identificacion\": \"75089431\",\n  \"primer_apellido\": \"OSORIO\",\n  \"segundo_apellido\": \"VALENCIA\",\n  \"primer_nombre\": \"JUAN\",\n  \"actividad_principal_codigo\": \"4923\",\n  \"actividad_secundaria_codigo\": \"5229\",\n  \"departamento\": \"CALDAS\",\n  \"municipio\": \"MANIZALES\",\n  \"direccion\": \"AV SANTANDER 58 21\",\n  \"nombre_representante_legal\": \"JUAN PABLO OSORIO VALENCIA\"\n}",
+          "refusal": null,
+          "reasoning": null,
+          "reasoning_details": [
+            {
+              "type": "reasoning.text",
+              "signature": "EnMKcQFpFH0Tvf2S/MZNFWDQYDqDWT3ae3w5wQb4f+Lv5qh/K/nPGLbyGOCSbIkcxVQowiiYBYr2a8UawvKkZBdgfQiwReo3ACdTYjeDDHKrnKoS4SQg61X54LVErdt4h8uykhL+Rlt4kM1X+FkXCPd+jsm8",
+              "format": "google-gemini-v1",
+              "index": 0
+            }
+          ]
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 910,
+      "completion_tokens": 223,
+      "total_tokens": 1133,
+      "cost": 0.000562,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.000562,
+        "upstream_inference_prompt_cost": 0.0002275,
+        "upstream_inference_completions_cost": 0.0003345
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    }
+  }
+}

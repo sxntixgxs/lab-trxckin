@@ -1,0 +1,74 @@
+{
+  "case": "rut-02",
+  "requested_model": "google/gemini-3.1-flash-lite-preview",
+  "recorded_at": "2026-09-27T21:45:26.040Z",
+  "input": {
+    "file": "document.pdf",
+    "media_type": "application/pdf",
+    "sha256": "31a688319804d41977cd482ac2a620bb6f72d2fe72dbe9074fe4dc61b7cb2048"
+  },
+  "prompt_sha256": "e4af20497fd02df685cd0cecda49b25f237a14e9e24b4063250ed1276c3dd529",
+  "model": "google/gemini-3.1-flash-lite-preview",
+  "latency_ms": 1753,
+  "outcome": "ok",
+  "usage": {
+    "promptTokens": 910,
+    "completionTokens": 206,
+    "costUsd": 0.0005365,
+    "costSource": "provider"
+  },
+  "response": {
+    "id": "gen-1790545526-SUsxAeImJxSv6XFBe7Xl",
+    "object": "chat.completion",
+    "created": 1790545526,
+    "model": "google/gemini-3.1-flash-lite-preview",
+    "provider": "Google AI Studio",
+    "system_fingerprint": null,
+    "service_tier": "default",
+    "choices": [
+      {
+        "index": 0,
+        "logprobs": null,
+        "finish_reason": "stop",
+        "native_finish_reason": "STOP",
+        "message": {
+          "role": "assistant",
+          "content": "{\n  \"nit\": \"79845123\",\n  \"dv\": \"1\",\n  \"tipo_contribuyente\": \"natural\",\n  \"razon_social\": null,\n  \"tipo_documento\": \"13\",\n  \"numero_identificacion\": \"79845123\",\n  \"primer_apellido\": \"GÓMEZ\",\n  \"segundo_apellido\": \"ARIAS\",\n  \"primer_nombre\": \"CARLOS\",\n  \"actividad_principal_codigo\": \"6920\",\n  \"actividad_secundaria_codigo\": null,\n  \"departamento\": \"BOGOTÁ D.C.\",\n  \"municipio\": \"BOGOTÁ D.C.\",\n  \"direccion\": \"CL 127 15 32 AP 402\",\n  \"nombre_representante_legal\": null\n}",
+          "refusal": null,
+          "reasoning": null,
+          "reasoning_details": [
+            {
+              "type": "reasoning.text",
+              "signature": "EnMKcQFpFH0TgDARkrk0zLH4QzHWQ6iTpqlkxpLPy+CeJ1J3vC0AoyK7FcR9Ce8JL4ebwm1hZzCt4XJpzxbS7FLEKlTKpx5Alp1q5rRGUcD0graVIvDZISb4XGJdgmaEb2XinLMQOFKQOBn9IqNYwd1Ncv/5",
+              "format": "google-gemini-v1",
+              "index": 0
+            }
+          ]
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 910,
+      "completion_tokens": 206,
+      "total_tokens": 1116,
+      "cost": 0.0005365,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.0005365,
+        "upstream_inference_prompt_cost": 0.0002275,
+        "upstream_inference_completions_cost": 0.000309
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    }
+  }
+}

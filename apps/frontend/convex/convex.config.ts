@@ -16,6 +16,9 @@ const app = defineApp({
     CONVEX_SERVER_SECRET: v.optional(v.string()),
     DEFAULT_CONTACT_EMAIL: v.optional(v.string()),
     FACTURACION_GRAPH_MAILBOXES: v.optional(v.string()),
+    /** Read-only MCP server (convex/mcp/lectura.ts): shared secret and allowed companies ("1,2"). */
+    MCP_READ_SECRET: v.optional(v.string()),
+    MCP_EMPRESAS: v.optional(v.string()),
   },
 });
 app.use(agent);

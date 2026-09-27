@@ -1,0 +1,74 @@
+{
+  "case": "rut-06",
+  "requested_model": "deepseek/deepseek-v4.1-flash",
+  "recorded_at": "2026-09-27T21:49:59.310Z",
+  "input": {
+    "file": "document.pdf",
+    "media_type": "application/pdf",
+    "sha256": "4df3b7fa38c2f3205b8e96bf02943b9493210e098c0c50b946a8d1568b210f88"
+  },
+  "prompt_sha256": "e4af20497fd02df685cd0cecda49b25f237a14e9e24b4063250ed1276c3dd529",
+  "model": "deepseek/deepseek-v4.1-flash",
+  "latency_ms": 4104,
+  "outcome": "ok",
+  "usage": {
+    "promptTokens": 1409,
+    "completionTokens": 1053,
+    "costUsd": 0.0016863,
+    "costSource": "provider"
+  },
+  "response": {
+    "id": "gen-1790545799-VBWuyV6DNWFvd15IRslw",
+    "object": "chat.completion",
+    "created": 1790545799,
+    "model": "deepseek/deepseek-v4.1-flash",
+    "provider": "Together",
+    "system_fingerprint": "default",
+    "service_tier": null,
+    "choices": [
+      {
+        "index": 0,
+        "logprobs": null,
+        "finish_reason": "stop",
+        "native_finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "{\"nit\": \"682415\", \"dv\": \"9\", \"tipo_contribuyente\": \"natural\", \"razon_social\": null, \"tipo_documento\": \"Cédula de Extranjería\", \"numero_identificacion\": \"682415\", \"primer_apellido\": \"ROSSI\", \"segundo_apellido\": \"BIANCHI\", \"primer_nombre\": \"MARCO\", \"actividad_principal_codigo\": \"20200918\", \"actividad_secundaria_codigo\": null, \"departamento\": \"ATLANTICO\", \"municipio\": \"BARRANQUILLA\", \"direccion\": \"CR 53 82 116 AP 5B\", \"nombre_representante_legal\": null}",
+          "refusal": null,
+          "reasoning": "1.  **Analyze the Request:**\n    *   Input: An image of a DIAN RUT (Registro Único Tributario) document.\n    *   Task: Extract specific fields and return them as a raw JSON object.\n    *   Rules:\n        *   If a field is missing/empty -> `null`.\n        *   `tipo_contribuyente` -> \"natural\" or \"juridica\".\n        *   `nit` -> Box 5 (digits only, copied exactly).\n        *   `dv` -> Box 6 (verification digit, copied exactly).\n        *   Return codes as strings.\n        *   `departamento` -> extract name (e.g., \"ANTIOQUIA\").\n        *   `municipio` -> extract city/municipality name (e.g., \"MEDELLÍN\").\n        *   `direccion` -> full address as written.\n        *   `nombre_representante_legal` -> full name if present, `null` otherwise (especially for natural persons).\n        *   Output format: ONLY valid JSON, no markdown formatting, no explanations.\n\n2.  **Extract Data from the Image:**\n    *   **nit (Box 5):** `6 8 2 4 1 5` -> `\"682415\"` (as a string).\n    *   **dv (Box 6):** `9` -> `\"9\"` (as a string).\n    *   **tipo_contribuyente (Box 24):** \"Persona natural o sucesión líquida\" -> `\"natural\"`.\n    *   **razon_social (Box 35):** Empty -> `null`.\n    *   **tipo_documento (Box 25):** \"Cédula de Extranjería\" -> `\"Cédula de Extranjería\"`.\n    *   **numero_identificacion (Box 26):** `682415` -> `\"682415\"`.\n    *   **primer_apellido (Box 31):** `ROSSI` -> `\"ROSSI\"`.\n    *   **segundo_apellido (Box 32):** `BIANCHI` -> `\"BIANCHI\"`.\n    *   **primer_nombre (Box 33):** `MARCO` -> `\"MARCO\"`.\n    *   **actividad_principal_codigo (Box 46):** `20200918` -> `\"20200918\"`.\n    *   **actividad_secundaria_codigo (Box 48):** Empty -> `null`.\n    *   **departamento (Box 39):** `ATLANTICO` -> `\"ATLANTICO\"`.\n    *   **municipio (Box 40):** `BARRANQUILLA` -> `\"BARRANQUILLA\"`.\n    *   **direccion (Box 41):** `CR 53 82 116 AP 5B` -> `\"CR 53 82 116 AP 5B\"`.\n    *   **nombre_representante_legal (Box 104-107):** Empty (since it's a natural person, this section is blank) -> `null`.\n\n3.  **Construct the JSON:**\n    *   Assemble the extracted values into the requested JSON structure.\n    *   Double-check formatting for string types.\n    *   Ensure no markdown formatting (like ```json) is added.\n\n4.  **Final Review against Constraints:**\n    *   Valid JSON? Yes.\n    *   No markdown? Yes.\n    *   All requested fields present? Yes.\n    *   Nulls used correctly? Yes.\n    *   NIT and DV extracted correctly without mixing digits? Yes, 682415 and 9.\n    *   Department and municipality names extracted? Yes, ATLANTICO and BARRANQUILLA.\n    *   Address extracted? Yes, CR 53 82 116 AP 5B.\n    *   Legal representative null? Yes.",
+          "reasoning_details": [
+            {
+              "type": "reasoning.text",
+              "text": "1.  **Analyze the Request:**\n    *   Input: An image of a DIAN RUT (Registro Único Tributario) document.\n    *   Task: Extract specific fields and return them as a raw JSON object.\n    *   Rules:\n        *   If a field is missing/empty -> `null`.\n        *   `tipo_contribuyente` -> \"natural\" or \"juridica\".\n        *   `nit` -> Box 5 (digits only, copied exactly).\n        *   `dv` -> Box 6 (verification digit, copied exactly).\n        *   Return codes as strings.\n        *   `departamento` -> extract name (e.g., \"ANTIOQUIA\").\n        *   `municipio` -> extract city/municipality name (e.g., \"MEDELLÍN\").\n        *   `direccion` -> full address as written.\n        *   `nombre_representante_legal` -> full name if present, `null` otherwise (especially for natural persons).\n        *   Output format: ONLY valid JSON, no markdown formatting, no explanations.\n\n2.  **Extract Data from the Image:**\n    *   **nit (Box 5):** `6 8 2 4 1 5` -> `\"682415\"` (as a string).\n    *   **dv (Box 6):** `9` -> `\"9\"` (as a string).\n    *   **tipo_contribuyente (Box 24):** \"Persona natural o sucesión líquida\" -> `\"natural\"`.\n    *   **razon_social (Box 35):** Empty -> `null`.\n    *   **tipo_documento (Box 25):** \"Cédula de Extranjería\" -> `\"Cédula de Extranjería\"`.\n    *   **numero_identificacion (Box 26):** `682415` -> `\"682415\"`.\n    *   **primer_apellido (Box 31):** `ROSSI` -> `\"ROSSI\"`.\n    *   **segundo_apellido (Box 32):** `BIANCHI` -> `\"BIANCHI\"`.\n    *   **primer_nombre (Box 33):** `MARCO` -> `\"MARCO\"`.\n    *   **actividad_principal_codigo (Box 46):** `20200918` -> `\"20200918\"`.\n    *   **actividad_secundaria_codigo (Box 48):** Empty -> `null`.\n    *   **departamento (Box 39):** `ATLANTICO` -> `\"ATLANTICO\"`.\n    *   **municipio (Box 40):** `BARRANQUILLA` -> `\"BARRANQUILLA\"`.\n    *   **direccion (Box 41):** `CR 53 82 116 AP 5B` -> `\"CR 53 82 116 AP 5B\"`.\n    *   **nombre_representante_legal (Box 104-107):** Empty (since it's a natural person, this section is blank) -> `null`.\n\n3.  **Construct the JSON:**\n    *   Assemble the extracted values into the requested JSON structure.\n    *   Double-check formatting for string types.\n    *   Ensure no markdown formatting (like ```json) is added.\n\n4.  **Final Review against Constraints:**\n    *   Valid JSON? Yes.\n    *   No markdown? Yes.\n    *   All requested fields present? Yes.\n    *   Nulls used correctly? Yes.\n    *   NIT and DV extracted correctly without mixing digits? Yes, 682415 and 9.\n    *   Department and municipality names extracted? Yes, ATLANTICO and BARRANQUILLA.\n    *   Address extracted? Yes, CR 53 82 116 AP 5B.\n    *   Legal representative null? Yes.",
+              "format": "unknown",
+              "index": 0
+            }
+          ]
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1409,
+      "completion_tokens": 1053,
+      "total_tokens": 2462,
+      "cost": 0.0016863,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.0016863,
+        "upstream_inference_prompt_cost": 0.0004227,
+        "upstream_inference_completions_cost": 0.0012636
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 876,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    }
+  }
+}

@@ -1,0 +1,843 @@
+{
+  "_note": "Contribuyentes FICTICIOS para las evals de extracción del RUT. Ningún nombre, NIT ni dirección corresponde a una persona o empresa real; los DV se calculan con el algoritmo de la DIAN.",
+  "cases": [
+    {
+      "id": "rut-01",
+      "variant": "clean",
+      "variant_options": {},
+      "omit": [],
+      "tipo_contribuyente": "juridica",
+      "nit": "901245781",
+      "dv": "4",
+      "razon_social": "DROMINC S.A.S.",
+      "nombre_comercial": "DROMINC",
+      "tipo_documento": null,
+      "numero_identificacion": null,
+      "primer_apellido": null,
+      "segundo_apellido": null,
+      "primer_nombre": null,
+      "otros_nombres": null,
+      "departamento": {
+        "nombre": "ANTIOQUIA",
+        "codigo": "05"
+      },
+      "municipio": {
+        "nombre": "MEDELLÍN",
+        "codigo": "001"
+      },
+      "direccion": "CR 43A 7 50 OF 1104",
+      "correo": "contabilidad@drominc.example",
+      "telefono": "6043218790",
+      "actividad_principal": {
+        "codigo": "6201",
+        "fecha_inicio": "20190312"
+      },
+      "actividad_secundaria": {
+        "codigo": "6202",
+        "fecha_inicio": "20190312"
+      },
+      "representante_legal": {
+        "primer_apellido": "RESTREPO",
+        "segundo_apellido": "GIL",
+        "primer_nombre": "ANA",
+        "otros_nombres": "MARÍA",
+        "tipo_documento": "13",
+        "numero_identificacion": "43876512"
+      },
+      "numero_formulario": "14382258049"
+    },
+    {
+      "id": "rut-02",
+      "variant": "clean",
+      "variant_options": {},
+      "omit": [],
+      "tipo_contribuyente": "natural",
+      "nit": "79845123",
+      "dv": "1",
+      "razon_social": null,
+      "nombre_comercial": null,
+      "tipo_documento": "13",
+      "numero_identificacion": "79845123",
+      "primer_apellido": "GÓMEZ",
+      "segundo_apellido": "ARIAS",
+      "primer_nombre": "CARLOS",
+      "otros_nombres": "ANDRÉS",
+      "departamento": {
+        "nombre": "BOGOTÁ D.C.",
+        "codigo": "11"
+      },
+      "municipio": {
+        "nombre": "BOGOTÁ D.C.",
+        "codigo": "001"
+      },
+      "direccion": "CL 127 15 32 AP 402",
+      "correo": "cgomez.contador@correo.example",
+      "telefono": "3104567812",
+      "actividad_principal": {
+        "codigo": "6920",
+        "fecha_inicio": "20150601"
+      },
+      "actividad_secundaria": null,
+      "representante_legal": null,
+      "numero_formulario": "14764516098"
+    },
+    {
+      "id": "rut-03",
+      "variant": "clean",
+      "variant_options": {},
+      "omit": [],
+      "tipo_contribuyente": "juridica",
+      "nit": "900874312",
+      "dv": "8",
+      "razon_social": "TRANSPORTES LA CORDILLERA S.A.S.",
+      "nombre_comercial": "TRANSCORDILLERA",
+      "tipo_documento": null,
+      "numero_identificacion": null,
+      "primer_apellido": null,
+      "segundo_apellido": null,
+      "primer_nombre": null,
+      "otros_nombres": null,
+      "departamento": {
+        "nombre": "CALDAS",
+        "codigo": "17"
+      },
+      "municipio": {
+        "nombre": "MANIZALES",
+        "codigo": "001"
+      },
+      "direccion": "AV SANTANDER 58 21",
+      "correo": "gerencia@transcordillera.example",
+      "telefono": "6068854120",
+      "actividad_principal": {
+        "codigo": "4923",
+        "fecha_inicio": "20160120"
+      },
+      "actividad_secundaria": {
+        "codigo": "5229",
+        "fecha_inicio": "20180905"
+      },
+      "representante_legal": {
+        "primer_apellido": "OSORIO",
+        "segundo_apellido": "VALENCIA",
+        "primer_nombre": "JUAN",
+        "otros_nombres": "PABLO",
+        "tipo_documento": "13",
+        "numero_identificacion": "75089431"
+      },
+      "numero_formulario": "14146774147"
+    },
+    {
+      "id": "rut-04",
+      "variant": "clean",
+      "variant_options": {},
+      "omit": [],
+      "tipo_contribuyente": "natural",
+      "nit": "1020734589",
+      "dv": "1",
+      "razon_social": null,
+      "nombre_comercial": null,
+      "tipo_documento": "13",
+      "numero_identificacion": "1020734589",
+      "primer_apellido": "MARTÍNEZ",
+      "segundo_apellido": "PÉREZ",
+      "primer_nombre": "LUISA",
+      "otros_nombres": "FERNANDA",
+      "departamento": {
+        "nombre": "CUNDINAMARCA",
+        "codigo": "25"
+      },
+      "municipio": {
+        "nombre": "CHÍA",
+        "codigo": "175"
+      },
+      "direccion": "CR 9 12 45 CS 3",
+      "correo": "lmartinez.med@correo.example",
+      "telefono": "3157781204",
+      "actividad_principal": {
+        "codigo": "8621",
+        "fecha_inicio": "20210415"
+      },
+      "actividad_secundaria": {
+        "codigo": "8299",
+        "fecha_inicio": "20220110"
+      },
+      "representante_legal": null,
+      "numero_formulario": "14529032196"
+    },
+    {
+      "id": "rut-05",
+      "variant": "clean",
+      "variant_options": {},
+      "omit": [],
+      "tipo_contribuyente": "juridica",
+      "nit": "890321457",
+      "dv": "9",
+      "razon_social": "ALIMENTOS DEL VALLE ANDINO S.A.",
+      "nombre_comercial": "VALLE ANDINO",
+      "tipo_documento": null,
+      "numero_identificacion": null,
+      "primer_apellido": null,
+      "segundo_apellido": null,
+      "primer_nombre": null,
+      "otros_nombres": null,
+      "departamento": {
+        "nombre": "VALLE DEL CAUCA",
+        "codigo": "76"
+      },
+      "municipio": {
+        "nombre": "PALMIRA",
+        "codigo": "520"
+      },
+      "direccion": "CL 42 28 115 BG 3",
+      "correo": "tesoreria@valleandino.example",
+      "telefono": "6022751190",
+      "actividad_principal": {
+        "codigo": "1011",
+        "fecha_inicio": "19980227"
+      },
+      "actividad_secundaria": {
+        "codigo": "4631",
+        "fecha_inicio": "20050811"
+      },
+      "representante_legal": {
+        "primer_apellido": "CAICEDO",
+        "segundo_apellido": "LOZANO",
+        "primer_nombre": "MARTA",
+        "otros_nombres": "LUCÍA",
+        "tipo_documento": "13",
+        "numero_identificacion": "31987456"
+      },
+      "numero_formulario": "14911290245"
+    },
+    {
+      "id": "rut-06",
+      "variant": "clean",
+      "variant_options": {},
+      "omit": [],
+      "tipo_contribuyente": "natural",
+      "nit": "682415",
+      "dv": "9",
+      "razon_social": null,
+      "nombre_comercial": null,
+      "tipo_documento": "22",
+      "numero_identificacion": "682415",
+      "primer_apellido": "ROSSI",
+      "segundo_apellido": "BIANCHI",
+      "primer_nombre": "MARCO",
+      "otros_nombres": null,
+      "departamento": {
+        "nombre": "ATLÁNTICO",
+        "codigo": "08"
+      },
+      "municipio": {
+        "nombre": "BARRANQUILLA",
+        "codigo": "001"
+      },
+      "direccion": "CR 53 82 116 AP 5B",
+      "correo": "marco.rossi@correo.example",
+      "telefono": "3016642857",
+      "actividad_principal": {
+        "codigo": "5611",
+        "fecha_inicio": "20200918"
+      },
+      "actividad_secundaria": null,
+      "representante_legal": null,
+      "numero_formulario": "14293548294"
+    },
+    {
+      "id": "rut-07",
+      "variant": "clean",
+      "variant_options": {},
+      "omit": [],
+      "tipo_contribuyente": "juridica",
+      "nit": "901563208",
+      "dv": "9",
+      "razon_social": "CONSTRUCTORA PIEDRA AZUL S.A.S.",
+      "nombre_comercial": null,
+      "tipo_documento": null,
+      "numero_identificacion": null,
+      "primer_apellido": null,
+      "segundo_apellido": null,
+      "primer_nombre": null,
+      "otros_nombres": null,
+      "departamento": {
+        "nombre": "SANTANDER",
+        "codigo": "68"
+      },
+      "municipio": {
+        "nombre": "BUCARAMANGA",
+        "codigo": "001"
+      },
+      "direccion": "CL 36 27 52 P 4",
+      "correo": "proyectos@piedraazul.example",
+      "telefono": "6076341822",
+      "actividad_principal": {
+        "codigo": "4111",
+        "fecha_inicio": "20220303"
+      },
+      "actividad_secundaria": {
+        "codigo": "4290",
+        "fecha_inicio": "20230516"
+      },
+      "representante_legal": {
+        "primer_apellido": "SERRANO",
+        "segundo_apellido": "DUARTE",
+        "primer_nombre": "HERNÁN",
+        "otros_nombres": null,
+        "tipo_documento": "13",
+        "numero_identificacion": "91456782"
+      },
+      "numero_formulario": "14675806343"
+    },
+    {
+      "id": "rut-08",
+      "variant": "clean",
+      "variant_options": {},
+      "omit": [],
+      "tipo_contribuyente": "natural",
+      "nit": "1088254310",
+      "dv": "1",
+      "razon_social": null,
+      "nombre_comercial": null,
+      "tipo_documento": "13",
+      "numero_identificacion": "1088254310",
+      "primer_apellido": "ÁLVAREZ",
+      "segundo_apellido": "OCAMPO",
+      "primer_nombre": "JULIÁN",
+      "otros_nombres": null,
+      "departamento": {
+        "nombre": "RISARALDA",
+        "codigo": "66"
+      },
+      "municipio": {
+        "nombre": "PEREIRA",
+        "codigo": "001"
+      },
+      "direccion": "MZ 12 CS 7 BRR CUBA",
+      "correo": "julian.alvarez@correo.example",
+      "telefono": "3128896431",
+      "actividad_principal": {
+        "codigo": "4520",
+        "fecha_inicio": "20170710"
+      },
+      "actividad_secundaria": null,
+      "representante_legal": null,
+      "numero_formulario": "14058064392"
+    },
+    {
+      "id": "rut-09",
+      "variant": "scan",
+      "variant_options": {
+        "format": "jpg",
+        "seed": 9
+      },
+      "omit": [],
+      "tipo_contribuyente": "juridica",
+      "nit": "900615734",
+      "dv": "2",
+      "razon_social": "SOLUCIONES LOGÍSTICAS DEL CARIBE S.A.S.",
+      "nombre_comercial": "SOLOCARIBE",
+      "tipo_documento": null,
+      "numero_identificacion": null,
+      "primer_apellido": null,
+      "segundo_apellido": null,
+      "primer_nombre": null,
+      "otros_nombres": null,
+      "departamento": {
+        "nombre": "BOLÍVAR",
+        "codigo": "13"
+      },
+      "municipio": {
+        "nombre": "CARTAGENA DE INDIAS",
+        "codigo": "001"
+      },
+      "direccion": "BRR MANGA CL 28 24 61",
+      "correo": "admin@solocaribe.example",
+      "telefono": "6056603344",
+      "actividad_principal": {
+        "codigo": "5229",
+        "fecha_inicio": "20130822"
+      },
+      "actividad_secundaria": {
+        "codigo": "4923",
+        "fecha_inicio": "20140115"
+      },
+      "representante_legal": {
+        "primer_apellido": "PADILLA",
+        "segundo_apellido": "MARRUGO",
+        "primer_nombre": "ROSA",
+        "otros_nombres": "ELENA",
+        "tipo_documento": "13",
+        "numero_identificacion": "45563218"
+      },
+      "numero_formulario": "14440322441"
+    },
+    {
+      "id": "rut-10",
+      "variant": "scan",
+      "variant_options": {
+        "format": "pdf",
+        "seed": 10
+      },
+      "omit": [],
+      "tipo_contribuyente": "natural",
+      "nit": "52896147",
+      "dv": "8",
+      "razon_social": null,
+      "nombre_comercial": null,
+      "tipo_documento": "13",
+      "numero_identificacion": "52896147",
+      "primer_apellido": "RINCÓN",
+      "segundo_apellido": "SUÁREZ",
+      "primer_nombre": "DIANA",
+      "otros_nombres": "MARCELA",
+      "departamento": {
+        "nombre": "BOYACÁ",
+        "codigo": "15"
+      },
+      "municipio": {
+        "nombre": "TUNJA",
+        "codigo": "001"
+      },
+      "direccion": "CL 19 10 64",
+      "correo": "diana.rincon@correo.example",
+      "telefono": "3202219874",
+      "actividad_principal": {
+        "codigo": "8559",
+        "fecha_inicio": "20111103"
+      },
+      "actividad_secundaria": {
+        "codigo": "8523",
+        "fecha_inicio": "20140205"
+      },
+      "representante_legal": null,
+      "numero_formulario": "14822580490"
+    },
+    {
+      "id": "rut-11",
+      "variant": "scan",
+      "variant_options": {
+        "format": "jpg",
+        "seed": 11
+      },
+      "omit": [],
+      "tipo_contribuyente": "juridica",
+      "nit": "901332957",
+      "dv": "6",
+      "razon_social": "CAFÉ ALTO DEL QUINDÍO S.A.S.",
+      "nombre_comercial": "CAFÉ ALTO",
+      "tipo_documento": null,
+      "numero_identificacion": null,
+      "primer_apellido": null,
+      "segundo_apellido": null,
+      "primer_nombre": null,
+      "otros_nombres": null,
+      "departamento": {
+        "nombre": "QUINDÍO",
+        "codigo": "63"
+      },
+      "municipio": {
+        "nombre": "ARMENIA",
+        "codigo": "001"
+      },
+      "direccion": "CR 14 22 18 LC 2",
+      "correo": "ventas@cafealto.example",
+      "telefono": "6067459012",
+      "actividad_principal": {
+        "codigo": "0123",
+        "fecha_inicio": "20191007"
+      },
+      "actividad_secundaria": {
+        "codigo": "4631",
+        "fecha_inicio": "20200214"
+      },
+      "representante_legal": {
+        "primer_apellido": "GIRALDO",
+        "segundo_apellido": "ARANGO",
+        "primer_nombre": "SEBASTIÁN",
+        "otros_nombres": null,
+        "tipo_documento": "13",
+        "numero_identificacion": "1094887123"
+      },
+      "numero_formulario": "14204838539"
+    },
+    {
+      "id": "rut-12",
+      "variant": "scan",
+      "variant_options": {
+        "format": "pdf",
+        "seed": 12
+      },
+      "omit": [],
+      "tipo_contribuyente": "natural",
+      "nit": "94532871",
+      "dv": "3",
+      "razon_social": null,
+      "nombre_comercial": null,
+      "tipo_documento": "13",
+      "numero_identificacion": "94532871",
+      "primer_apellido": "MORENO",
+      "segundo_apellido": "CASTAÑO",
+      "primer_nombre": "WILSON",
+      "otros_nombres": null,
+      "departamento": {
+        "nombre": "VALLE DEL CAUCA",
+        "codigo": "76"
+      },
+      "municipio": {
+        "nombre": "CALI",
+        "codigo": "001"
+      },
+      "direccion": "CL 5 38 25",
+      "correo": "wmoreno.tienda@correo.example",
+      "telefono": "3176654093",
+      "actividad_principal": {
+        "codigo": "4711",
+        "fecha_inicio": "20080519"
+      },
+      "actividad_secundaria": null,
+      "representante_legal": null,
+      "numero_formulario": "14587096588"
+    },
+    {
+      "id": "rut-13",
+      "variant": "rotated",
+      "variant_options": {
+        "format": "jpg",
+        "angle": 90,
+        "seed": 13
+      },
+      "omit": [],
+      "tipo_contribuyente": "juridica",
+      "nit": "900987416",
+      "dv": "0",
+      "razon_social": "FLORES DE LA SABANA S.A.S.",
+      "nombre_comercial": null,
+      "tipo_documento": null,
+      "numero_identificacion": null,
+      "primer_apellido": null,
+      "segundo_apellido": null,
+      "primer_nombre": null,
+      "otros_nombres": null,
+      "departamento": {
+        "nombre": "CUNDINAMARCA",
+        "codigo": "25"
+      },
+      "municipio": {
+        "nombre": "ZIPAQUIRÁ",
+        "codigo": "899"
+      },
+      "direccion": "VDA BARANDILLAS FINCA EL ROSAL",
+      "correo": "exportaciones@floressabana.example",
+      "telefono": "6018523641",
+      "actividad_principal": {
+        "codigo": "0125",
+        "fecha_inicio": "20161128"
+      },
+      "actividad_secundaria": {
+        "codigo": "4620",
+        "fecha_inicio": "20170403"
+      },
+      "representante_legal": {
+        "primer_apellido": "CASTRO",
+        "segundo_apellido": "BELTRÁN",
+        "primer_nombre": "ANDREA",
+        "otros_nombres": null,
+        "tipo_documento": "13",
+        "numero_identificacion": "35478129"
+      },
+      "numero_formulario": "14969354637"
+    },
+    {
+      "id": "rut-14",
+      "variant": "rotated",
+      "variant_options": {
+        "format": "pdf",
+        "angle": 180,
+        "seed": 14
+      },
+      "omit": [],
+      "tipo_contribuyente": "natural",
+      "nit": "701588234",
+      "dv": "3",
+      "razon_social": null,
+      "nombre_comercial": null,
+      "tipo_documento": "41",
+      "numero_identificacion": "PE4821937",
+      "primer_apellido": "GARCÍA",
+      "segundo_apellido": "LÓPEZ",
+      "primer_nombre": "JAVIER",
+      "otros_nombres": "ALONSO",
+      "departamento": {
+        "nombre": "META",
+        "codigo": "50"
+      },
+      "municipio": {
+        "nombre": "VILLAVICENCIO",
+        "codigo": "001"
+      },
+      "direccion": "CL 38 31 50 AP 301",
+      "correo": "jgarcia.consultor@correo.example",
+      "telefono": "3143327810",
+      "actividad_principal": {
+        "codigo": "7490",
+        "fecha_inicio": "20230620"
+      },
+      "actividad_secundaria": null,
+      "representante_legal": null,
+      "numero_formulario": "14351612686"
+    },
+    {
+      "id": "rut-15",
+      "variant": "rotated",
+      "variant_options": {
+        "format": "png",
+        "angle": -5,
+        "seed": 15
+      },
+      "omit": [],
+      "tipo_contribuyente": "juridica",
+      "nit": "900452163",
+      "dv": "6",
+      "razon_social": "TEXTILES MONTAÑA VERDE S.A.S.",
+      "nombre_comercial": "MONTAÑA VERDE",
+      "tipo_documento": null,
+      "numero_identificacion": null,
+      "primer_apellido": null,
+      "segundo_apellido": null,
+      "primer_nombre": null,
+      "otros_nombres": null,
+      "departamento": {
+        "nombre": "ANTIOQUIA",
+        "codigo": "05"
+      },
+      "municipio": {
+        "nombre": "ITAGÜÍ",
+        "codigo": "360"
+      },
+      "direccion": "CR 50A 35 12",
+      "correo": "compras@montanaverde.example",
+      "telefono": "6043762215",
+      "actividad_principal": {
+        "codigo": "1410",
+        "fecha_inicio": "20120730"
+      },
+      "actividad_secundaria": {
+        "codigo": "1811",
+        "fecha_inicio": "20150902"
+      },
+      "representante_legal": {
+        "primer_apellido": "ZAPATA",
+        "segundo_apellido": "MEJÍA",
+        "primer_nombre": "LUIS",
+        "otros_nombres": "FERNANDO",
+        "tipo_documento": "13",
+        "numero_identificacion": "71654328"
+      },
+      "numero_formulario": "14733870735"
+    },
+    {
+      "id": "rut-16",
+      "variant": "lowres",
+      "variant_options": {
+        "format": "png",
+        "dpi": 72
+      },
+      "omit": [],
+      "tipo_contribuyente": "natural",
+      "nit": "1015478236",
+      "dv": "9",
+      "razon_social": null,
+      "nombre_comercial": null,
+      "tipo_documento": "13",
+      "numero_identificacion": "1015478236",
+      "primer_apellido": "HERRERA",
+      "segundo_apellido": "BUITRAGO",
+      "primer_nombre": "SANDRA",
+      "otros_nombres": "PATRICIA",
+      "departamento": {
+        "nombre": "TOLIMA",
+        "codigo": "73"
+      },
+      "municipio": {
+        "nombre": "IBAGUÉ",
+        "codigo": "001"
+      },
+      "direccion": "CR 5 42 30 BRR BELÉN",
+      "correo": "sandra.herrera@correo.example",
+      "telefono": "3187745120",
+      "actividad_principal": {
+        "codigo": "9602",
+        "fecha_inicio": "20181012"
+      },
+      "actividad_secundaria": null,
+      "representante_legal": null,
+      "numero_formulario": "14116128784"
+    },
+    {
+      "id": "rut-17",
+      "variant": "lowres",
+      "variant_options": {
+        "format": "jpg",
+        "dpi": 80
+      },
+      "omit": [],
+      "tipo_contribuyente": "juridica",
+      "nit": "901118594",
+      "dv": "1",
+      "razon_social": "INGENIERÍA Y MANTENIMIENTO NORTE S.A.S.",
+      "nombre_comercial": "IMN",
+      "tipo_documento": null,
+      "numero_identificacion": null,
+      "primer_apellido": null,
+      "segundo_apellido": null,
+      "primer_nombre": null,
+      "otros_nombres": null,
+      "departamento": {
+        "nombre": "NORTE DE SANTANDER",
+        "codigo": "54"
+      },
+      "municipio": {
+        "nombre": "CÚCUTA",
+        "codigo": "001"
+      },
+      "direccion": "AV 0 11 45 OF 203",
+      "correo": "operaciones@imnorte.example",
+      "telefono": "6075728413",
+      "actividad_principal": {
+        "codigo": "3312",
+        "fecha_inicio": "20171115"
+      },
+      "actividad_secundaria": {
+        "codigo": "7410",
+        "fecha_inicio": "20190508"
+      },
+      "representante_legal": {
+        "primer_apellido": "VILLAMIZAR",
+        "segundo_apellido": "ORTIZ",
+        "primer_nombre": "PEDRO",
+        "otros_nombres": "NEL",
+        "tipo_documento": "13",
+        "numero_identificacion": "13478562"
+      },
+      "numero_formulario": "14498386833"
+    },
+    {
+      "id": "rut-18",
+      "variant": "lowres",
+      "variant_options": {
+        "format": "png",
+        "dpi": 90
+      },
+      "omit": [],
+      "tipo_contribuyente": "natural",
+      "nit": "80456123",
+      "dv": "6",
+      "razon_social": null,
+      "nombre_comercial": null,
+      "tipo_documento": "13",
+      "numero_identificacion": "80456123",
+      "primer_apellido": "CÁRDENAS",
+      "segundo_apellido": "RUIZ",
+      "primer_nombre": "MIGUEL",
+      "otros_nombres": "ÁNGEL",
+      "departamento": {
+        "nombre": "HUILA",
+        "codigo": "41"
+      },
+      "municipio": {
+        "nombre": "NEIVA",
+        "codigo": "001"
+      },
+      "direccion": "CL 8 15 42",
+      "correo": "miguel.cardenas@correo.example",
+      "telefono": "3115428796",
+      "actividad_principal": {
+        "codigo": "0111",
+        "fecha_inicio": "20100304"
+      },
+      "actividad_secundaria": {
+        "codigo": "0162",
+        "fecha_inicio": "20130611"
+      },
+      "representante_legal": null,
+      "numero_formulario": "14880644882"
+    },
+    {
+      "id": "rut-19",
+      "variant": "missing",
+      "variant_options": {},
+      "omit": [
+        "segundo_apellido",
+        "actividad_secundaria"
+      ],
+      "tipo_contribuyente": "natural",
+      "nit": "1152463870",
+      "dv": "0",
+      "razon_social": null,
+      "nombre_comercial": null,
+      "tipo_documento": "13",
+      "numero_identificacion": "1152463870",
+      "primer_apellido": "OSPINA",
+      "segundo_apellido": null,
+      "primer_nombre": "VALENTINA",
+      "otros_nombres": null,
+      "departamento": {
+        "nombre": "ANTIOQUIA",
+        "codigo": "05"
+      },
+      "municipio": {
+        "nombre": "ENVIGADO",
+        "codigo": "266"
+      },
+      "direccion": "CL 37 SUR 43 20",
+      "correo": "valentina.ospina@correo.example",
+      "telefono": "3006671234",
+      "actividad_principal": {
+        "codigo": "7310",
+        "fecha_inicio": "20240115"
+      },
+      "actividad_secundaria": null,
+      "representante_legal": null,
+      "numero_formulario": "14262902931"
+    },
+    {
+      "id": "rut-20",
+      "variant": "missing",
+      "variant_options": {},
+      "omit": [
+        "representante_legal",
+        "actividad_secundaria"
+      ],
+      "tipo_contribuyente": "juridica",
+      "nit": "901407625",
+      "dv": "1",
+      "razon_social": "AGROINSUMOS LOS LLANOS S.A.S.",
+      "nombre_comercial": null,
+      "tipo_documento": null,
+      "numero_identificacion": null,
+      "primer_apellido": null,
+      "segundo_apellido": null,
+      "primer_nombre": null,
+      "otros_nombres": null,
+      "departamento": {
+        "nombre": "CASANARE",
+        "codigo": "85"
+      },
+      "municipio": {
+        "nombre": "YOPAL",
+        "codigo": "001"
+      },
+      "direccion": "CL 24 19 33",
+      "correo": "info@agrollanos.example",
+      "telefono": "6086354127",
+      "actividad_principal": {
+        "codigo": "4620",
+        "fecha_inicio": "20200807"
+      },
+      "actividad_secundaria": null,
+      "representante_legal": null,
+      "numero_formulario": "14645160980"
+    }
+  ]
+}

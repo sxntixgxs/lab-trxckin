@@ -1,0 +1,74 @@
+{
+  "case": "rut-16",
+  "requested_model": "google/gemini-3.1-flash-lite-preview",
+  "recorded_at": "2026-09-27T21:45:31.600Z",
+  "input": {
+    "file": "document.png",
+    "media_type": "image/png",
+    "sha256": "02134ec852bcc387bcba601e21cd5f5d773bb1199a9cd9bf05422f9837b27549"
+  },
+  "prompt_sha256": "e4af20497fd02df685cd0cecda49b25f237a14e9e24b4063250ed1276c3dd529",
+  "model": "google/gemini-3.1-flash-lite-preview",
+  "latency_ms": 1320,
+  "outcome": "ok",
+  "usage": {
+    "promptTokens": 1492,
+    "completionTokens": 205,
+    "costUsd": 0.0006805,
+    "costSource": "provider"
+  },
+  "response": {
+    "id": "gen-1790545531-urgjZDeN1eiXPsC53U7A",
+    "object": "chat.completion",
+    "created": 1790545531,
+    "model": "google/gemini-3.1-flash-lite-preview",
+    "provider": "Google AI Studio",
+    "system_fingerprint": null,
+    "service_tier": "default",
+    "choices": [
+      {
+        "index": 0,
+        "logprobs": null,
+        "finish_reason": "stop",
+        "native_finish_reason": "STOP",
+        "message": {
+          "role": "assistant",
+          "content": "{\n  \"nit\": \"1015478236\",\n  \"dv\": \"9\",\n  \"tipo_contribuyente\": \"natural\",\n  \"razon_social\": null,\n  \"tipo_documento\": \"Cédula de Ciudadanía\",\n  \"numero_identificacion\": \"1015478236\",\n  \"primer_apellido\": \"HERRERA\",\n  \"segundo_apellido\": \"BUITRAGO\",\n  \"primer_nombre\": \"SANDRA\",\n  \"actividad_principal_codigo\": \"9602\",\n  \"actividad_secundaria_codigo\": null,\n  \"departamento\": \"TOLIMA\",\n  \"municipio\": \"IBAGUÉ\",\n  \"direccion\": \"CR 5 42 30 BRR BELÉN\",\n  \"nombre_representante_legal\": null\n}",
+          "refusal": null,
+          "reasoning": null,
+          "reasoning_details": [
+            {
+              "type": "reasoning.text",
+              "signature": "EnMKcQFpFH0TaE1esXd/ka+RaPsL9T4sE3L/Nh764BMSIcyVnDqIFxlEq5y81H6spH6VmTkdUrfr1VRTue2zcqzB4nR/XB54ChC4zpnqJi6vBMf6SEFUU3woDB4yIuI+8Zliy5NV0+RnYxTtLmIYlSWfOrpq",
+              "format": "google-gemini-v1",
+              "index": 0
+            }
+          ]
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1492,
+      "completion_tokens": 205,
+      "total_tokens": 1697,
+      "cost": 0.0006805,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.0006805,
+        "upstream_inference_prompt_cost": 0.000373,
+        "upstream_inference_completions_cost": 0.0003075
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    }
+  }
+}

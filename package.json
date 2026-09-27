@@ -10,7 +10,8 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
-    "start": "turbo run start"
+    "start": "turbo run start",
+    "eval:rut": "pnpm --filter frontend eval:rut"
   },
   "devDependencies": {
     "concurrently": "^9.2.3",

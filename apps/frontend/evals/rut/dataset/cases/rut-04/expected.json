@@ -1,0 +1,18 @@
+{
+  "nit": "1020734589",
+  "dv": "1",
+  "tipo_contribuyente": "natural",
+  "razon_social": null,
+  "tipo_documento": "13",
+  "numero_identificacion": "1020734589",
+  "primer_apellido": "MARTÍNEZ",
+  "segundo_apellido": "PÉREZ",
+  "primer_nombre": "LUISA",
+  "actividad_principal_codigo": "8621",
+  "actividad_secundaria_codigo": "8299",
+  "departamento": "CUNDINAMARCA",
+  "municipio": "CHÍA",
+  "direccion": "CR 9 12 45 CS 3",
+  "nombre_representante_legal": null,
+  "variant": "clean"
+}

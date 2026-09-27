@@ -1,0 +1,74 @@
+{
+  "case": "rut-07",
+  "requested_model": "google/gemini-3.1-flash-lite-preview",
+  "recorded_at": "2026-09-27T21:45:27.794Z",
+  "input": {
+    "file": "document.pdf",
+    "media_type": "application/pdf",
+    "sha256": "43dccaa7a4356963d0ce0062de925712602d7717e53e271892d977499f51e96a"
+  },
+  "prompt_sha256": "e4af20497fd02df685cd0cecda49b25f237a14e9e24b4063250ed1276c3dd529",
+  "model": "google/gemini-3.1-flash-lite-preview",
+  "latency_ms": 1488,
+  "outcome": "ok",
+  "usage": {
+    "promptTokens": 910,
+    "completionTokens": 208,
+    "costUsd": 0.0005395,
+    "costSource": "provider"
+  },
+  "response": {
+    "id": "gen-1790545527-IlCmwJxJd4GBQVTV2RHs",
+    "object": "chat.completion",
+    "created": 1790545527,
+    "model": "google/gemini-3.1-flash-lite-preview",
+    "provider": "Google AI Studio",
+    "system_fingerprint": null,
+    "service_tier": "default",
+    "choices": [
+      {
+        "index": 0,
+        "logprobs": null,
+        "finish_reason": "stop",
+        "native_finish_reason": "STOP",
+        "message": {
+          "role": "assistant",
+          "content": "{\n  \"nit\": \"901563208\",\n  \"dv\": \"9\",\n  \"tipo_contribuyente\": \"juridica\",\n  \"razon_social\": \"CONSTRUCTORA PIEDRA AZUL S.A.S.\",\n  \"tipo_documento\": null,\n  \"numero_identificacion\": null,\n  \"primer_apellido\": null,\n  \"segundo_apellido\": null,\n  \"primer_nombre\": null,\n  \"actividad_principal_codigo\": \"4111\",\n  \"actividad_secundaria_codigo\": \"4290\",\n  \"departamento\": \"SANTANDER\",\n  \"municipio\": \"BUCARAMANGA\",\n  \"direccion\": \"CL 36 27 52 P 4\",\n  \"nombre_representante_legal\": \"HERNÁN SERRANO DUARTE\"\n}",
+          "refusal": null,
+          "reasoning": null,
+          "reasoning_details": [
+            {
+              "type": "reasoning.text",
+              "signature": "EnMKcQFpFH0TxoKBjM5IOfYIKE7ZJ4Hv71n93DLQiaMjgOGdSBm6g54pQNOyHzTlaHJSj8cGJ/ouMSGivc0Jh2EmD9vJsA95Lb9cFbgN07JQnIucC2MDc7YG7wtXllH/fgKzBJ05YQ1qejBUGQaY+yf+2yTq",
+              "format": "google-gemini-v1",
+              "index": 0
+            }
+          ]
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 910,
+      "completion_tokens": 208,
+      "total_tokens": 1118,
+      "cost": 0.0005395,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.0005395,
+        "upstream_inference_prompt_cost": 0.0002275,
+        "upstream_inference_completions_cost": 0.000312
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    }
+  }
+}

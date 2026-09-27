@@ -1,0 +1,74 @@
+{
+  "case": "rut-15",
+  "requested_model": "deepseek/deepseek-v4.1-flash",
+  "recorded_at": "2026-09-27T21:50:13.434Z",
+  "input": {
+    "file": "document.png",
+    "media_type": "image/png",
+    "sha256": "9afda987b822b30c7b06644c3118f914d1e4ede4ab179abd0589275617f6c861"
+  },
+  "prompt_sha256": "e4af20497fd02df685cd0cecda49b25f237a14e9e24b4063250ed1276c3dd529",
+  "model": "deepseek/deepseek-v4.1-flash",
+  "latency_ms": 5706,
+  "outcome": "ok",
+  "usage": {
+    "promptTokens": 1415,
+    "completionTokens": 1767,
+    "costUsd": 0.0025449,
+    "costSource": "provider"
+  },
+  "response": {
+    "id": "gen-1790545813-5gk8PqGcb3SrGw7acdZQ",
+    "object": "chat.completion",
+    "created": 1790545813,
+    "model": "deepseek/deepseek-v4.1-flash",
+    "provider": "Together",
+    "system_fingerprint": "default",
+    "service_tier": null,
+    "choices": [
+      {
+        "index": 0,
+        "logprobs": null,
+        "finish_reason": "stop",
+        "native_finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "{\n  \"nit\": \"900452163\",\n  \"dv\": \"6\",\n  \"tipo_contribuyente\": \"juridica\",\n  \"razon_social\": \"TEXTILES MONTAÑA VERDE S.A.S.\",\n  \"tipo_documento\": null,\n  \"numero_identificacion\": null,\n  \"primer_apellido\": null,\n  \"segundo_apellido\": null,\n  \"primer_nombre\": null,\n  \"actividad_principal_codigo\": \"1410\",\n  \"actividad_secundaria_codigo\": \"1811\",\n  \"departamento\": \"ANTIOQUIA\",\n  \"municipio\": \"ITAGÜÍ\",\n  \"direccion\": \"CR 50A 35 12\",\n  \"nombre_representante_legal\": \"LUIS FERNANDO ZAPATA MEJIA\"\n}",
+          "refusal": null,
+          "reasoning": "1.  **Analyze the Request:**\n    *   Extract specific fields from the provided image of a DIAN RUT document.\n    *   Output format: ONLY a valid JSON object. No markdown, no explanations.\n    *   Rules:\n        *   Missing/empty fields -> `null`.\n        *   `tipo_contribuyente`: \"natural\" or \"juridica\".\n        *   `nit`: Box 5 (Número de Identificación Tributaria). Copy digits exactly.\n        *   `dv`: Box 6 (DV). Copy exactly.\n        *   Codes as strings.\n        *   `departamento`: Extract name (e.g., \"ANTIOQUIA\").\n        *   `municipio`: Extract city/municipality name (e.g., \"ITAGÜÍ\").\n        *   `direccion`: Extract full address.\n        *   `nombre_representante_legal`: Extract full name if present (for juridica), else null.\n    *   JSON Structure provided in the prompt.\n\n2.  **Extract Data from the Image:**\n    *   **Nit (Box 5):** `900452163` (Wait, looking closely at the image, Box 5 is \"9 0 0 4 5 2 1 6 3\". Yes, that's 9 digits).\n    *   **DV (Box 6):** `6`\n    *   **tipo_contribuyente:** Box 24 says \"Persona jurídica\". -> \"juridica\"\n    *   **razon_social:** Box 35 says \"TEXTILES MONTAÑA VERDE S.A.S.\"\n    *   **tipo_documento:** Box 25 is empty for this (it says \"Cód 1\" above Box 25, but the box for 25 tipo de documento is blank. Wait, Box 25 is empty. Wait, looking at Box 25 for the legal entity, it's empty. For the legal representative (Box 100), it says \"Cédula de Ciudadanía 13\". But the prompt says `tipo_documento` corresponds to Box 25? Actually, the JSON has `tipo_documento` and `numero_identificacion`. Box 25 is *Tipo de documento* for the *contribuyente*. For Persona Jurídica, NIT is the document. The box is blank. So `null`.\n    *   **numero_identificacion:** Box 26 is empty. `null`.\n    *   **primer_apellido:** Box 31 is empty (Persona Jurídica). `null`.\n    *   **segundo_apellido:** Box 32 is empty. `null`.\n    *   **primer_nombre:** Box 33 is empty. `null`.\n    *   **actividad_principal_codigo:** Box 46 is `1410`.\n    *   **actividad_secundaria_codigo:** Box 48 is `1811`.\n    *   **departamento:** Box 39 is \"ANTIOQUIA\".\n    *   **municipio:** Box 40 is \"ITAGÜÍ\".\n    *   **direccion:** Box 41 is \"CR 50A 35 12\".\n    *   **nombre_representante_legal:** Boxes 104, 105, 106, 107.\n        *   104 Primer apellido: ZAPATA\n        *   105 Segundo apellido: MEJIA\n        *   106 Primer nombre: LUIS\n        *   107 Otros nombres: FERNANDO\n        *   Full name: ZAPATA MEJIA LUIS FERNANDO. (Usually formatted as Nombres + Apellidos, but let's just get the full name. \"LUIS FERNANDO ZAPATA MEJIA\" or \"ZAPATA MEJIA LUIS FERNANDO\" depending on convention. Let's just use the text from the boxes in a logical order, e.g., \"LUIS FERNANDO ZAPATA MEJIA\" or \"ZAPATA MEJIA LUIS FERNANDO\". The prompt asks for \"full name\". I'll provide \"LUIS FERNANDO ZAPATA MEJIA\". Wait, looking at the typical RUT format, it's usually Primer Apellido, Segundo Apellido, Primer Nombre, Otros Nombres. I'll assemble it as \"LUIS FERNANDO ZAPATA MEJIA\" for common reading, or \"ZAPATA MEJIA LUIS FERNANDO\". Let's just use \"LUIS FERNANDO ZAPATA MEJIA\". Wait, I'll stick to the exact string combination to be safe: \"ZAPATA MEJIA LUIS FERNANDO\". Actually, natural order is \"LUIS FERNANDO ZAPATA MEJIA\". Let's provide \"LUIS FERNANDO ZAPATA MEJIA\".\n\n3.  **Refine Extraction based on exact JSON structure:**\n    *   `nit`: \"900452163\"\n    *   `dv`: \"6\"\n    *   `tipo_contribuyente`: \"juridica\"\n    *   `razon_social`: \"TEXTILES MONTAÑA VERDE S.A.S.\"\n    *   `tipo_documento`: null (Box 25 is empty)\n    *   `numero_identificacion`: null (Box 26 is empty)\n    *   `primer_apellido`: null (Box 31 empty)\n    *   `segundo_apellido`: null (Box 32 empty)\n    *   `primer_nombre`: null (Box 33 empty)\n    *   `actividad_principal_codigo`: \"1410\"\n    *   `actividad_secundaria_codigo`: \"1811\"\n    *   `departamento`: \"ANTIOQUIA\"\n    *   `municipio`: \"ITAGÜÍ\"\n    *   `direccion`: \"CR 50A 35 12\"\n    *   `nombre_representante_legal`: \"LUIS FERNANDO ZAPATA MEJIA\" (or \"ZAPATA MEJIA LUIS FERNANDO\", but the first is standard. I will use \"LUIS FERNANDO ZAPATA MEJIA\").\n\n4.  **Final JSON Validation:**\n    *   Ensure no markdown, just the JSON.\n    *   Check for syntax errors (commas, quotes).\n    *   Verify all keys are present.\n    *   Ensure all values are correct strings or null.\n\n    *Self-Correction on NIT:* Box 5: 9 0 0 4 5 2 1 6 3. `\"900452163\"`.\n    *Self-Correction on DV:* Box 6: 6. `\"6\"`.\n    *Self-Correction on `tipo_documento` and `numero_identificacion`: Boxes 25 and 26 are empty. So `null`.\n    *Self-Correction on `nombre_representante_legal`: \"LUIS FERNANDO ZAPATA MEJIA\".\n\n    Looks good to go.",
+          "reasoning_details": [
+            {
+              "type": "reasoning.text",
+              "text": "1.  **Analyze the Request:**\n    *   Extract specific fields from the provided image of a DIAN RUT document.\n    *   Output format: ONLY a valid JSON object. No markdown, no explanations.\n    *   Rules:\n        *   Missing/empty fields -> `null`.\n        *   `tipo_contribuyente`: \"natural\" or \"juridica\".\n        *   `nit`: Box 5 (Número de Identificación Tributaria). Copy digits exactly.\n        *   `dv`: Box 6 (DV). Copy exactly.\n        *   Codes as strings.\n        *   `departamento`: Extract name (e.g., \"ANTIOQUIA\").\n        *   `municipio`: Extract city/municipality name (e.g., \"ITAGÜÍ\").\n        *   `direccion`: Extract full address.\n        *   `nombre_representante_legal`: Extract full name if present (for juridica), else null.\n    *   JSON Structure provided in the prompt.\n\n2.  **Extract Data from the Image:**\n    *   **Nit (Box 5):** `900452163` (Wait, looking closely at the image, Box 5 is \"9 0 0 4 5 2 1 6 3\". Yes, that's 9 digits).\n    *   **DV (Box 6):** `6`\n    *   **tipo_contribuyente:** Box 24 says \"Persona jurídica\". -> \"juridica\"\n    *   **razon_social:** Box 35 says \"TEXTILES MONTAÑA VERDE S.A.S.\"\n    *   **tipo_documento:** Box 25 is empty for this (it says \"Cód 1\" above Box 25, but the box for 25 tipo de documento is blank. Wait, Box 25 is empty. Wait, looking at Box 25 for the legal entity, it's empty. For the legal representative (Box 100), it says \"Cédula de Ciudadanía 13\". But the prompt says `tipo_documento` corresponds to Box 25? Actually, the JSON has `tipo_documento` and `numero_identificacion`. Box 25 is *Tipo de documento* for the *contribuyente*. For Persona Jurídica, NIT is the document. The box is blank. So `null`.\n    *   **numero_identificacion:** Box 26 is empty. `null`.\n    *   **primer_apellido:** Box 31 is empty (Persona Jurídica). `null`.\n    *   **segundo_apellido:** Box 32 is empty. `null`.\n    *   **primer_nombre:** Box 33 is empty. `null`.\n    *   **actividad_principal_codigo:** Box 46 is `1410`.\n    *   **actividad_secundaria_codigo:** Box 48 is `1811`.\n    *   **departamento:** Box 39 is \"ANTIOQUIA\".\n    *   **municipio:** Box 40 is \"ITAGÜÍ\".\n    *   **direccion:** Box 41 is \"CR 50A 35 12\".\n    *   **nombre_representante_legal:** Boxes 104, 105, 106, 107.\n        *   104 Primer apellido: ZAPATA\n        *   105 Segundo apellido: MEJIA\n        *   106 Primer nombre: LUIS\n        *   107 Otros nombres: FERNANDO\n        *   Full name: ZAPATA MEJIA LUIS FERNANDO. (Usually formatted as Nombres + Apellidos, but let's just get the full name. \"LUIS FERNANDO ZAPATA MEJIA\" or \"ZAPATA MEJIA LUIS FERNANDO\" depending on convention. Let's just use the text from the boxes in a logical order, e.g., \"LUIS FERNANDO ZAPATA MEJIA\" or \"ZAPATA MEJIA LUIS FERNANDO\". The prompt asks for \"full name\". I'll provide \"LUIS FERNANDO ZAPATA MEJIA\". Wait, looking at the typical RUT format, it's usually Primer Apellido, Segundo Apellido, Primer Nombre, Otros Nombres. I'll assemble it as \"LUIS FERNANDO ZAPATA MEJIA\" for common reading, or \"ZAPATA MEJIA LUIS FERNANDO\". Let's just use \"LUIS FERNANDO ZAPATA MEJIA\". Wait, I'll stick to the exact string combination to be safe: \"ZAPATA MEJIA LUIS FERNANDO\". Actually, natural order is \"LUIS FERNANDO ZAPATA MEJIA\". Let's provide \"LUIS FERNANDO ZAPATA MEJIA\".\n\n3.  **Refine Extraction based on exact JSON structure:**\n    *   `nit`: \"900452163\"\n    *   `dv`: \"6\"\n    *   `tipo_contribuyente`: \"juridica\"\n    *   `razon_social`: \"TEXTILES MONTAÑA VERDE S.A.S.\"\n    *   `tipo_documento`: null (Box 25 is empty)\n    *   `numero_identificacion`: null (Box 26 is empty)\n    *   `primer_apellido`: null (Box 31 empty)\n    *   `segundo_apellido`: null (Box 32 empty)\n    *   `primer_nombre`: null (Box 33 empty)\n    *   `actividad_principal_codigo`: \"1410\"\n    *   `actividad_secundaria_codigo`: \"1811\"\n    *   `departamento`: \"ANTIOQUIA\"\n    *   `municipio`: \"ITAGÜÍ\"\n    *   `direccion`: \"CR 50A 35 12\"\n    *   `nombre_representante_legal`: \"LUIS FERNANDO ZAPATA MEJIA\" (or \"ZAPATA MEJIA LUIS FERNANDO\", but the first is standard. I will use \"LUIS FERNANDO ZAPATA MEJIA\").\n\n4.  **Final JSON Validation:**\n    *   Ensure no markdown, just the JSON.\n    *   Check for syntax errors (commas, quotes).\n    *   Verify all keys are present.\n    *   Ensure all values are correct strings or null.\n\n    *Self-Correction on NIT:* Box 5: 9 0 0 4 5 2 1 6 3. `\"900452163\"`.\n    *Self-Correction on DV:* Box 6: 6. `\"6\"`.\n    *Self-Correction on `tipo_documento` and `numero_identificacion`: Boxes 25 and 26 are empty. So `null`.\n    *Self-Correction on `nombre_representante_legal`: \"LUIS FERNANDO ZAPATA MEJIA\".\n\n    Looks good to go.",
+              "format": "unknown",
+              "index": 0
+            }
+          ]
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1415,
+      "completion_tokens": 1767,
+      "total_tokens": 3182,
+      "cost": 0.0025449,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.0025449,
+        "upstream_inference_prompt_cost": 0.0004245,
+        "upstream_inference_completions_cost": 0.0021204
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 1568,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    }
+  }
+}

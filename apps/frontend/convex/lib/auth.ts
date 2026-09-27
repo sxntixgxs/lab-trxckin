@@ -58,7 +58,7 @@ export async function requireRole(
  * so `timingSafeEqual` is implemented by hand: XOR every char code and OR the result
  * together so the loop always runs over the full expected length.
  */
-function constantTimeEqual(a: string, b: string): boolean {
+export function constantTimeEqual(a: string, b: string): boolean {
   let diff = a.length ^ b.length;
   const length = Math.max(a.length, b.length);
   for (let i = 0; i < length; i++) {
