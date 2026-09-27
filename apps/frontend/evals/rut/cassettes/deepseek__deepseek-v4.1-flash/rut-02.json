@@ -1,0 +1,74 @@
+{
+  "case": "rut-02",
+  "requested_model": "deepseek/deepseek-v4.1-flash",
+  "recorded_at": "2026-09-27T21:49:50.383Z",
+  "input": {
+    "file": "document.pdf",
+    "media_type": "application/pdf",
+    "sha256": "31a688319804d41977cd482ac2a620bb6f72d2fe72dbe9074fe4dc61b7cb2048"
+  },
+  "prompt_sha256": "e4af20497fd02df685cd0cecda49b25f237a14e9e24b4063250ed1276c3dd529",
+  "model": "deepseek/deepseek-v4.1-flash",
+  "latency_ms": 7942,
+  "outcome": "ok",
+  "usage": {
+    "promptTokens": 1409,
+    "completionTokens": 1113,
+    "costUsd": 0.0017583,
+    "costSource": "provider"
+  },
+  "response": {
+    "id": "gen-1790545791-0WkdGq4r3eUw71GkT8M9",
+    "object": "chat.completion",
+    "created": 1790545791,
+    "model": "deepseek/deepseek-v4.1-flash",
+    "provider": "Together",
+    "system_fingerprint": "default",
+    "service_tier": null,
+    "choices": [
+      {
+        "index": 0,
+        "logprobs": null,
+        "finish_reason": "stop",
+        "native_finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "{\n  \"nit\": \"79845123\",\n  \"dv\": \"1\",\n  \"tipo_contribuyente\": \"natural\",\n  \"razon_social\": null,\n  \"tipo_documento\": \"Cédula de Ciudadanía\",\n  \"numero_identificacion\": \"79845123\",\n  \"primer_apellido\": \"GÓMEZ\",\n  \"segundo_apellido\": \"ARIAS\",\n  \"primer_nombre\": \"CARLOS\",\n  \"actividad_principal_codigo\": \"6920\",\n  \"actividad_secundaria_codigo\": null,\n  \"departamento\": \"BOGOTÁ D.C.\",\n  \"municipio\": \"BOGOTÁ D.C.\",\n  \"direccion\": \"CL 127 15 32 AP 402\",\n  \"nombre_representante_legal\": null\n}",
+          "refusal": null,
+          "reasoning": "1.  **Analyze the Request**:\n    *   Input: An image of a DIAN RUT (Registro Único Tributario) document.\n    *   Task: Extract specific fields and return a JSON object.\n    *   Constraints: ONLY valid JSON, no markdown, no explanation.\n    *   Rules: Use `null` for missing/empty fields. `tipo_contribuyente` must be \"natural\" or \"juridica\". `nit` and `dv` from specific boxes. Codes as strings. Extract specific formats for department, municipality, address, legal representative.\n\n2.  **Examine the Image & Extract Data**:\n    *   **nit (Box 5)**: `7 9 8 4 5 1 2 3` -> \"79845123\"\n    *   **dv (Box 6)**: `1` -> \"1\"\n    *   **tipo_contribuyente (Box 24)**: \"Persona natural o sucesión líquida\" -> \"natural\"\n    *   **razon_social (Box 35)**: Empty -> null\n    *   **tipo_documento (Box 25)**: \"Cédula de Ciudadanía\" -> \"Cédula de Ciudadanía\"\n    *   **numero_identificacion (Box 26)**: \"79845123\" -> \"79845123\"\n    *   **primer_apellido (Box 31)**: \"GÓMEZ\" -> \"GÓMEZ\"\n    *   **segundo_apellido (Box 32)**: \"ARIAS\" -> \"ARIAS\"\n    *   **primer_nombre (Box 33)**: \"CARLOS\" -> \"CARLOS\"\n    *   **actividad_principal_codigo (Box 46)**: \"6 9 2 0\" -> \"6920\"\n    *   **actividad_secundaria_codigo (Box 48)**: Empty -> null\n    *   **departamento (Box 39)**: \"BOGOTÁ D.C.\" -> \"BOGOTÁ D.C.\"\n    *   **municipio (Box 40)**: \"BOGOTÁ D.C.\" -> \"BOGOTÁ D.C.\"\n    *   **direccion (Box 41)**: \"CL 127 15 32 AP 402\" -> \"CL 127 15 32 AP 402\"\n    *   **nombre_representante_legal**: Empty (since it's a natural person) -> null\n\n3.  **Construct the JSON**:\n    *   Ensure all strings are properly quoted.\n    *   Check for `null` values where specified.\n    *   Verify that `nit` and `dv` are exactly as requested.\n\n4.  **Final JSON Review**:\n    *   `nit`: \"79845123\"\n    *   `dv`: \"1\"\n    *   `tipo_contribuyente`: \"natural\"\n    *   `razon_social`: null\n    *   `tipo_documento`: \"Cédula de Ciudadanía\"\n    *   `numero_identificacion`: \"79845123\"\n    *   `primer_apellido`: \"GÓMEZ\"\n    *   `segundo_apellido`: \"ARIAS\"\n    *   `primer_nombre`: \"CARLOS\"\n    *   `actividad_principal_codigo`: \"6920\"\n    *   `actividad_secundaria_codigo`: null\n    *   `departamento`: \"BOGOTÁ D.C.\"\n    *   `municipio`: \"BOGOTÁ D.C.\"\n    *   `direccion`: \"CL 127 15 32 AP 402\"\n    *   `nombre_representante_legal`: null\n\n5.  **Output Generation**: Provide only the JSON block, no markdown wrappers (as per \"no markdown\" rule), though the prompt says \"return ONLY a valid JSON object\" and \"no markdown\". I will output the raw JSON. Wait, standard json response is usually wrapped in ```json ``` if not explicitly forbidden, but \"No markdown\" explicitly forbids it. I will just print the JSON string.",
+          "reasoning_details": [
+            {
+              "type": "reasoning.text",
+              "text": "1.  **Analyze the Request**:\n    *   Input: An image of a DIAN RUT (Registro Único Tributario) document.\n    *   Task: Extract specific fields and return a JSON object.\n    *   Constraints: ONLY valid JSON, no markdown, no explanation.\n    *   Rules: Use `null` for missing/empty fields. `tipo_contribuyente` must be \"natural\" or \"juridica\". `nit` and `dv` from specific boxes. Codes as strings. Extract specific formats for department, municipality, address, legal representative.\n\n2.  **Examine the Image & Extract Data**:\n    *   **nit (Box 5)**: `7 9 8 4 5 1 2 3` -> \"79845123\"\n    *   **dv (Box 6)**: `1` -> \"1\"\n    *   **tipo_contribuyente (Box 24)**: \"Persona natural o sucesión líquida\" -> \"natural\"\n    *   **razon_social (Box 35)**: Empty -> null\n    *   **tipo_documento (Box 25)**: \"Cédula de Ciudadanía\" -> \"Cédula de Ciudadanía\"\n    *   **numero_identificacion (Box 26)**: \"79845123\" -> \"79845123\"\n    *   **primer_apellido (Box 31)**: \"GÓMEZ\" -> \"GÓMEZ\"\n    *   **segundo_apellido (Box 32)**: \"ARIAS\" -> \"ARIAS\"\n    *   **primer_nombre (Box 33)**: \"CARLOS\" -> \"CARLOS\"\n    *   **actividad_principal_codigo (Box 46)**: \"6 9 2 0\" -> \"6920\"\n    *   **actividad_secundaria_codigo (Box 48)**: Empty -> null\n    *   **departamento (Box 39)**: \"BOGOTÁ D.C.\" -> \"BOGOTÁ D.C.\"\n    *   **municipio (Box 40)**: \"BOGOTÁ D.C.\" -> \"BOGOTÁ D.C.\"\n    *   **direccion (Box 41)**: \"CL 127 15 32 AP 402\" -> \"CL 127 15 32 AP 402\"\n    *   **nombre_representante_legal**: Empty (since it's a natural person) -> null\n\n3.  **Construct the JSON**:\n    *   Ensure all strings are properly quoted.\n    *   Check for `null` values where specified.\n    *   Verify that `nit` and `dv` are exactly as requested.\n\n4.  **Final JSON Review**:\n    *   `nit`: \"79845123\"\n    *   `dv`: \"1\"\n    *   `tipo_contribuyente`: \"natural\"\n    *   `razon_social`: null\n    *   `tipo_documento`: \"Cédula de Ciudadanía\"\n    *   `numero_identificacion`: \"79845123\"\n    *   `primer_apellido`: \"GÓMEZ\"\n    *   `segundo_apellido`: \"ARIAS\"\n    *   `primer_nombre`: \"CARLOS\"\n    *   `actividad_principal_codigo`: \"6920\"\n    *   `actividad_secundaria_codigo`: null\n    *   `departamento`: \"BOGOTÁ D.C.\"\n    *   `municipio`: \"BOGOTÁ D.C.\"\n    *   `direccion`: \"CL 127 15 32 AP 402\"\n    *   `nombre_representante_legal`: null\n\n5.  **Output Generation**: Provide only the JSON block, no markdown wrappers (as per \"no markdown\" rule), though the prompt says \"return ONLY a valid JSON object\" and \"no markdown\". I will output the raw JSON. Wait, standard json response is usually wrapped in ```json ``` if not explicitly forbidden, but \"No markdown\" explicitly forbids it. I will just print the JSON string.",
+              "format": "unknown",
+              "index": 0
+            }
+          ]
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1409,
+      "completion_tokens": 1113,
+      "total_tokens": 2522,
+      "cost": 0.0017583,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.0017583,
+        "upstream_inference_prompt_cost": 0.0004227,
+        "upstream_inference_completions_cost": 0.0013356
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 918,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    }
+  }
+}

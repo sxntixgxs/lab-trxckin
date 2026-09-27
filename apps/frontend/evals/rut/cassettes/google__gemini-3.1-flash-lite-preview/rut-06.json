@@ -1,0 +1,74 @@
+{
+  "case": "rut-06",
+  "requested_model": "google/gemini-3.1-flash-lite-preview",
+  "recorded_at": "2026-09-27T21:45:27.771Z",
+  "input": {
+    "file": "document.pdf",
+    "media_type": "application/pdf",
+    "sha256": "4df3b7fa38c2f3205b8e96bf02943b9493210e098c0c50b946a8d1568b210f88"
+  },
+  "prompt_sha256": "e4af20497fd02df685cd0cecda49b25f237a14e9e24b4063250ed1276c3dd529",
+  "model": "google/gemini-3.1-flash-lite-preview",
+  "latency_ms": 1531,
+  "outcome": "ok",
+  "usage": {
+    "promptTokens": 910,
+    "completionTokens": 195,
+    "costUsd": 0.00052,
+    "costSource": "provider"
+  },
+  "response": {
+    "id": "gen-1790545527-Wm78QW7I6reWfDnxDQZV",
+    "object": "chat.completion",
+    "created": 1790545527,
+    "model": "google/gemini-3.1-flash-lite-preview",
+    "provider": "Google AI Studio",
+    "system_fingerprint": null,
+    "service_tier": "default",
+    "choices": [
+      {
+        "index": 0,
+        "logprobs": null,
+        "finish_reason": "stop",
+        "native_finish_reason": "STOP",
+        "message": {
+          "role": "assistant",
+          "content": "{\n  \"nit\": \"682415\",\n  \"dv\": \"9\",\n  \"tipo_contribuyente\": \"natural\",\n  \"razon_social\": null,\n  \"tipo_documento\": \"22\",\n  \"numero_identificacion\": \"682415\",\n  \"primer_apellido\": \"ROSSI\",\n  \"segundo_apellido\": \"BIANCHI\",\n  \"primer_nombre\": \"MARCO\",\n  \"actividad_principal_codigo\": \"5611\",\n  \"actividad_secundaria_codigo\": null,\n  \"departamento\": \"ATLÁNTICO\",\n  \"municipio\": \"BARRANQUILLA\",\n  \"direccion\": \"CR 53 82 116 AP 5B\",\n  \"nombre_representante_legal\": null\n}",
+          "refusal": null,
+          "reasoning": null,
+          "reasoning_details": [
+            {
+              "type": "reasoning.text",
+              "signature": "EnMKcQFpFH0TL+7IepWZTwYi8le1vIgDW3ZfcgYinkRMGrr6e6/IpRa5aszXFtW9Xy5icycW7BciLyvvEW4fLPcBhO7WR7IHxFHtsEuZ7ApfJq0KYza9tZ4c+LFVJhUvjJaK1S5Ve/xCRW0g5QUE3SkKgfAm",
+              "format": "google-gemini-v1",
+              "index": 0
+            }
+          ]
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 910,
+      "completion_tokens": 195,
+      "total_tokens": 1105,
+      "cost": 0.00052,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.00052,
+        "upstream_inference_prompt_cost": 0.0002275,
+        "upstream_inference_completions_cost": 0.0002925
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    }
+  }
+}

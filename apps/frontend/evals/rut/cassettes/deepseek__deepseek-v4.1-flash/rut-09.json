@@ -1,0 +1,74 @@
+{
+  "case": "rut-09",
+  "requested_model": "deepseek/deepseek-v4.1-flash",
+  "recorded_at": "2026-09-27T21:50:03.419Z",
+  "input": {
+    "file": "document.jpg",
+    "media_type": "image/jpeg",
+    "sha256": "223e023c1ddea7f27025bd4f10853c3977838bcd1917b7c317cda8e42eb7733d"
+  },
+  "prompt_sha256": "e4af20497fd02df685cd0cecda49b25f237a14e9e24b4063250ed1276c3dd529",
+  "model": "deepseek/deepseek-v4.1-flash",
+  "latency_ms": 6066,
+  "outcome": "ok",
+  "usage": {
+    "promptTokens": 1409,
+    "completionTokens": 1680,
+    "costUsd": 0.0024387,
+    "costSource": "provider"
+  },
+  "response": {
+    "id": "gen-1790545803-x9ivsbgVp71LfSbUinNC",
+    "object": "chat.completion",
+    "created": 1790545803,
+    "model": "deepseek/deepseek-v4.1-flash",
+    "provider": "Together",
+    "system_fingerprint": "default",
+    "service_tier": null,
+    "choices": [
+      {
+        "index": 0,
+        "logprobs": null,
+        "finish_reason": "stop",
+        "native_finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "{\n  \"nit\": \"900615734\",\n  \"dv\": \"2\",\n  \"tipo_contribuyente\": \"juridica\",\n  \"razon_social\": \"SOLUCIONES LOGISTICAS DEL CARIBE S.A.S.\",\n  \"tipo_documento\": null,\n  \"numero_identificacion\": null,\n  \"primer_apellido\": null,\n  \"segundo_apellido\": null,\n  \"primer_nombre\": null,\n  \"actividad_principal_codigo\": \"5229\",\n  \"actividad_secundaria_codigo\": \"4923\",\n  \"departamento\": \"BOLÍVAR\",\n  \"municipio\": \"CARTAGENA DE INDIAS\",\n  \"direccion\": \"BRR MANGA CL 28 24 61\",\n  \"nombre_representante_legal\": \"ROSA ELENA PADILLA MARRUGO\"\n}",
+          "refusal": null,
+          "reasoning": "1.  **Analyze the Request:**\n    *   Extract specific fields from the provided image of a DIAN RUT document.\n    *   Output format: ONLY a valid JSON object.\n    *   Constraints: No markdown, no explanation, raw JSON.\n    *   Rules:\n        *   Missing/empty fields -> `null`.\n        *   `tipo_contribuyente`: \"natural\" or \"juridica\".\n        *   `nit`: Box 5 (copy exactly as printed).\n        *   `dv`: Box 6 (copy exactly as printed).\n        *   Codes as strings.\n        *   `departamento`: Extract department name.\n        *   `municipio`: Extract city/municipality name.\n        *   `direccion`: Full address as written.\n        *   `nombre_representante_legal`: Full name if present (persona jurídica), else `null`.\n\n2.  **Extract Information from the Image:**\n    *   **Box 5 (NIT):** `9 0 0 6 1 5 7 3 4` -> `\"900615734\"`\n    *   **Box 6 (DV):** `2` -> `\"2\"`\n    *   **Box 24 (Tipo de contribuyente):** `Persona jurídica` -> `\"juridica\"`\n    *   **Box 35 (Razón social):** `SOLUCIONES LOGISTICAS DEL CARIBE S.A.S.` -> `\"SOLUCIONES LOGISTICAS DEL CARIBE S.A.S.\"`\n    *   **Box 25 (Tipo de documento):** *Empty* -> `null`\n    *   **Box 26 (Número de identificación):** *Empty* -> `null`\n    *   **Box 31 (Primer apellido):** *Empty* -> `null`\n    *   **Box 32 (Segundo apellido):** *Empty* -> `null`\n    *   **Box 33 (Primer nombre):** *Empty* -> `null`\n    *   **Box 46 (Actividad principal - Código):** `5229` -> `\"5229\"`\n    *   **Box 48 (Actividad secundaria - Código):** `4923` -> `\"4923\"`\n    *   **Box 39 (Departamento):** `BOLÍVAR` -> `\"BOLÍVAR\"`\n    *   **Box 40 (Ciudad/Municipio):** `CARTAGENA DE INDIAS` -> `\"CARTAGENA DE INDIAS\"`\n    *   **Box 41 (Dirección principal):** `BRR MANGA CL 28 24 61` -> `\"BRR MANGA CL 28 24 61\"`\n    *   **Box 104-107 & 98 (Representante Legal):**\n        *   Box 98 Representación: `REPRS LEGAL PRIN 18` (indicates a legal rep is present).\n        *   Box 104 (Primer apellido): `PADILLA`\n        *   Box 105 (Segundo apellido): `MARRUGO`\n        *   Box 106 (Primer nombre): `ROSA`\n        *   Box 107 (Otros nombres): `ELENA`\n        *   Full name: `ROSA ELENA PADILLA MARRUGO` (or `PADILLA MARRUGO ROSA ELENA`, but typically standard order is names then surnames, or as it appears: Primer apellido, segundo apellido, primer nombre, otros nombres. Let's reconstruct it logically as \"ROSA ELENA PADILLA MARRUGO\" or follow the exact text layout. Better to combine surnames and names: `PADILLA MARRUGO ROSA ELENA` based on the field layout, or `ROSA ELENA PADILLA MARRUGO`. Usually, \"Nombres y Apellidos\" means Primer Nombre + Otros Nombres + Primer Apellido + Segundo Apellido. Let's extract it as \"ROSA ELENA PADILLA MARRUGO\").\n\n3.  **Construct the JSON:**\n    *   `nit`: `\"900615734\"`\n    *   `dv`: `\"2\"`\n    *   `tipo_contribuyente`: `\"juridica\"`\n    *   `razon_social`: `\"SOLUCIONES LOGISTICAS DEL CARIBE S.A.S.\"`\n    *   `tipo_documento`: `null`\n    *   `numero_identificacion`: `null`\n    *   `primer_apellido`: `null` (Wait, the form has a section for persona natural, but this is persona juridica. Do I put null for the person's last names here *or* should it be null since it's the main entity's fields? The prompt says \"If a field is not present or empty, use null\". Boxes 31, 32, 33 are empty because it's a juridical person. So `null` is correct.)\n    *   `segundo_apellido`: `null`\n    *   `primer_nombre`: `null`\n    *   `actividad_principal_codigo`: `\"5229\"`\n    *   `actividad_secundaria_codigo`: `\"4923\"`\n    *   `departamento`: `\"BOLÍVAR\"`\n    *   `municipio`: `\"CARTAGENA DE INDIAS\"`\n    *   `direccion`: `\"BRR MANGA CL 28 24 61\"`\n    *   `nombre_representante_legal`: `\"ROSA ELENA PADILLA MARRUGO\"` (or `PADILLA MARRUGO ROSA ELENA`). Usually \"PADILLA MARRUGO ROSA ELENA\" is exactly how it's laid out. Let's use `\"ROSA ELENA PADILLA MARRUGO\"` as it's the standard natural way to read names. Or just `\"PADILLA MARRUGO ROSA ELENA\"`. Let's provide `\"ROSA ELENA PADILLA MARRUGO\"`.\n\n4.  **Final Check against Rules:**\n    *   Raw JSON output? Yes.\n    *   No markdown? Yes.\n    *   Missing fields = null? Yes.\n    *   `tipo_contribuyente` correct? Yes, \"juridica\" (lowercase).\n    *   `nit` and `dv` copied exactly? Yes.\n    *   Codes as strings? Yes.\n\n5.  **Formatting the JSON:** Ensure the string produces valid JSON.",
+          "reasoning_details": [
+            {
+              "type": "reasoning.text",
+              "text": "1.  **Analyze the Request:**\n    *   Extract specific fields from the provided image of a DIAN RUT document.\n    *   Output format: ONLY a valid JSON object.\n    *   Constraints: No markdown, no explanation, raw JSON.\n    *   Rules:\n        *   Missing/empty fields -> `null`.\n        *   `tipo_contribuyente`: \"natural\" or \"juridica\".\n        *   `nit`: Box 5 (copy exactly as printed).\n        *   `dv`: Box 6 (copy exactly as printed).\n        *   Codes as strings.\n        *   `departamento`: Extract department name.\n        *   `municipio`: Extract city/municipality name.\n        *   `direccion`: Full address as written.\n        *   `nombre_representante_legal`: Full name if present (persona jurídica), else `null`.\n\n2.  **Extract Information from the Image:**\n    *   **Box 5 (NIT):** `9 0 0 6 1 5 7 3 4` -> `\"900615734\"`\n    *   **Box 6 (DV):** `2` -> `\"2\"`\n    *   **Box 24 (Tipo de contribuyente):** `Persona jurídica` -> `\"juridica\"`\n    *   **Box 35 (Razón social):** `SOLUCIONES LOGISTICAS DEL CARIBE S.A.S.` -> `\"SOLUCIONES LOGISTICAS DEL CARIBE S.A.S.\"`\n    *   **Box 25 (Tipo de documento):** *Empty* -> `null`\n    *   **Box 26 (Número de identificación):** *Empty* -> `null`\n    *   **Box 31 (Primer apellido):** *Empty* -> `null`\n    *   **Box 32 (Segundo apellido):** *Empty* -> `null`\n    *   **Box 33 (Primer nombre):** *Empty* -> `null`\n    *   **Box 46 (Actividad principal - Código):** `5229` -> `\"5229\"`\n    *   **Box 48 (Actividad secundaria - Código):** `4923` -> `\"4923\"`\n    *   **Box 39 (Departamento):** `BOLÍVAR` -> `\"BOLÍVAR\"`\n    *   **Box 40 (Ciudad/Municipio):** `CARTAGENA DE INDIAS` -> `\"CARTAGENA DE INDIAS\"`\n    *   **Box 41 (Dirección principal):** `BRR MANGA CL 28 24 61` -> `\"BRR MANGA CL 28 24 61\"`\n    *   **Box 104-107 & 98 (Representante Legal):**\n        *   Box 98 Representación: `REPRS LEGAL PRIN 18` (indicates a legal rep is present).\n        *   Box 104 (Primer apellido): `PADILLA`\n        *   Box 105 (Segundo apellido): `MARRUGO`\n        *   Box 106 (Primer nombre): `ROSA`\n        *   Box 107 (Otros nombres): `ELENA`\n        *   Full name: `ROSA ELENA PADILLA MARRUGO` (or `PADILLA MARRUGO ROSA ELENA`, but typically standard order is names then surnames, or as it appears: Primer apellido, segundo apellido, primer nombre, otros nombres. Let's reconstruct it logically as \"ROSA ELENA PADILLA MARRUGO\" or follow the exact text layout. Better to combine surnames and names: `PADILLA MARRUGO ROSA ELENA` based on the field layout, or `ROSA ELENA PADILLA MARRUGO`. Usually, \"Nombres y Apellidos\" means Primer Nombre + Otros Nombres + Primer Apellido + Segundo Apellido. Let's extract it as \"ROSA ELENA PADILLA MARRUGO\").\n\n3.  **Construct the JSON:**\n    *   `nit`: `\"900615734\"`\n    *   `dv`: `\"2\"`\n    *   `tipo_contribuyente`: `\"juridica\"`\n    *   `razon_social`: `\"SOLUCIONES LOGISTICAS DEL CARIBE S.A.S.\"`\n    *   `tipo_documento`: `null`\n    *   `numero_identificacion`: `null`\n    *   `primer_apellido`: `null` (Wait, the form has a section for persona natural, but this is persona juridica. Do I put null for the person's last names here *or* should it be null since it's the main entity's fields? The prompt says \"If a field is not present or empty, use null\". Boxes 31, 32, 33 are empty because it's a juridical person. So `null` is correct.)\n    *   `segundo_apellido`: `null`\n    *   `primer_nombre`: `null`\n    *   `actividad_principal_codigo`: `\"5229\"`\n    *   `actividad_secundaria_codigo`: `\"4923\"`\n    *   `departamento`: `\"BOLÍVAR\"`\n    *   `municipio`: `\"CARTAGENA DE INDIAS\"`\n    *   `direccion`: `\"BRR MANGA CL 28 24 61\"`\n    *   `nombre_representante_legal`: `\"ROSA ELENA PADILLA MARRUGO\"` (or `PADILLA MARRUGO ROSA ELENA`). Usually \"PADILLA MARRUGO ROSA ELENA\" is exactly how it's laid out. Let's use `\"ROSA ELENA PADILLA MARRUGO\"` as it's the standard natural way to read names. Or just `\"PADILLA MARRUGO ROSA ELENA\"`. Let's provide `\"ROSA ELENA PADILLA MARRUGO\"`.\n\n4.  **Final Check against Rules:**\n    *   Raw JSON output? Yes.\n    *   No markdown? Yes.\n    *   Missing fields = null? Yes.\n    *   `tipo_contribuyente` correct? Yes, \"juridica\" (lowercase).\n    *   `nit` and `dv` copied exactly? Yes.\n    *   Codes as strings? Yes.\n\n5.  **Formatting the JSON:** Ensure the string produces valid JSON.",
+              "format": "unknown",
+              "index": 0
+            }
+          ]
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1409,
+      "completion_tokens": 1680,
+      "total_tokens": 3089,
+      "cost": 0.0024387,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.0024387,
+        "upstream_inference_prompt_cost": 0.0004227,
+        "upstream_inference_completions_cost": 0.002016
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 1471,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    }
+  }
+}

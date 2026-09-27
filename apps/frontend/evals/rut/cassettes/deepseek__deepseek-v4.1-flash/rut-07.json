@@ -1,0 +1,74 @@
+{
+  "case": "rut-07",
+  "requested_model": "deepseek/deepseek-v4.1-flash",
+  "recorded_at": "2026-09-27T21:50:00.555Z",
+  "input": {
+    "file": "document.pdf",
+    "media_type": "application/pdf",
+    "sha256": "43dccaa7a4356963d0ce0062de925712602d7717e53e271892d977499f51e96a"
+  },
+  "prompt_sha256": "e4af20497fd02df685cd0cecda49b25f237a14e9e24b4063250ed1276c3dd529",
+  "model": "deepseek/deepseek-v4.1-flash",
+  "latency_ms": 5167,
+  "outcome": "ok",
+  "usage": {
+    "promptTokens": 1409,
+    "completionTokens": 1529,
+    "costUsd": 0.0022575,
+    "costSource": "provider"
+  },
+  "response": {
+    "id": "gen-1790545800-nVZ8r4sSjDQx3MeMFjI7",
+    "object": "chat.completion",
+    "created": 1790545800,
+    "model": "deepseek/deepseek-v4.1-flash",
+    "provider": "Together",
+    "system_fingerprint": "default",
+    "service_tier": null,
+    "choices": [
+      {
+        "index": 0,
+        "logprobs": null,
+        "finish_reason": "stop",
+        "native_finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "{\n  \"nit\": \"901563208\",\n  \"dv\": \"9\",\n  \"tipo_contribuyente\": \"juridica\",\n  \"razon_social\": \"CONSTRUCTORA PIEDRA AZUL S.A.S.\",\n  \"tipo_documento\": null,\n  \"numero_identificacion\": null,\n  \"primer_apellido\": null,\n  \"segundo_apellido\": null,\n  \"primer_nombre\": null,\n  \"actividad_principal_codigo\": \"4111\",\n  \"actividad_secundaria_codigo\": \"4290\",\n  \"departamento\": \"SANTANDER\",\n  \"municipio\": \"BUCARAMANGA\",\n  \"direccion\": \"CL 36 27 52 P 4\",\n  \"nombre_representante_legal\": \"SERRANO DUARTE HERNÁN\"\n}",
+          "refusal": null,
+          "reasoning": "Thinking Process:\n1.  **Analyze the Request:** The user wants a JSON object extracted from the provided image of a DIAN RUT (Registro Único Tributario) document. Strict rules are provided for specific fields (e.g., `nit`, `dv`, `tipo_contribuyente`, department/municipality names, etc.). No markdown, just raw JSON.\n\n2.  **Analyze the Image:** I need to locate the relevant boxes in the form.\n    *   Box 5 (NIT): `9 0 1 5 6 3 2 0 8`\n    *   Box 6 (DV): `9`\n    *   Box 24 (Tipo de contribuyente): `Persona jurídica` -> \"juridica\"\n    *   Box 35 (Razón social): `CONSTRUCTORA PIEDRA AZUL S.A.S.`\n    *   Box 25 (Tipo de documento): Empty\n    *   Box 26 (Número de identificación): Empty\n    *   Box 31 (Primer apellido): Empty\n    *   Box 32 (Segundo apellido): Empty\n    *   Box 33 (Primer nombre): Empty\n    *   Box 46 (Actividad principal - Código): `4111`\n    *   Box 48 (Actividad secundaria - Código): `4290`\n    *   Box 39 (Departamento): `SANTANDER`\n    *   Box 40 (Ciudad/Municipio): `BUCARAMANGA`\n    *   Box 41 (Dirección principal): `CL 36 27 52 P 4`\n    *   Representative Legal (Box 104, 105, 106): `SERRANO DUARTE HERNÁN`\n\n3.  **Extract Data & Apply Rules:**\n    *   `nit`: \"901563208\" (from box 5, no spaces)\n    *   `dv`: \"9\" (from box 6)\n    *   `tipo_contribuyente`: \"juridica\" (based on \"Persona jurídica\")\n    *   `razon_social`: \"CONSTRUCTORA PIEDRA AZUL S.A.S.\"\n    *   `tipo_documento`: null (Box 25 is empty)\n    *   `numero_identificacion`: null (Box 26 is empty)\n    *   `primer_apellido`: null (Box 31 empty, it's a juridical person)\n    *   `segundo_apellido`: null (Box 32 empty)\n    *   `primer_nombre`: null (Box 33 empty)\n    *   `actividad_principal_codigo`: \"4111\" (from box 46)\n    *   `actividad_secundaria_codigo`: \"4290\" (from box 48)\n    *   `departamento`: \"SANTANDER\" (from box 39)\n    *   `municipio`: \"BUCARAMANGA\" (from box 40)\n    *   `direccion`: \"CL 36 27 52 P 4\" (from box 41)\n    *   `nombre_representante_legal`: \"SERRANO DUARTE HERNÁN\" (merged from boxes 104, 105, 106)\n\n4.  **Format JSON:** Construct the JSON object according to the requested schema. Ensure all strings are quoted correctly.\n    *   Check: `nit` should be exactly as printed. It's \"901563208\".\n    *   Check: `dv` is \"9\".\n    *   Check: `razon_social` is \"CONSTRUCTORA PIEDRA AZUL S.A.S.\"\n    *   Check: `actividad_principal_codigo` is string \"4111\".\n    *   Check: `actividad_secundaria_codigo` is string \"4290\".\n    *   Check: `nombre_representante_legal` is \"SERRANO DUARTE HERNÁN\".\n\n5.  **Final Review:** Read the user prompt again to ensure all constraints are met. (Valid JSON, no markdown, only raw JSON, correct fields, extracted properly). The values match exactly what's in the image. The representative's name is combined from the three boxes: SERRANO DUARTE HERNÁN.\n\n6.  **Construct Output:** (Self-correction: Ensure string escaping if necessary, but no special chars except accents which are fine in standard JSON). Let's output.\n    ```json\n    {\n      \"nit\": \"901563208\",\n      \"dv\": \"9\",\n      \"tipo_contribuyente\": \"juridica\",\n      \"razon_social\": \"CONSTRUCTORA PIEDRA AZUL S.A.S.\",\n      \"tipo_documento\": null,\n      \"numero_identificacion\": null,\n      \"primer_apellido\": null,\n      \"segundo_apellido\": null,\n      \"primer_nombre\": null,\n      \"actividad_principal_codigo\": \"4111\",\n      \"actividad_secundaria_codigo\": \"4290\",\n      \"departamento\": \"SANTANDER\",\n      \"municipio\": \"BUCARAMANGA\",\n      \"direccion\": \"CL 36 27 52 P 4\",\n      \"nombre_representante_legal\": \"SERRANO DUARTE HERNÁN\"\n    }\n    ```\n    Wait, `nombre_representante_legal` for a juridical person: The boxes are 104 (Primer apellido) SERRANO, 105 (Segundo apellido) DUARTE, 106 (Primer nombre) HERNÁN. So the full name is \"SERRANO DUARTE HERNÁN\". Correct.\n    Wait, `tipo_documento` is box 25. It's blank. So null.\n    Wait, `numero_identificacion` is box 26. It's blank. So null.\n    All nulls handled. All codes as strings. Looks perfect.",
+          "reasoning_details": [
+            {
+              "type": "reasoning.text",
+              "text": "Thinking Process:\n1.  **Analyze the Request:** The user wants a JSON object extracted from the provided image of a DIAN RUT (Registro Único Tributario) document. Strict rules are provided for specific fields (e.g., `nit`, `dv`, `tipo_contribuyente`, department/municipality names, etc.). No markdown, just raw JSON.\n\n2.  **Analyze the Image:** I need to locate the relevant boxes in the form.\n    *   Box 5 (NIT): `9 0 1 5 6 3 2 0 8`\n    *   Box 6 (DV): `9`\n    *   Box 24 (Tipo de contribuyente): `Persona jurídica` -> \"juridica\"\n    *   Box 35 (Razón social): `CONSTRUCTORA PIEDRA AZUL S.A.S.`\n    *   Box 25 (Tipo de documento): Empty\n    *   Box 26 (Número de identificación): Empty\n    *   Box 31 (Primer apellido): Empty\n    *   Box 32 (Segundo apellido): Empty\n    *   Box 33 (Primer nombre): Empty\n    *   Box 46 (Actividad principal - Código): `4111`\n    *   Box 48 (Actividad secundaria - Código): `4290`\n    *   Box 39 (Departamento): `SANTANDER`\n    *   Box 40 (Ciudad/Municipio): `BUCARAMANGA`\n    *   Box 41 (Dirección principal): `CL 36 27 52 P 4`\n    *   Representative Legal (Box 104, 105, 106): `SERRANO DUARTE HERNÁN`\n\n3.  **Extract Data & Apply Rules:**\n    *   `nit`: \"901563208\" (from box 5, no spaces)\n    *   `dv`: \"9\" (from box 6)\n    *   `tipo_contribuyente`: \"juridica\" (based on \"Persona jurídica\")\n    *   `razon_social`: \"CONSTRUCTORA PIEDRA AZUL S.A.S.\"\n    *   `tipo_documento`: null (Box 25 is empty)\n    *   `numero_identificacion`: null (Box 26 is empty)\n    *   `primer_apellido`: null (Box 31 empty, it's a juridical person)\n    *   `segundo_apellido`: null (Box 32 empty)\n    *   `primer_nombre`: null (Box 33 empty)\n    *   `actividad_principal_codigo`: \"4111\" (from box 46)\n    *   `actividad_secundaria_codigo`: \"4290\" (from box 48)\n    *   `departamento`: \"SANTANDER\" (from box 39)\n    *   `municipio`: \"BUCARAMANGA\" (from box 40)\n    *   `direccion`: \"CL 36 27 52 P 4\" (from box 41)\n    *   `nombre_representante_legal`: \"SERRANO DUARTE HERNÁN\" (merged from boxes 104, 105, 106)\n\n4.  **Format JSON:** Construct the JSON object according to the requested schema. Ensure all strings are quoted correctly.\n    *   Check: `nit` should be exactly as printed. It's \"901563208\".\n    *   Check: `dv` is \"9\".\n    *   Check: `razon_social` is \"CONSTRUCTORA PIEDRA AZUL S.A.S.\"\n    *   Check: `actividad_principal_codigo` is string \"4111\".\n    *   Check: `actividad_secundaria_codigo` is string \"4290\".\n    *   Check: `nombre_representante_legal` is \"SERRANO DUARTE HERNÁN\".\n\n5.  **Final Review:** Read the user prompt again to ensure all constraints are met. (Valid JSON, no markdown, only raw JSON, correct fields, extracted properly). The values match exactly what's in the image. The representative's name is combined from the three boxes: SERRANO DUARTE HERNÁN.\n\n6.  **Construct Output:** (Self-correction: Ensure string escaping if necessary, but no special chars except accents which are fine in standard JSON). Let's output.\n    ```json\n    {\n      \"nit\": \"901563208\",\n      \"dv\": \"9\",\n      \"tipo_contribuyente\": \"juridica\",\n      \"razon_social\": \"CONSTRUCTORA PIEDRA AZUL S.A.S.\",\n      \"tipo_documento\": null,\n      \"numero_identificacion\": null,\n      \"primer_apellido\": null,\n      \"segundo_apellido\": null,\n      \"primer_nombre\": null,\n      \"actividad_principal_codigo\": \"4111\",\n      \"actividad_secundaria_codigo\": \"4290\",\n      \"departamento\": \"SANTANDER\",\n      \"municipio\": \"BUCARAMANGA\",\n      \"direccion\": \"CL 36 27 52 P 4\",\n      \"nombre_representante_legal\": \"SERRANO DUARTE HERNÁN\"\n    }\n    ```\n    Wait, `nombre_representante_legal` for a juridical person: The boxes are 104 (Primer apellido) SERRANO, 105 (Segundo apellido) DUARTE, 106 (Primer nombre) HERNÁN. So the full name is \"SERRANO DUARTE HERNÁN\". Correct.\n    Wait, `tipo_documento` is box 25. It's blank. So null.\n    Wait, `numero_identificacion` is box 26. It's blank. So null.\n    All nulls handled. All codes as strings. Looks perfect.",
+              "format": "unknown",
+              "index": 0
+            }
+          ]
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1409,
+      "completion_tokens": 1529,
+      "total_tokens": 2938,
+      "cost": 0.0022575,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.0022575,
+        "upstream_inference_prompt_cost": 0.0004227,
+        "upstream_inference_completions_cost": 0.0018348
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 1329,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    }
+  }
+}

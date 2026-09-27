@@ -1,0 +1,74 @@
+{
+  "case": "rut-13",
+  "requested_model": "google/gemini-3.1-flash-lite-preview",
+  "recorded_at": "2026-09-27T21:45:30.598Z",
+  "input": {
+    "file": "document.jpg",
+    "media_type": "image/jpeg",
+    "sha256": "b89ea2ced663c584073e2d39606dc0d82177d1599fab2605896658f0ebe4ae0d"
+  },
+  "prompt_sha256": "e4af20497fd02df685cd0cecda49b25f237a14e9e24b4063250ed1276c3dd529",
+  "model": "google/gemini-3.1-flash-lite-preview",
+  "latency_ms": 1472,
+  "outcome": "ok",
+  "usage": {
+    "promptTokens": 1492,
+    "completionTokens": 206,
+    "costUsd": 0.000682,
+    "costSource": "provider"
+  },
+  "response": {
+    "id": "gen-1790545530-GNjObm8OMVF1lb1jqVbe",
+    "object": "chat.completion",
+    "created": 1790545530,
+    "model": "google/gemini-3.1-flash-lite-preview",
+    "provider": "Google AI Studio",
+    "system_fingerprint": null,
+    "service_tier": "default",
+    "choices": [
+      {
+        "index": 0,
+        "logprobs": null,
+        "finish_reason": "stop",
+        "native_finish_reason": "STOP",
+        "message": {
+          "role": "assistant",
+          "content": "{\n  \"nit\": \"900987416\",\n  \"dv\": \"0\",\n  \"tipo_contribuyente\": \"juridica\",\n  \"razon_social\": \"FLORES DE LA SABANA S.A.S.\",\n  \"tipo_documento\": null,\n  \"numero_identificacion\": null,\n  \"primer_apellido\": null,\n  \"segundo_apellido\": null,\n  \"primer_nombre\": null,\n  \"actividad_principal_codigo\": \"0125\",\n  \"actividad_secundaria_codigo\": \"4620\",\n  \"departamento\": \"CUNDINAMARCA\",\n  \"municipio\": \"ZIPAQUIRÁ\",\n  \"direccion\": \"VDA BARANDILLAS FINCA EL ROSAL\",\n  \"nombre_representante_legal\": \"ANDREA CASTRO BELTRÁN\"\n}",
+          "refusal": null,
+          "reasoning": null,
+          "reasoning_details": [
+            {
+              "type": "reasoning.text",
+              "signature": "EnMKcQFpFH0TjIRtRfVosZacbFR+PCwQAMxcx7IoDdVfMNkARswKmQE21YJiVzmQkSCSizQjGKdlUw/WaS8zlDgULCbQdhMRIef1hpgp4Chd16i3QiEfMNGWpAn60IJ0AYtR2ILwmcqNuFgFPkV98YNr6J/f",
+              "format": "google-gemini-v1",
+              "index": 0
+            }
+          ]
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1492,
+      "completion_tokens": 206,
+      "total_tokens": 1698,
+      "cost": 0.000682,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.000682,
+        "upstream_inference_prompt_cost": 0.000373,
+        "upstream_inference_completions_cost": 0.000309
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    }
+  }
+}

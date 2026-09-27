@@ -1,0 +1,18 @@
+{
+  "nit": "901563208",
+  "dv": "9",
+  "tipo_contribuyente": "juridica",
+  "razon_social": "CONSTRUCTORA PIEDRA AZUL S.A.S.",
+  "tipo_documento": null,
+  "numero_identificacion": null,
+  "primer_apellido": null,
+  "segundo_apellido": null,
+  "primer_nombre": null,
+  "actividad_principal_codigo": "4111",
+  "actividad_secundaria_codigo": "4290",
+  "departamento": "SANTANDER",
+  "municipio": "BUCARAMANGA",
+  "direccion": "CL 36 27 52 P 4",
+  "nombre_representante_legal": "HERNÁN SERRANO DUARTE",
+  "variant": "clean"
+}

@@ -331,6 +331,7 @@ Run from the repo root.
 | `pnpm --filter backend erp:sync [--empresa N] [--entidad proveedores\|clientes]` | Sync the ERP catalog now |
 | `pnpm --filter erp-simulator prisma:migrate` / `prisma:seed [--reset]` | Create / load the fake SIESA database |
 | `pnpm --filter frontend convex` | `convex dev` alone |
+| `pnpm eval:rut` | Replay the RUT extraction evals and check the thresholds (`pnpm --filter frontend eval:rut:live` re-records with `OPENROUTER_API_KEY`) |
 | `pnpm --filter mcp-server build` / `inspect` | Build the MCP server / open it in the MCP Inspector |
 | `npx convex run mcp/demo:sembrar '{"empresa": 2}'` / `mcp/demo:limpiar` | Load / remove the MCP demo data (dev deployments; run in `apps/frontend`) |
 
@@ -362,7 +363,7 @@ apps/
     scripts/                promote-admin.ts, erp-sync.ts
   erp-simulator/            Fake SIESA (NestJS) with its own Postgres: standard queries, import connector, seed data
   mcp-server/               Read-only MCP server (stdio) over invoices, approvals, advances and the supplier catalog
-docs/                       module guides (billing, finance, suppliers, customers, erp, mcp-server), onboarding.md, billing-azure-setup.md
+docs/                       module guides (billing, finance, suppliers, customers, erp, mcp-server), rut-evals.md, onboarding.md, billing-azure-setup.md
   diagrams/                 Excalidraw sources (.excalidraw) and light/dark SVG exports
 ```
 
@@ -386,6 +387,7 @@ pnpm test
 - **Backend**: Vitest specs for guards, impersonation, env validation and the ERP integration (client paging/retries, row mapping, sync diff, import document, NIT check digits).
 - **ERP simulator**: Vitest specs for the SIESA filter grammar, pagination, row projection, import validation and the deterministic data generator.
 - **MCP server**: a real MCP client over an in-memory transport (tool list and read-only annotations, input validation, errors, the resource); the Convex side is covered in `convex/mcpLectura.test.ts`.
+- **RUT extraction evals**: `pnpm eval:rut` replays recorded model responses and fails when a threshold breaks; CI runs it on pull requests that touch the extraction ([docs/rut-evals.md](docs/rut-evals.md)).
 - Optional fixture: set `DIAN_XLSX_FIXTURE` to a real DIAN export to run the extra XLSX parser test.
 
 ## Adding a module

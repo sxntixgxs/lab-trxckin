@@ -1,0 +1,336 @@
+{
+  "cases": [
+    {
+      "id": "rut-01",
+      "variant": "clean"
+    },
+    {
+      "id": "rut-02",
+      "variant": "clean"
+    },
+    {
+      "id": "rut-03",
+      "variant": "clean"
+    },
+    {
+      "id": "rut-04",
+      "variant": "clean"
+    },
+    {
+      "id": "rut-05",
+      "variant": "clean"
+    },
+    {
+      "id": "rut-06",
+      "variant": "clean"
+    },
+    {
+      "id": "rut-07",
+      "variant": "clean"
+    },
+    {
+      "id": "rut-08",
+      "variant": "clean"
+    },
+    {
+      "id": "rut-09",
+      "variant": "scan"
+    },
+    {
+      "id": "rut-10",
+      "variant": "scan"
+    },
+    {
+      "id": "rut-11",
+      "variant": "scan"
+    },
+    {
+      "id": "rut-12",
+      "variant": "scan"
+    },
+    {
+      "id": "rut-13",
+      "variant": "rotated"
+    },
+    {
+      "id": "rut-14",
+      "variant": "rotated"
+    },
+    {
+      "id": "rut-15",
+      "variant": "rotated"
+    },
+    {
+      "id": "rut-16",
+      "variant": "lowres"
+    },
+    {
+      "id": "rut-17",
+      "variant": "lowres"
+    },
+    {
+      "id": "rut-18",
+      "variant": "lowres"
+    },
+    {
+      "id": "rut-19",
+      "variant": "missing"
+    },
+    {
+      "id": "rut-20",
+      "variant": "missing"
+    }
+  ],
+  "models": {
+    "deepseek/deepseek-v4.1-flash": {
+      "input": "image",
+      "cases": 20,
+      "schemaValidRate": 1,
+      "dvMismatches": 4,
+      "ciiuFormatErrors": 3,
+      "missingRequired": 1,
+      "overallFieldAccuracy": 0.9633333333333334,
+      "perField": {
+        "nit": 0.8,
+        "dv": 1,
+        "tipo_contribuyente": 1,
+        "razon_social": 1,
+        "tipo_documento": 1,
+        "numero_identificacion": 1,
+        "primer_apellido": 1,
+        "segundo_apellido": 1,
+        "primer_nombre": 1,
+        "actividad_principal_codigo": 0.85,
+        "actividad_secundaria_codigo": 0.9,
+        "departamento": 1,
+        "municipio": 1,
+        "direccion": 0.95,
+        "nombre_representante_legal": 0.95
+      },
+      "byVariant": {
+        "clean": {
+          "cases": 8,
+          "accuracy": 0.9916666666666667
+        },
+        "lowres": {
+          "cases": 3,
+          "accuracy": 0.8666666666666667
+        },
+        "missing": {
+          "cases": 2,
+          "accuracy": 1
+        },
+        "rotated": {
+          "cases": 3,
+          "accuracy": 0.9111111111111111
+        },
+        "scan": {
+          "cases": 4,
+          "accuracy": 1
+        }
+      },
+      "cost": {
+        "totalUsd": 0.0558072,
+        "meanUsd": 0.00279036
+      },
+      "latency": {
+        "p50Ms": 6438,
+        "p95Ms": 12285
+      },
+      "failures": [
+        {
+          "caseId": "rut-06",
+          "field": "actividad_principal_codigo",
+          "expected": "5611",
+          "got": "20200918"
+        },
+        {
+          "caseId": "rut-13",
+          "field": "nit",
+          "expected": "900987416",
+          "got": "9009874116"
+        },
+        {
+          "caseId": "rut-13",
+          "field": "actividad_principal_codigo",
+          "expected": "0125",
+          "got": "01125"
+        },
+        {
+          "caseId": "rut-14",
+          "field": "actividad_principal_codigo",
+          "expected": "7490",
+          "got": "74900"
+        },
+        {
+          "caseId": "rut-14",
+          "field": "direccion",
+          "expected": "CL 38 31 50 AP 301",
+          "got": null
+        },
+        {
+          "caseId": "rut-16",
+          "field": "nit",
+          "expected": "1015478236",
+          "got": "10151487836"
+        },
+        {
+          "caseId": "rut-16",
+          "field": "actividad_secundaria_codigo",
+          "expected": null,
+          "got": "2018"
+        },
+        {
+          "caseId": "rut-17",
+          "field": "nit",
+          "expected": "901118594",
+          "got": "901118954"
+        },
+        {
+          "caseId": "rut-17",
+          "field": "actividad_secundaria_codigo",
+          "expected": "7410",
+          "got": "2017"
+        },
+        {
+          "caseId": "rut-17",
+          "field": "nombre_representante_legal",
+          "expected": "PEDRO NEL VILLAMIZAR ORTIZ",
+          "got": "PEDRO VILLAMIZAR ORTIZ"
+        },
+        {
+          "caseId": "rut-18",
+          "field": "nit",
+          "expected": "80456123",
+          "got": "800456123"
+        }
+      ],
+      "gate": "pass"
+    },
+    "google/gemini-3.1-flash-lite-preview": {
+      "input": "pdf",
+      "cases": 20,
+      "schemaValidRate": 1,
+      "dvMismatches": 0,
+      "ciiuFormatErrors": 0,
+      "missingRequired": 0,
+      "overallFieldAccuracy": 0.9833333333333333,
+      "perField": {
+        "nit": 1,
+        "dv": 1,
+        "tipo_contribuyente": 1,
+        "razon_social": 1,
+        "tipo_documento": 0.95,
+        "numero_identificacion": 0.95,
+        "primer_apellido": 0.95,
+        "segundo_apellido": 0.95,
+        "primer_nombre": 0.95,
+        "actividad_principal_codigo": 1,
+        "actividad_secundaria_codigo": 1,
+        "departamento": 1,
+        "municipio": 1,
+        "direccion": 1,
+        "nombre_representante_legal": 1
+      },
+      "byVariant": {
+        "clean": {
+          "cases": 8,
+          "accuracy": 0.9583333333333334
+        },
+        "lowres": {
+          "cases": 3,
+          "accuracy": 1
+        },
+        "missing": {
+          "cases": 2,
+          "accuracy": 1
+        },
+        "rotated": {
+          "cases": 3,
+          "accuracy": 1
+        },
+        "scan": {
+          "cases": 4,
+          "accuracy": 1
+        }
+      },
+      "cost": {
+        "totalUsd": 0.011694000000000001,
+        "meanUsd": 0.0005847000000000001
+      },
+      "latency": {
+        "p50Ms": 1551,
+        "p95Ms": 1909
+      },
+      "failures": [
+        {
+          "caseId": "rut-03",
+          "field": "tipo_documento",
+          "expected": null,
+          "got": "Cédula de Ciudadanía"
+        },
+        {
+          "caseId": "rut-03",
+          "field": "numero_identificacion",
+          "expected": null,
+          "got": "75089431"
+        },
+        {
+          "caseId": "rut-03",
+          "field": "primer_apellido",
+          "expected": null,
+          "got": "OSORIO"
+        },
+        {
+          "caseId": "rut-03",
+          "field": "segundo_apellido",
+          "expected": null,
+          "got": "VALENCIA"
+        },
+        {
+          "caseId": "rut-03",
+          "field": "primer_nombre",
+          "expected": null,
+          "got": "JUAN"
+        }
+      ],
+      "gate": "pass"
+    }
+  },
+  "probe": {
+    "requested_model": "google/gemini-2.0-flash-001",
+    "recorded_at": "2026-09-27T21:49:49.670Z",
+    "input": {
+      "file": "document.pdf",
+      "media_type": "application/pdf",
+      "sha256": "2174e0a2b5a9ffac3e069481c4c7ea8a21fe7f5295950c102003b73a21f388f1"
+    },
+    "prompt_sha256": "e4af20497fd02df685cd0cecda49b25f237a14e9e24b4063250ed1276c3dd529",
+    "model": "google/gemini-2.0-flash-001",
+    "latency_ms": 581,
+    "outcome": "http",
+    "error": "google/gemini-2.0-flash-001: HTTP 404 {\"error\":{\"message\":\"No endpoints found for google/gemini-2.0-flash-001.\",\"code\":404}}",
+    "http_status": 404,
+    "usage": {
+      "promptTokens": 0,
+      "completionTokens": 0,
+      "costUsd": 0,
+      "costSource": "price_table"
+    },
+    "listed_in_models_api": false
+  },
+  "thresholds": {
+    "google/gemini-3.1-flash-lite-preview": {
+      "min_schema_valid_rate": 0.95,
+      "min_overall_field_accuracy": 0.96,
+      "max_dv_mismatches": 0,
+      "max_p95_latency_ms": 10000
+    },
+    "deepseek/deepseek-v4.1-flash": {
+      "min_schema_valid_rate": 0.95,
+      "min_overall_field_accuracy": 0.92,
+      "max_dv_mismatches": 4,
+      "max_p95_latency_ms": 30000
+    }
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "case": "rut-11",
+  "requested_model": "google/gemini-3.1-flash-lite-preview",
+  "recorded_at": "2026-09-27T21:45:29.303Z",
+  "input": {
+    "file": "document.jpg",
+    "media_type": "image/jpeg",
+    "sha256": "df39d4665c3f3d191fbeb1c2b9ecf64c143715d8ec941a94b0ab0d060668490f"
+  },
+  "prompt_sha256": "e4af20497fd02df685cd0cecda49b25f237a14e9e24b4063250ed1276c3dd529",
+  "model": "google/gemini-3.1-flash-lite-preview",
+  "latency_ms": 1647,
+  "outcome": "ok",
+  "usage": {
+    "promptTokens": 1463,
+    "completionTokens": 209,
+    "costUsd": 0.00067925,
+    "costSource": "provider"
+  },
+  "response": {
+    "id": "gen-1790545529-uSqSIP8BTCktx0a5PFp8",
+    "object": "chat.completion",
+    "created": 1790545529,
+    "model": "google/gemini-3.1-flash-lite-preview",
+    "provider": "Google AI Studio",
+    "system_fingerprint": null,
+    "service_tier": "default",
+    "choices": [
+      {
+        "index": 0,
+        "logprobs": null,
+        "finish_reason": "stop",
+        "native_finish_reason": "STOP",
+        "message": {
+          "role": "assistant",
+          "content": "{\n  \"nit\": \"901332957\",\n  \"dv\": \"6\",\n  \"tipo_contribuyente\": \"juridica\",\n  \"razon_social\": \"CAFÉ ALTO DEL QUINDÍO S.A.S.\",\n  \"tipo_documento\": null,\n  \"numero_identificacion\": null,\n  \"primer_apellido\": null,\n  \"segundo_apellido\": null,\n  \"primer_nombre\": null,\n  \"actividad_principal_codigo\": \"0123\",\n  \"actividad_secundaria_codigo\": \"4631\",\n  \"departamento\": \"QUINDÍO\",\n  \"municipio\": \"ARMENIA\",\n  \"direccion\": \"CR 14 22 18 LC 2\",\n  \"nombre_representante_legal\": \"SEBASTIÁN ARANGO GIRALDO\"\n}",
+          "refusal": null,
+          "reasoning": null,
+          "reasoning_details": [
+            {
+              "type": "reasoning.text",
+              "signature": "EnMKcQFpFH0TSkiLUxfpButlJj9dVUIlcTs88wVu+MjwLRoXSaGn+bZ6cDX9YOSdhDayYuRXCXaDKSaQvhRxno/pmQv3sIS1bF60iZl0WqMAYFdhH2pM/Ix1S0EHFmguYQi4L4mkEzfagon0kqn2v83MnQ6V",
+              "format": "google-gemini-v1",
+              "index": 0
+            }
+          ]
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1463,
+      "completion_tokens": 209,
+      "total_tokens": 1672,
+      "cost": 0.00067925,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.00067925,
+        "upstream_inference_prompt_cost": 0.00036575,
+        "upstream_inference_completions_cost": 0.0003135
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    }
+  }
+}

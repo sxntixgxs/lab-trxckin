@@ -1,0 +1,74 @@
+{
+  "case": "rut-20",
+  "requested_model": "deepseek/deepseek-v4.1-flash",
+  "recorded_at": "2026-09-27T21:50:25.500Z",
+  "input": {
+    "file": "document.pdf",
+    "media_type": "application/pdf",
+    "sha256": "616101aa443bc471f6f982e538d046150a37cfc6bf5b69bb727a1bf5d9aeabac"
+  },
+  "prompt_sha256": "e4af20497fd02df685cd0cecda49b25f237a14e9e24b4063250ed1276c3dd529",
+  "model": "deepseek/deepseek-v4.1-flash",
+  "latency_ms": 4998,
+  "outcome": "ok",
+  "usage": {
+    "promptTokens": 1409,
+    "completionTokens": 1570,
+    "costUsd": 0.0023067,
+    "costSource": "provider"
+  },
+  "response": {
+    "id": "gen-1790545825-ctuIxnOedFogdS5afmIz",
+    "object": "chat.completion",
+    "created": 1790545825,
+    "model": "deepseek/deepseek-v4.1-flash",
+    "provider": "Together",
+    "system_fingerprint": "default",
+    "service_tier": null,
+    "choices": [
+      {
+        "index": 0,
+        "logprobs": null,
+        "finish_reason": "stop",
+        "native_finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "{\n  \"nit\": \"901407625\",\n  \"dv\": \"1\",\n  \"tipo_contribuyente\": \"juridica\",\n  \"razon_social\": \"AGROINSUMOS LOS LLANOS S.A.S.\",\n  \"tipo_documento\": null,\n  \"numero_identificacion\": null,\n  \"primer_apellido\": null,\n  \"segundo_apellido\": null,\n  \"primer_nombre\": null,\n  \"actividad_principal_codigo\": \"4620\",\n  \"actividad_secundaria_codigo\": null,\n  \"departamento\": \"CASANARE\",\n  \"municipio\": \"YOPAL\",\n  \"direccion\": \"CL 24 19 33\",\n  \"nombre_representante_legal\": null\n}",
+          "refusal": null,
+          "reasoning": "1.  **Analyze the Request:**\n    *   Task: Extract specific fields from a DIAN RUT document image.\n    *   Output format: ONLY a valid JSON object. No markdown, no explanations.\n    *   Rules:\n        *   Missing/empty fields -> `null`.\n        *   `tipo_contribuyente`: \"natural\" or \"juridica\".\n        *   `nit`: Box 5 (Número de Identificación Tributaria). Copy exactly.\n        *   `dv`: Box 6 (DV). Copy exactly.\n        *   Codes must be strings.\n        *   `departamento`: Extract department name.\n        *   `municipio`: Extract city/municipality name.\n        *   `direccion`: Extract full address.\n        *   `nombre_representante_legal`: Extract full name if present (persona jurídica), else `null`.\n    *   Target JSON structure provided in the prompt.\n\n2.  **Extract Fields from the Image:**\n    *   **Box 5 (nit):** `901407625`\n    *   **Box 6 (dv):** `1`\n    *   **Box 24 (tipo_contribuyente):** \"Persona jurídica\" -> `juridica`\n    *   **Box 35 (razon_social):** `AGROINSUMOS LOS LLANOS S.A.S.`\n    *   **Box 25 (tipo_documento):** Contains \"1\" under \"Cód.\". Wait, empty in the actual value boxes, but the label is \"25. Tipo de documento\" and it shows \"1\" under Cód. I will use `null` if it's considered empty, but the instruction says \"If a field is not present or empty, use null\". The box has a \"1\" under Cód. Let's output `1` but as a string `\"1\"`. Wait, the rule says \"Return codes as strings\". Let's check structural context. I'll put `\"1\"`.\n    *   **Box 26 (numero_identificacion):** Empty -> `null`\n    *   **Box 31 (primer_apellido):** Empty -> `null`\n    *   **Box 32 (segundo_apellido):** Empty -> `null`\n    *   **Box 33 (primer_nombre):** Empty -> `null`\n    *   **Box 46 (actividad_principal_codigo):** `4620`\n    *   **Box 48 (actividad_secundaria_codigo):** Empty -> `null`\n    *   **Box 39 (departamento):** `CASANARE`\n    *   **Box 40 (municipio):** `YOPAL`\n    *   **Box 41 (direccion):** `CL 24 19 33`\n    *   **Representante Legal:** The \"REPRESENTACIÓN\" section (boxes 98-107) is completely empty. So `nombre_representante_legal` is `null`.\n\n3.  **Refine Extraction based on Rules:**\n    *   `nit`: `\"901407625\"` (string)\n    *   `dv`: `\"1\"` (string)\n    *   `tipo_contribuyente`: `\"juridica\"`\n    *   `razon_social`: `\"AGROINSUMOS LOS LLANOS S.A.S.\"`\n    *   `tipo_documento`: Empty, looks like no type is actually filled, just the header code box. Wait, the generic rule says \"If a field is not present or empty, use null\". Box 25's actual value part is blank. I'll use `null`.\n    *   `numero_identificacion`: `null`\n    *   `primer_apellido`: `null`\n    *   `segundo_apellido`: `null`\n    *   `primer_nombre`: `null`\n    *   `actividad_principal_codigo`: `\"4620\"`\n    *   `actividad_secundaria_codigo`: `null`\n    *   `departamento`: `\"CASANARE\"`\n    *   `municipio`: `\"YOPAL\"`\n    *   `direccion`: `\"CL 24 19 33\"`\n    *   `nombre_representante_legal`: `null`\n\n4.  **Final JSON Construction:**\n    Check all types and keys against the template.\n    ```json\n    {\n      \"nit\": \"901407625\",\n      \"dv\": \"1\",\n      \"tipo_contribuyente\": \"juridica\",\n      \"razon_social\": \"AGROINSUMOS LOS LLANOS S.A.S.\",\n      \"tipo_documento\": null,\n      \"numero_identificacion\": null,\n      \"primer_apellido\": null,\n      \"segundo_apellido\": null,\n      \"primer_nombre\": null,\n      \"actividad_principal_codigo\": \"4620\",\n      \"actividad_secundaria_codigo\": null,\n      \"departamento\": \"CASANARE\",\n      \"municipio\": \"YOPAL\",\n      \"direccion\": \"CL 24 19 33\",\n      \"nombre_representante_legal\": null\n    }\n    ```\n    Wait, `tipo_documento` - Box 25 says \"25. Tipo de documento\" and has \"Cod. 1\". Let me re-read the rule: \"If a field is not present or empty, use null\". The value field for Box 25 besides the small \"1\" is empty. The small \"1\" is a code. I'll put `null` as the field seems present but empty of the actual document type. Wait, let me look at 24, 25, 26. 24 is filled with \"Persona jurídica\", 25 has \"1\" in a small box next to \"Cód.\", 26 is empty. Since they said `tipo_documento` -> `null` if empty, I will use `null`.\n\n    Let's double check \"departamento\" and \"municipio\":\n    \"Departamento: CASANARE\"\n    \"Ciudad/Municipio: YOPAL\"\n\n    \"direccion\": \"CL 24 19 33\"\n\n    Everything looks correct. Format as clean JSON.",
+          "reasoning_details": [
+            {
+              "type": "reasoning.text",
+              "text": "1.  **Analyze the Request:**\n    *   Task: Extract specific fields from a DIAN RUT document image.\n    *   Output format: ONLY a valid JSON object. No markdown, no explanations.\n    *   Rules:\n        *   Missing/empty fields -> `null`.\n        *   `tipo_contribuyente`: \"natural\" or \"juridica\".\n        *   `nit`: Box 5 (Número de Identificación Tributaria). Copy exactly.\n        *   `dv`: Box 6 (DV). Copy exactly.\n        *   Codes must be strings.\n        *   `departamento`: Extract department name.\n        *   `municipio`: Extract city/municipality name.\n        *   `direccion`: Extract full address.\n        *   `nombre_representante_legal`: Extract full name if present (persona jurídica), else `null`.\n    *   Target JSON structure provided in the prompt.\n\n2.  **Extract Fields from the Image:**\n    *   **Box 5 (nit):** `901407625`\n    *   **Box 6 (dv):** `1`\n    *   **Box 24 (tipo_contribuyente):** \"Persona jurídica\" -> `juridica`\n    *   **Box 35 (razon_social):** `AGROINSUMOS LOS LLANOS S.A.S.`\n    *   **Box 25 (tipo_documento):** Contains \"1\" under \"Cód.\". Wait, empty in the actual value boxes, but the label is \"25. Tipo de documento\" and it shows \"1\" under Cód. I will use `null` if it's considered empty, but the instruction says \"If a field is not present or empty, use null\". The box has a \"1\" under Cód. Let's output `1` but as a string `\"1\"`. Wait, the rule says \"Return codes as strings\". Let's check structural context. I'll put `\"1\"`.\n    *   **Box 26 (numero_identificacion):** Empty -> `null`\n    *   **Box 31 (primer_apellido):** Empty -> `null`\n    *   **Box 32 (segundo_apellido):** Empty -> `null`\n    *   **Box 33 (primer_nombre):** Empty -> `null`\n    *   **Box 46 (actividad_principal_codigo):** `4620`\n    *   **Box 48 (actividad_secundaria_codigo):** Empty -> `null`\n    *   **Box 39 (departamento):** `CASANARE`\n    *   **Box 40 (municipio):** `YOPAL`\n    *   **Box 41 (direccion):** `CL 24 19 33`\n    *   **Representante Legal:** The \"REPRESENTACIÓN\" section (boxes 98-107) is completely empty. So `nombre_representante_legal` is `null`.\n\n3.  **Refine Extraction based on Rules:**\n    *   `nit`: `\"901407625\"` (string)\n    *   `dv`: `\"1\"` (string)\n    *   `tipo_contribuyente`: `\"juridica\"`\n    *   `razon_social`: `\"AGROINSUMOS LOS LLANOS S.A.S.\"`\n    *   `tipo_documento`: Empty, looks like no type is actually filled, just the header code box. Wait, the generic rule says \"If a field is not present or empty, use null\". Box 25's actual value part is blank. I'll use `null`.\n    *   `numero_identificacion`: `null`\n    *   `primer_apellido`: `null`\n    *   `segundo_apellido`: `null`\n    *   `primer_nombre`: `null`\n    *   `actividad_principal_codigo`: `\"4620\"`\n    *   `actividad_secundaria_codigo`: `null`\n    *   `departamento`: `\"CASANARE\"`\n    *   `municipio`: `\"YOPAL\"`\n    *   `direccion`: `\"CL 24 19 33\"`\n    *   `nombre_representante_legal`: `null`\n\n4.  **Final JSON Construction:**\n    Check all types and keys against the template.\n    ```json\n    {\n      \"nit\": \"901407625\",\n      \"dv\": \"1\",\n      \"tipo_contribuyente\": \"juridica\",\n      \"razon_social\": \"AGROINSUMOS LOS LLANOS S.A.S.\",\n      \"tipo_documento\": null,\n      \"numero_identificacion\": null,\n      \"primer_apellido\": null,\n      \"segundo_apellido\": null,\n      \"primer_nombre\": null,\n      \"actividad_principal_codigo\": \"4620\",\n      \"actividad_secundaria_codigo\": null,\n      \"departamento\": \"CASANARE\",\n      \"municipio\": \"YOPAL\",\n      \"direccion\": \"CL 24 19 33\",\n      \"nombre_representante_legal\": null\n    }\n    ```\n    Wait, `tipo_documento` - Box 25 says \"25. Tipo de documento\" and has \"Cod. 1\". Let me re-read the rule: \"If a field is not present or empty, use null\". The value field for Box 25 besides the small \"1\" is empty. The small \"1\" is a code. I'll put `null` as the field seems present but empty of the actual document type. Wait, let me look at 24, 25, 26. 24 is filled with \"Persona jurídica\", 25 has \"1\" in a small box next to \"Cód.\", 26 is empty. Since they said `tipo_documento` -> `null` if empty, I will use `null`.\n\n    Let's double check \"departamento\" and \"municipio\":\n    \"Departamento: CASANARE\"\n    \"Ciudad/Municipio: YOPAL\"\n\n    \"direccion\": \"CL 24 19 33\"\n\n    Everything looks correct. Format as clean JSON.",
+              "format": "unknown",
+              "index": 0
+            }
+          ]
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1409,
+      "completion_tokens": 1570,
+      "total_tokens": 2979,
+      "cost": 0.0023067,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.0023067,
+        "upstream_inference_prompt_cost": 0.0004227,
+        "upstream_inference_completions_cost": 0.001884
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 1388,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    }
+  }
+}

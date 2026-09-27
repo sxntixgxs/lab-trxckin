@@ -1,0 +1,74 @@
+{
+  "case": "rut-09",
+  "requested_model": "google/gemini-3.1-flash-lite-preview",
+  "recorded_at": "2026-09-27T21:45:28.863Z",
+  "input": {
+    "file": "document.jpg",
+    "media_type": "image/jpeg",
+    "sha256": "223e023c1ddea7f27025bd4f10853c3977838bcd1917b7c317cda8e42eb7733d"
+  },
+  "prompt_sha256": "e4af20497fd02df685cd0cecda49b25f237a14e9e24b4063250ed1276c3dd529",
+  "model": "google/gemini-3.1-flash-lite-preview",
+  "latency_ms": 1733,
+  "outcome": "ok",
+  "usage": {
+    "promptTokens": 1463,
+    "completionTokens": 214,
+    "costUsd": 0.00068675,
+    "costSource": "provider"
+  },
+  "response": {
+    "id": "gen-1790545528-ILuA9h7K7Qcek8DPBlzK",
+    "object": "chat.completion",
+    "created": 1790545528,
+    "model": "google/gemini-3.1-flash-lite-preview",
+    "provider": "Google AI Studio",
+    "system_fingerprint": null,
+    "service_tier": "default",
+    "choices": [
+      {
+        "index": 0,
+        "logprobs": null,
+        "finish_reason": "stop",
+        "native_finish_reason": "STOP",
+        "message": {
+          "role": "assistant",
+          "content": "{\n  \"nit\": \"900615734\",\n  \"dv\": \"2\",\n  \"tipo_contribuyente\": \"juridica\",\n  \"razon_social\": \"SOLUCIONES LOGÍSTICAS DEL CARIBE S.A.S.\",\n  \"tipo_documento\": null,\n  \"numero_identificacion\": null,\n  \"primer_apellido\": null,\n  \"segundo_apellido\": null,\n  \"primer_nombre\": null,\n  \"actividad_principal_codigo\": \"5229\",\n  \"actividad_secundaria_codigo\": \"4923\",\n  \"departamento\": \"BOLÍVAR\",\n  \"municipio\": \"CARTAGENA DE INDIAS\",\n  \"direccion\": \"BRR MANGA CL 28 24 61\",\n  \"nombre_representante_legal\": \"ROSA ELENA PADILLA MARRUGO\"\n}",
+          "refusal": null,
+          "reasoning": null,
+          "reasoning_details": [
+            {
+              "type": "reasoning.text",
+              "signature": "EnMKcQFpFH0T/Yx/20caU8sbvzB3YLOIyL8CbrzFEUuf5MrmQ6nJWNZAVtZgSZ3Q9JJgLf3IjR0cEw1bdVn/VBrGP2FMU3j05c95FPmQs6nMChFwyxV1Gx9xjMv2A/TGTJNdmU9Cx7/cR0JB/Eni1mpwFBOu",
+              "format": "google-gemini-v1",
+              "index": 0
+            }
+          ]
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1463,
+      "completion_tokens": 214,
+      "total_tokens": 1677,
+      "cost": 0.00068675,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.00068675,
+        "upstream_inference_prompt_cost": 0.00036575,
+        "upstream_inference_completions_cost": 0.000321
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    }
+  }
+}

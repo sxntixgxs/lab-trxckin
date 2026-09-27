@@ -1,0 +1,74 @@
+{
+  "case": "rut-17",
+  "requested_model": "deepseek/deepseek-v4.1-flash",
+  "recorded_at": "2026-09-27T21:50:19.142Z",
+  "input": {
+    "file": "document.jpg",
+    "media_type": "image/jpeg",
+    "sha256": "978017f8d6a3ebd1d48a69e59f07a2a94eebabcf800d39bda9103fdb4ac05ee4"
+  },
+  "prompt_sha256": "e4af20497fd02df685cd0cecda49b25f237a14e9e24b4063250ed1276c3dd529",
+  "model": "deepseek/deepseek-v4.1-flash",
+  "latency_ms": 6438,
+  "outcome": "ok",
+  "usage": {
+    "promptTokens": 807,
+    "completionTokens": 1851,
+    "costUsd": 0.0024633,
+    "costSource": "provider"
+  },
+  "response": {
+    "id": "gen-1790545819-GJcOg643ZGjw036AcUgD",
+    "object": "chat.completion",
+    "created": 1790545819,
+    "model": "deepseek/deepseek-v4.1-flash",
+    "provider": "Together",
+    "system_fingerprint": "default",
+    "service_tier": null,
+    "choices": [
+      {
+        "index": 0,
+        "logprobs": null,
+        "finish_reason": "stop",
+        "native_finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "{\n  \"nit\": \"901118954\",\n  \"dv\": \"1\",\n  \"tipo_contribuyente\": \"juridica\",\n  \"razon_social\": \"INGENIERIA Y MANTENIMIENTO NORTE S.A.S.\",\n  \"tipo_documento\": null,\n  \"numero_identificacion\": null,\n  \"primer_apellido\": null,\n  \"segundo_apellido\": null,\n  \"primer_nombre\": null,\n  \"actividad_principal_codigo\": \"3312\",\n  \"actividad_secundaria_codigo\": \"2017\",\n  \"departamento\": \"NORTE DE SANTANDER\",\n  \"municipio\": \"CUCUTA\",\n  \"direccion\": \"AV 0 11 45 OF 203\",\n  \"nombre_representante_legal\": \"PEDRO VILLAMIZAR ORTIZ\"\n}",
+          "refusal": null,
+          "reasoning": "1.  **Analyze the Request:**\n    *   Task: Extract specified fields from a DIAN RUT document (image provided).\n    *   Output Format: ONLY a valid JSON object. No markdown, no explanation.\n    *   Rules:\n        *   Missing/empty fields -> `null`.\n        *   `tipo_contribuyente`: \"natural\" or \"juridica\".\n        *   `nit`: Box 5 (Número de Identificación Tributaria). Copy exactly.\n        *   `dv`: Box 6 (DV). Copy exactly.\n        *   Codes as strings.\n        *   `departamento`: Extract department name.\n        *   `municipio`: Extract city/municipality name.\n        *   `direccion`: Full address.\n        *   `nombre_representante_legal`: Full name if present (persona jurídica), else null.\n\n2.  **Extract Data from Image:**\n    *   **Box 5 (NIT):** 901118954\n    *   **Box 6 (DV):** 1\n    *   **Tipo Contribuyente:** The section \"IDENTIFICACIÓN\" shows \"48. Tipo de contribuyente\" checked as \"Persona jurídica\". So, \"juridica\".\n    *   **Razón Social (Box 35):** INGENIERIA Y MANTENIMIENTO NORTE S.A.S.\n    *   **Tipo Documento (Box 25):** Empty/Blank. -> null\n    *   **Número Identificación (Box 26):** Empty/Blank. -> null\n    *   Primer Apellido (Box 31): Empty/Blank. -> null\n    *   Segundo Apellido (Box 32): Empty/Blank. -> null\n    *   Primer Nombre (Box 33): Empty/Blank. -> null\n    *   **Actividad Principal Código (Box 46):** 3312 (from 3 3 1 2)\n    *   **Actividad Secundaria Código (Box 48):** 2017 (from 2 0 1 7) / 4711 (from 4 7 1 1) / 7410 (from 7 4 1 0) / 2019 (from 2 0 1 9) / 0508 (from 0 5 0 8). Wait, the prompt asks for \"actividad_secundaria_codigo\" as a single field. I'll provide the first secondary activity code (2017) or list all if it's an array, but the prompt implies a single string or null. Let's stick to the first one: 2017. Actually, looking at the JSON template, it's `\"actividad_secundaria_codigo\": null`. I'll put \"2017\" or maybe just list the first one. Let's re-read: \"If a field is not present or empty, use null\". Since multiple boxes (48) exist, providing the first one \"2017\" is reasonable, but I'll check if it's better to just capture the first one. Let's use \"2017\".\n    *   **Departamento (Box 24):** NORTE DE SANTANDER\n    *   **Municipio (Box 40):** CUCUTA\n    *   **Dirección (Box 41):** AV 0 11 45 OF 203\n    *   **Nombre Representante Legal (Box 104-107):**\n        *   104. Primer apellido: VILLAMIZAR\n        *   105. Segundo apellido: ORTIZ\n        *   106. Primer nombre: PEDRO\n        *   107. Otros nombres: NEL\n        *   Full name: PEDRO VILLAMIZAR ORTIZ\n\n3.  **Refine Data Extraction (Self-Correction/Verification):**\n    *   `nit`: \"901118954\" (String, exact digits)\n    *   `dv`: \"1\" (String)\n    *   `tipo_contribuyente`: \"juridica\" (Matches rule)\n    *   `razon_social`: \"INGENIERIA Y MANTENIMIENTO NORTE S.A.S.\" (Box 35)\n    *   `tipo_documento`: null (Box 25 is blank, and it's a Juridica)\n    *   `numero_identificacion`: null (Box 26 is blank, and it's a Juridica)\n    *   `primer_apellido`: null\n    *   `segundo_apellido`: null\n    *   `primer_nombre`: null\n    *   `actividad_principal_codigo`: \"3312\" (Box 46: 3 3 1 2)\n    *   `actividad_secundaria_codigo`: \"2017\" (Box 48: 2 0 1 7). Let's check if multiple values are needed. The JSON template has a single string placeholder. Let's provide \"2017\" as it's the first secondary activity.\n    *   `departamento`: \"NORTE DE SANTANDER\" (Box 24)\n    *   `municipio`: \"CUCUTA\" (Box 40)\n    *   `direccion`: \"AV 0 11 45 OF 203\" (Box 41)\n    *   `nombre_representante_legal`: \"PEDRO VILLAMIZAR ORTIZ\" (Boxes 104-106)\n\n4.  **Construct JSON:**\n    ```json\n    {\n      \"nit\": \"901118954\",\n      \"dv\": \"1\",\n      \"tipo_contribuyente\": \"juridica\",\n      \"razon_social\": \"INGENIERIA Y MANTENIMIENTO NORTE S.A.S.\",\n      \"tipo_documento\": null,\n      \"numero_identificacion\": null,\n      \"primer_apellido\": null,\n      \"segundo_apellido\": null,\n      \"primer_nombre\": null,\n      \"actividad_principal_codigo\": \"3312\",\n      \"actividad_secundaria_codigo\": \"2017\",\n      \"departamento\": \"NORTE DE SANTANDER\",\n      \"municipio\": \"CUCUTA\",\n      \"direccion\": \"AV 0 11 45 OF 203\",\n      \"nombre_representante_legal\": \"PEDRO VILLAMIZAR ORTIZ\"\n    }\n    ```\n\n5.  **Final check against constraints:**\n    *   Only valid JSON object? Yes.\n    *   No markdown, no explanation? Yes.\n    *   Missing/empty fields null? Yes.\n    *   `tipo_contribuyente` natural or juridica? \"juridica\" used.\n    *   `nit` and `dv` correct format and extraction? Yes, copied exactly. NIT \"901118954\" and DV \"1\". Note: The rule says \"Copy every digit of box 5 into \"nit\", exactly as printed\". Box 5 is \"901118954\". Box 6 is \"1\".\n    *   Codes as strings? \"3312\", \"2017\" used.\n    *   Departments/Cities extracted properly? Yes.\n    *   Name for rep legal? \"PEDRO VILLAMIZAR ORTIZ\" extracted.\n    *   All good. Ready to output.",
+          "reasoning_details": [
+            {
+              "type": "reasoning.text",
+              "text": "1.  **Analyze the Request:**\n    *   Task: Extract specified fields from a DIAN RUT document (image provided).\n    *   Output Format: ONLY a valid JSON object. No markdown, no explanation.\n    *   Rules:\n        *   Missing/empty fields -> `null`.\n        *   `tipo_contribuyente`: \"natural\" or \"juridica\".\n        *   `nit`: Box 5 (Número de Identificación Tributaria). Copy exactly.\n        *   `dv`: Box 6 (DV). Copy exactly.\n        *   Codes as strings.\n        *   `departamento`: Extract department name.\n        *   `municipio`: Extract city/municipality name.\n        *   `direccion`: Full address.\n        *   `nombre_representante_legal`: Full name if present (persona jurídica), else null.\n\n2.  **Extract Data from Image:**\n    *   **Box 5 (NIT):** 901118954\n    *   **Box 6 (DV):** 1\n    *   **Tipo Contribuyente:** The section \"IDENTIFICACIÓN\" shows \"48. Tipo de contribuyente\" checked as \"Persona jurídica\". So, \"juridica\".\n    *   **Razón Social (Box 35):** INGENIERIA Y MANTENIMIENTO NORTE S.A.S.\n    *   **Tipo Documento (Box 25):** Empty/Blank. -> null\n    *   **Número Identificación (Box 26):** Empty/Blank. -> null\n    *   Primer Apellido (Box 31): Empty/Blank. -> null\n    *   Segundo Apellido (Box 32): Empty/Blank. -> null\n    *   Primer Nombre (Box 33): Empty/Blank. -> null\n    *   **Actividad Principal Código (Box 46):** 3312 (from 3 3 1 2)\n    *   **Actividad Secundaria Código (Box 48):** 2017 (from 2 0 1 7) / 4711 (from 4 7 1 1) / 7410 (from 7 4 1 0) / 2019 (from 2 0 1 9) / 0508 (from 0 5 0 8). Wait, the prompt asks for \"actividad_secundaria_codigo\" as a single field. I'll provide the first secondary activity code (2017) or list all if it's an array, but the prompt implies a single string or null. Let's stick to the first one: 2017. Actually, looking at the JSON template, it's `\"actividad_secundaria_codigo\": null`. I'll put \"2017\" or maybe just list the first one. Let's re-read: \"If a field is not present or empty, use null\". Since multiple boxes (48) exist, providing the first one \"2017\" is reasonable, but I'll check if it's better to just capture the first one. Let's use \"2017\".\n    *   **Departamento (Box 24):** NORTE DE SANTANDER\n    *   **Municipio (Box 40):** CUCUTA\n    *   **Dirección (Box 41):** AV 0 11 45 OF 203\n    *   **Nombre Representante Legal (Box 104-107):**\n        *   104. Primer apellido: VILLAMIZAR\n        *   105. Segundo apellido: ORTIZ\n        *   106. Primer nombre: PEDRO\n        *   107. Otros nombres: NEL\n        *   Full name: PEDRO VILLAMIZAR ORTIZ\n\n3.  **Refine Data Extraction (Self-Correction/Verification):**\n    *   `nit`: \"901118954\" (String, exact digits)\n    *   `dv`: \"1\" (String)\n    *   `tipo_contribuyente`: \"juridica\" (Matches rule)\n    *   `razon_social`: \"INGENIERIA Y MANTENIMIENTO NORTE S.A.S.\" (Box 35)\n    *   `tipo_documento`: null (Box 25 is blank, and it's a Juridica)\n    *   `numero_identificacion`: null (Box 26 is blank, and it's a Juridica)\n    *   `primer_apellido`: null\n    *   `segundo_apellido`: null\n    *   `primer_nombre`: null\n    *   `actividad_principal_codigo`: \"3312\" (Box 46: 3 3 1 2)\n    *   `actividad_secundaria_codigo`: \"2017\" (Box 48: 2 0 1 7). Let's check if multiple values are needed. The JSON template has a single string placeholder. Let's provide \"2017\" as it's the first secondary activity.\n    *   `departamento`: \"NORTE DE SANTANDER\" (Box 24)\n    *   `municipio`: \"CUCUTA\" (Box 40)\n    *   `direccion`: \"AV 0 11 45 OF 203\" (Box 41)\n    *   `nombre_representante_legal`: \"PEDRO VILLAMIZAR ORTIZ\" (Boxes 104-106)\n\n4.  **Construct JSON:**\n    ```json\n    {\n      \"nit\": \"901118954\",\n      \"dv\": \"1\",\n      \"tipo_contribuyente\": \"juridica\",\n      \"razon_social\": \"INGENIERIA Y MANTENIMIENTO NORTE S.A.S.\",\n      \"tipo_documento\": null,\n      \"numero_identificacion\": null,\n      \"primer_apellido\": null,\n      \"segundo_apellido\": null,\n      \"primer_nombre\": null,\n      \"actividad_principal_codigo\": \"3312\",\n      \"actividad_secundaria_codigo\": \"2017\",\n      \"departamento\": \"NORTE DE SANTANDER\",\n      \"municipio\": \"CUCUTA\",\n      \"direccion\": \"AV 0 11 45 OF 203\",\n      \"nombre_representante_legal\": \"PEDRO VILLAMIZAR ORTIZ\"\n    }\n    ```\n\n5.  **Final check against constraints:**\n    *   Only valid JSON object? Yes.\n    *   No markdown, no explanation? Yes.\n    *   Missing/empty fields null? Yes.\n    *   `tipo_contribuyente` natural or juridica? \"juridica\" used.\n    *   `nit` and `dv` correct format and extraction? Yes, copied exactly. NIT \"901118954\" and DV \"1\". Note: The rule says \"Copy every digit of box 5 into \"nit\", exactly as printed\". Box 5 is \"901118954\". Box 6 is \"1\".\n    *   Codes as strings? \"3312\", \"2017\" used.\n    *   Departments/Cities extracted properly? Yes.\n    *   Name for rep legal? \"PEDRO VILLAMIZAR ORTIZ\" extracted.\n    *   All good. Ready to output.",
+              "format": "unknown",
+              "index": 0
+            }
+          ]
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 807,
+      "completion_tokens": 1851,
+      "total_tokens": 2658,
+      "cost": 0.0024633,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.0024633,
+        "upstream_inference_prompt_cost": 0.0002421,
+        "upstream_inference_completions_cost": 0.0022212
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 1642,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    }
+  }
+}

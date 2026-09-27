@@ -1,58 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireApiSession, userHasAccessToAny } from "@/lib/api-route-auth";
 import { RUTAS_SISTEMA } from "@/lib/rutas-sistema";
+import { checkDv, extractRut, type RutExtraction } from "@/lib/rut/extract";
+import { FALLBACK_MODEL, PRIMARY_MODEL } from "@/lib/rut/models";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-
-const PRIMARY_MODEL = "google/gemini-2.0-flash-001";
-const FALLBACK_MODEL = "google/gemini-3.1-flash-lite-preview";
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const ALLOWED_MEDIA_TYPES = new Set(["application/pdf", "image/jpeg", "image/png"]);
-
-// USD per 1M tokens (only used when the provider does not report a cost).
-const PRICE: Record<string, { input: number; output: number }> = {
-  [PRIMARY_MODEL]: { input: 0.1, output: 0.4 },
-  [FALLBACK_MODEL]: { input: 0.25, output: 1.5 },
-};
-
-function calcCost(promptTokens: number, completionTokens: number, model: string): number {
-  const p = PRICE[model] ?? PRICE[PRIMARY_MODEL];
-  return (promptTokens / 1_000_000) * p.input + (completionTokens / 1_000_000) * p.output;
-}
-
-const PROMPT = `Extract the following fields from this DIAN RUT document and return ONLY a valid JSON object.
-No markdown, no explanation, just raw JSON.
-
-Rules:
-- If a field is not present or empty, use null
-- For "tipo_contribuyente": return either "natural" or "juridica"
-- NIT should NOT include the DV digit
-- Return codes as strings
-- For "departamento": extract the department name (e.g. "CUNDINAMARCA", "ANTIOQUIA")
-- For "municipio": extract the city/municipality name (e.g. "BOGOTÁ D.C.", "MEDELLÍN")
-- For "direccion": extract the full address as written on the document
-- For "nombre_representante_legal": extract the full name of the legal representative if present (persona jurídica); use null if not found or if natural person
-
-{
-  "nit": "",
-  "dv": "",
-  "tipo_contribuyente": "",
-  "razon_social": null,
-  "tipo_documento": null,
-  "numero_identificacion": null,
-  "primer_apellido": null,
-  "segundo_apellido": null,
-  "primer_nombre": null,
-  "actividad_principal_codigo": "",
-  "actividad_secundaria_codigo": null,
-  "departamento": null,
-  "municipio": null,
-  "direccion": null,
-  "nombre_representante_legal": null
-}`;
 
 /**
  * Extracts RUT fields with OpenRouter (Gemini). Optional feature: without
@@ -103,55 +59,34 @@ export async function POST(req: NextRequest) {
   }
 
   // OpenRouter/Gemini: PDFs and images both travel as image_url data URLs (mapped to inline_data).
-  const dataUrl = `data:${contentType};base64,${Buffer.from(buffer).toString("base64")}`;
-  const requestBody = {
-    messages: [
-      {
-        role: "user" as const,
-        content: [
-          { type: "image_url" as const, image_url: { url: dataUrl } },
-          { type: "text" as const, text: PROMPT },
-        ],
-      },
-    ],
-  };
-
-  const tryModel = async (model: string) => {
-    const response = await fetch(OPENROUTER_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({ ...requestBody, model }),
-    });
-    if (!response.ok) throw new Error(await response.text());
-    const data = (await response.json()) as {
-      choices?: Array<{ message?: { content?: string } }>;
-      usage?: Record<string, unknown>;
-    };
-    const raw = data.choices?.[0]?.message?.content ?? "";
-    const json = raw.replace(/```json?\n?/g, "").replace(/```/g, "").trim();
-    const extracted = JSON.parse(json) as Record<string, unknown>;
-    const usage = data.usage ?? {};
-    const promptTokens = Number(usage.prompt_tokens ?? usage.input_tokens ?? 0);
-    const completionTokens = Number(usage.completion_tokens ?? usage.output_tokens ?? 0);
-    const costUsd = typeof usage.cost === "number" ? usage.cost : calcCost(promptTokens, completionTokens, model);
-    return {
-      ...extracted,
-      _usage: {
-        prompt_tokens: promptTokens,
-        completion_tokens: completionTokens,
-        total_tokens: promptTokens + completionTokens,
-        cost_usd: Math.round(costUsd * 1_000_000) / 1_000_000,
-      },
-    };
-  };
+  // Any failure of the primary (HTTP, timeout, unparseable or schema-invalid JSON) tries the fallback.
+  const bytes = new Uint8Array(buffer);
+  const tryModel = (model: string) => extractRut({ bytes, mediaType: contentType, apiKey, model });
 
   try {
-    return NextResponse.json(await tryModel(PRIMARY_MODEL));
+    return NextResponse.json(toResponseBody(await tryModel(PRIMARY_MODEL)));
   } catch {
     try {
-      return NextResponse.json(await tryModel(FALLBACK_MODEL));
+      return NextResponse.json(toResponseBody(await tryModel(FALLBACK_MODEL)));
     } catch (err) {
       return NextResponse.json({ error: err instanceof Error ? err.message : "Error en extracción" }, { status: 500 });
     }
   }
+}
+
+/** Backward-compatible body: the fields plus `_usage`; adds the answering model, latency and the DV check. */
+function toResponseBody(result: RutExtraction) {
+  const { promptTokens, completionTokens, costUsd } = result.usage;
+  return {
+    ...result.fields,
+    _usage: {
+      prompt_tokens: promptTokens,
+      completion_tokens: completionTokens,
+      total_tokens: promptTokens + completionTokens,
+      cost_usd: Math.round(costUsd * 1_000_000) / 1_000_000,
+      model: result.model,
+      latency_ms: result.latencyMs,
+    },
+    _validation: { dv_ok: checkDv(result.fields).ok },
+  };
 }

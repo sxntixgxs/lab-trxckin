@@ -1,0 +1,73 @@
+name: RUT evals
+
+# Pull requests replay the recorded model responses (no secrets, no network calls to the model).
+# A manual run calls OpenRouter live; its cassettes come back as an artifact and are never
+# committed from CI. Logs are public: the runner prints scores, never keys or document contents.
+on:
+  pull_request:
+    paths:
+      - apps/frontend/lib/rut/**
+      - apps/frontend/app/api/extract-rut/**
+      - apps/frontend/evals/rut/**
+      - .github/workflows/rut-evals.yml
+  workflow_dispatch:
+    inputs:
+      models:
+        description: Comma-separated OpenRouter model ids (must exist in lib/rut/models.ts)
+        required: true
+        default: deepseek/deepseek-v4.1-flash,google/gemini-3.1-flash-lite-preview
+      budget_usd:
+        description: Abort the live run once this much has been spent
+        required: true
+        default: "2"
+
+permissions:
+  contents: read
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Replay recorded responses
+        if: github.event_name == 'pull_request'
+        run: pnpm --filter frontend eval:rut
+
+      - name: Live run
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          MODELS: ${{ inputs.models }}
+          BUDGET_USD: ${{ inputs.budget_usd }}
+        run: pnpm --filter frontend exec tsx evals/rut/run.ts --mode live --models "$MODELS" --budget-usd "$BUDGET_USD"
+
+      - name: Summary
+        if: always()
+        run: |
+          report=apps/frontend/evals/rut/report.md
+          if [ -f "$report" ]; then
+            {
+              echo "## RUT evals (${{ github.event_name == 'workflow_dispatch' && 'live' || 'replay' }})"
+              sed -n '/<!-- summary:start -->/,/<!-- summary:end -->/p' "$report" | grep -v '<!-- summary'
+              echo
+              echo "Full report (per-field accuracy, variants, failing fields) in the \`rut-evals\` artifact."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rut-evals
+          path: |
+            apps/frontend/evals/rut/report.md
+            apps/frontend/evals/rut/summary.json
+            ${{ github.event_name == 'workflow_dispatch' && 'apps/frontend/evals/rut/cassettes/' || '' }}
+          if-no-files-found: warn

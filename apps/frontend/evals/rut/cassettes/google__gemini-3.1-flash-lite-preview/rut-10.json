@@ -1,0 +1,74 @@
+{
+  "case": "rut-10",
+  "requested_model": "google/gemini-3.1-flash-lite-preview",
+  "recorded_at": "2026-09-27T21:45:29.284Z",
+  "input": {
+    "file": "document.pdf",
+    "media_type": "application/pdf",
+    "sha256": "2b4cccd226fa27bc21fc7c5a3a86ff424adbe2066262f9ccdaa4af51c6931769"
+  },
+  "prompt_sha256": "e4af20497fd02df685cd0cecda49b25f237a14e9e24b4063250ed1276c3dd529",
+  "model": "google/gemini-3.1-flash-lite-preview",
+  "latency_ms": 1571,
+  "outcome": "ok",
+  "usage": {
+    "promptTokens": 910,
+    "completionTokens": 200,
+    "costUsd": 0.0005275,
+    "costSource": "provider"
+  },
+  "response": {
+    "id": "gen-1790545529-zg5ZpdBlXv1q2qr7A3CV",
+    "object": "chat.completion",
+    "created": 1790545529,
+    "model": "google/gemini-3.1-flash-lite-preview",
+    "provider": "Google AI Studio",
+    "system_fingerprint": null,
+    "service_tier": "default",
+    "choices": [
+      {
+        "index": 0,
+        "logprobs": null,
+        "finish_reason": "stop",
+        "native_finish_reason": "STOP",
+        "message": {
+          "role": "assistant",
+          "content": "{\n  \"nit\": \"52896147\",\n  \"dv\": \"8\",\n  \"tipo_contribuyente\": \"natural\",\n  \"razon_social\": null,\n  \"tipo_documento\": \"Cédula de Ciudadanía\",\n  \"numero_identificacion\": \"52896147\",\n  \"primer_apellido\": \"RINCÓN\",\n  \"segundo_apellido\": \"SUÁREZ\",\n  \"primer_nombre\": \"DIANA\",\n  \"actividad_principal_codigo\": \"8559\",\n  \"actividad_secundaria_codigo\": \"8523\",\n  \"departamento\": \"BOYACÁ\",\n  \"municipio\": \"TUNJA\",\n  \"direccion\": \"CL 19 10 64\",\n  \"nombre_representante_legal\": null\n}",
+          "refusal": null,
+          "reasoning": null,
+          "reasoning_details": [
+            {
+              "type": "reasoning.text",
+              "signature": "EnMKcQFpFH0TXQuyHViwdArLYFEt0aP+jWTTYXmwGQ3qkXNnAecK0It2p0eKOnsUIiEr5OuEhsFrr2K95xyzdIc8bRiaGVTRGG0m9U9/foPYeOw5kUIkwXi+mhKFlz3mnA+F+u01sBMpI9BS7QeNwd76kSSa",
+              "format": "google-gemini-v1",
+              "index": 0
+            }
+          ]
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 910,
+      "completion_tokens": 200,
+      "total_tokens": 1110,
+      "cost": 0.0005275,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.0005275,
+        "upstream_inference_prompt_cost": 0.0002275,
+        "upstream_inference_completions_cost": 0.0003
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    }
+  }
+}

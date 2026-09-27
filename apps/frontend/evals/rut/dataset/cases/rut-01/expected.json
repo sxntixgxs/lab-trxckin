@@ -1,0 +1,18 @@
+{
+  "nit": "901245781",
+  "dv": "4",
+  "tipo_contribuyente": "juridica",
+  "razon_social": "DROMINC S.A.S.",
+  "tipo_documento": null,
+  "numero_identificacion": null,
+  "primer_apellido": null,
+  "segundo_apellido": null,
+  "primer_nombre": null,
+  "actividad_principal_codigo": "6201",
+  "actividad_secundaria_codigo": "6202",
+  "departamento": "ANTIOQUIA",
+  "municipio": "MEDELLÍN",
+  "direccion": "CR 43A 7 50 OF 1104",
+  "nombre_representante_legal": "ANA MARÍA RESTREPO GIL",
+  "variant": "clean"
+}

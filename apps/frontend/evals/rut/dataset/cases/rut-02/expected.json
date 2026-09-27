@@ -1,0 +1,18 @@
+{
+  "nit": "79845123",
+  "dv": "1",
+  "tipo_contribuyente": "natural",
+  "razon_social": null,
+  "tipo_documento": "13",
+  "numero_identificacion": "79845123",
+  "primer_apellido": "GÓMEZ",
+  "segundo_apellido": "ARIAS",
+  "primer_nombre": "CARLOS",
+  "actividad_principal_codigo": "6920",
+  "actividad_secundaria_codigo": null,
+  "departamento": "BOGOTÁ D.C.",
+  "municipio": "BOGOTÁ D.C.",
+  "direccion": "CL 127 15 32 AP 402",
+  "nombre_representante_legal": null,
+  "variant": "clean"
+}

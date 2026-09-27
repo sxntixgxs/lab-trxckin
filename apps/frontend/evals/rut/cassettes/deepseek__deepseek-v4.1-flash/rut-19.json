@@ -1,0 +1,74 @@
+{
+  "case": "rut-19",
+  "requested_model": "deepseek/deepseek-v4.1-flash",
+  "recorded_at": "2026-09-27T21:50:22.610Z",
+  "input": {
+    "file": "document.pdf",
+    "media_type": "application/pdf",
+    "sha256": "a16403048972c26643ab95caac03d7db971bed6a5c7a4b5295e9d4045deb3f15"
+  },
+  "prompt_sha256": "e4af20497fd02df685cd0cecda49b25f237a14e9e24b4063250ed1276c3dd529",
+  "model": "deepseek/deepseek-v4.1-flash",
+  "latency_ms": 5639,
+  "outcome": "ok",
+  "usage": {
+    "promptTokens": 1409,
+    "completionTokens": 1616,
+    "costUsd": 0.0023619,
+    "costSource": "provider"
+  },
+  "response": {
+    "id": "gen-1790545822-0SMy4Y87vGA46l5sedvK",
+    "object": "chat.completion",
+    "created": 1790545822,
+    "model": "deepseek/deepseek-v4.1-flash",
+    "provider": "Together",
+    "system_fingerprint": "default",
+    "service_tier": null,
+    "choices": [
+      {
+        "index": 0,
+        "logprobs": null,
+        "finish_reason": "stop",
+        "native_finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "{\"nit\":\"1152463870\",\"dv\":\"0\",\"tipo_contribuyente\":\"natural\",\"razon_social\":null,\"tipo_documento\":\"13\",\"numero_identificacion\":\"1152463870\",\"primer_apellido\":\"OSPINA\",\"segundo_apellido\":null,\"primer_nombre\":\"VALENTINA\",\"actividad_principal_codigo\":\"7310\",\"actividad_secundaria_codigo\":null,\"departamento\":\"ANTIOQUIA\",\"municipio\":\"ENVIGADO\",\"direccion\":\"CL 37 SUR 43 20\",\"nombre_representante_legal\":null}",
+          "refusal": null,
+          "reasoning": "1.  **Analyze the Request:**\n    *   Extract specific fields from the provided DIAN RUT document image.\n    *   Return ONLY a valid JSON object.\n    *   No markdown, no explanation.\n    *   Rules:\n        *   Missing/empty fields -> `null`.\n        *   `tipo_contribuyente`: \"natural\" or \"juridica\".\n        *   `nit` (box 5): Copy exactly as printed. `dv` (box 6): Copy exactly as printed.\n        *   Codes as strings.\n        *   `departamento`: Extract name (e.g., \"ANTIOQUIA\").\n        *   `municipio`: Extract name (e.g., \"ENVIGADO\").\n        *   `direccion`: Full address as written.\n        *   `nombre_representante_legal`: Extract if present (persona juridica), else `null`.\n\n2.  **Extract Information from the Image:**\n    *   **Box 5 (NIT):** `1 1 5 2 4 6 3 8 7 0` -> \"1152463870\"\n    *   **Box 6 (DV):** `0` -> \"0\"\n    *   **Box 24 (Tipo de contribuyente):** \"Persona natural o sucesión líquida\" -> \"natural\"\n    *   **Box 35 (Razón social):** Empty -> `null`\n    *   **Box 25 (Tipo de documento):** \"Cédula de Ciudadanía\" -> \"13\" (The code is 13, but the rule asks for `tipo_documento`. Usually, RUT documents have both the name and code. I'll provide the code \"13\" or the name. Let's provide the code \"13\" as it's more standard for structured data, or \"Cédula de Ciudadanía\". Wait, the prompt says \"Return codes as strings\" for general fields. Let's look at the specific JSON template: `tipo_documento` is a field. I'll provide the code \"13\" or \"CC\". I'll use \"13\". Actually, it just says `tipo_documento`. Let's use \"13\".\n    *   **Box 26 (Número de identificación):** `1 1 5 2 4 6 3 8 7 0` -> \"1152463870\" (Same as NIT)\n    *   **Box 31 (Primer apellido):** \"OSPINA\" -> \"OSPINA\"\n    *   **Box 32 (Segundo apellido):** Empty -> `null` (Wait, looking closely at the image, box 32 is empty).\n    *   **Box 33 (Primer nombre):** \"VALENTINA\" -> \"VALENTINA\"\n    *   **Box 46 (Actividad principal - Código):** `7 3 1 0` -> \"7310\"\n    *   **Box 48 (Actividad secundaria - Código):** Empty -> `null`\n    *   **Box 39 (Departamento):** \"ANTIOQUIA\" -> \"ANTIOQUIA\" (Code is 05)\n    *   **Box 40 (Ciudad/Municipio):** \"ENVIGADO\" -> \"ENVIGADO\" (Code is 266)\n    *   **Box 41 (Dirección principal):** \"CL 37 SUR 43 20\" -> \"CL 37 SUR 43 20\"\n    *   **Representante Legal (Box 98-107):** This is for \"Persona natural\", so these fields are empty. `nombre_representante_legal` -> `null`.\n\n3.  **Format the JSON:**\n    *   `nit`: \"1152463870\"\n    *   `dv`: \"0\"\n    *   `tipo_contribuyente`: \"natural\"\n    *   `razon_social`: null\n    *   `tipo_documento`: \"13\" (or \"Cédula de Ciudadanía\", but codes are generally preferred. Let's use \"13\" since code is explicitly listed next to it. The rule says \"Return codes as strings\").\n    *   `numero_identificacion`: \"1152463870\"\n    *   `primer_apellido`: \"OSPINA\"\n    *   `segundo_apellido`: null\n    *   `primer_nombre`: \"VALENTINA\"\n    *   `actividad_principal_codigo`: \"7310\"\n    *   `actividad_secundaria_codigo`: null\n    *   `departamento`: \"ANTIOQUIA\"\n    *   `municipio`: \"ENVIGADO\"\n    *   `direccion`: \"CL 37 SUR 43 20\"\n    *   `nombre_representante_legal`: null\n\n4.  **Refine JSON values:**\n    *   Check `tipo_documento` again. The prompt says \"Return codes as strings\". The code for \"Cédula de Ciudadanía\" is \"13\". I will use \"13\". If it expected the name, it would say so. Given the strict rules, \"13\" is safer.\n    *   Check `nit` and `dv`. Box 5 is `1152463870`. Box 6 is `0`. Separated correctly.\n    *   Check `tipo_contribuyente`. The text is \"Persona natural o sucesión líquida\". This falls under \"natural\". Returns \"natural\".\n    *   Check `razon_social`. Box 35 is empty. Returns null.\n    *   Check `actividad_secundaria_codigo`. Box 48 is empty. Returns null.\n    *   Check `nombre_representante_legal`. Boxes 98-107 are empty. Returns null.\n\n5.  **Final JSON Output Generation:**\n    *   Ensure no markdown, no leading/trailing text, just the JSON.\n    *   { \"nit\": \"1152463870\", \"dv\": \"0\", \"tipo_contribuyente\": \"natural\", \"razon_social\": null, \"tipo_documento\": \"13\", \"numero_identificacion\": \"1152463870\", \"primer_apellido\": \"OSPINA\", \"segundo_apellido\": null, \"primer_nombre\": \"VALENTINA\", \"actividad_principal_codigo\": \"7310\", \"actividad_secundaria_codigo\": null, \"departamento\": \"ANTIOQUIA\", \"municipio\": \"ENVIGADO\", \"direccion\": \"CL 37 SUR 43 20\", \"nombre_representante_legal\": null }",
+          "reasoning_details": [
+            {
+              "type": "reasoning.text",
+              "text": "1.  **Analyze the Request:**\n    *   Extract specific fields from the provided DIAN RUT document image.\n    *   Return ONLY a valid JSON object.\n    *   No markdown, no explanation.\n    *   Rules:\n        *   Missing/empty fields -> `null`.\n        *   `tipo_contribuyente`: \"natural\" or \"juridica\".\n        *   `nit` (box 5): Copy exactly as printed. `dv` (box 6): Copy exactly as printed.\n        *   Codes as strings.\n        *   `departamento`: Extract name (e.g., \"ANTIOQUIA\").\n        *   `municipio`: Extract name (e.g., \"ENVIGADO\").\n        *   `direccion`: Full address as written.\n        *   `nombre_representante_legal`: Extract if present (persona juridica), else `null`.\n\n2.  **Extract Information from the Image:**\n    *   **Box 5 (NIT):** `1 1 5 2 4 6 3 8 7 0` -> \"1152463870\"\n    *   **Box 6 (DV):** `0` -> \"0\"\n    *   **Box 24 (Tipo de contribuyente):** \"Persona natural o sucesión líquida\" -> \"natural\"\n    *   **Box 35 (Razón social):** Empty -> `null`\n    *   **Box 25 (Tipo de documento):** \"Cédula de Ciudadanía\" -> \"13\" (The code is 13, but the rule asks for `tipo_documento`. Usually, RUT documents have both the name and code. I'll provide the code \"13\" or the name. Let's provide the code \"13\" as it's more standard for structured data, or \"Cédula de Ciudadanía\". Wait, the prompt says \"Return codes as strings\" for general fields. Let's look at the specific JSON template: `tipo_documento` is a field. I'll provide the code \"13\" or \"CC\". I'll use \"13\". Actually, it just says `tipo_documento`. Let's use \"13\".\n    *   **Box 26 (Número de identificación):** `1 1 5 2 4 6 3 8 7 0` -> \"1152463870\" (Same as NIT)\n    *   **Box 31 (Primer apellido):** \"OSPINA\" -> \"OSPINA\"\n    *   **Box 32 (Segundo apellido):** Empty -> `null` (Wait, looking closely at the image, box 32 is empty).\n    *   **Box 33 (Primer nombre):** \"VALENTINA\" -> \"VALENTINA\"\n    *   **Box 46 (Actividad principal - Código):** `7 3 1 0` -> \"7310\"\n    *   **Box 48 (Actividad secundaria - Código):** Empty -> `null`\n    *   **Box 39 (Departamento):** \"ANTIOQUIA\" -> \"ANTIOQUIA\" (Code is 05)\n    *   **Box 40 (Ciudad/Municipio):** \"ENVIGADO\" -> \"ENVIGADO\" (Code is 266)\n    *   **Box 41 (Dirección principal):** \"CL 37 SUR 43 20\" -> \"CL 37 SUR 43 20\"\n    *   **Representante Legal (Box 98-107):** This is for \"Persona natural\", so these fields are empty. `nombre_representante_legal` -> `null`.\n\n3.  **Format the JSON:**\n    *   `nit`: \"1152463870\"\n    *   `dv`: \"0\"\n    *   `tipo_contribuyente`: \"natural\"\n    *   `razon_social`: null\n    *   `tipo_documento`: \"13\" (or \"Cédula de Ciudadanía\", but codes are generally preferred. Let's use \"13\" since code is explicitly listed next to it. The rule says \"Return codes as strings\").\n    *   `numero_identificacion`: \"1152463870\"\n    *   `primer_apellido`: \"OSPINA\"\n    *   `segundo_apellido`: null\n    *   `primer_nombre`: \"VALENTINA\"\n    *   `actividad_principal_codigo`: \"7310\"\n    *   `actividad_secundaria_codigo`: null\n    *   `departamento`: \"ANTIOQUIA\"\n    *   `municipio`: \"ENVIGADO\"\n    *   `direccion`: \"CL 37 SUR 43 20\"\n    *   `nombre_representante_legal`: null\n\n4.  **Refine JSON values:**\n    *   Check `tipo_documento` again. The prompt says \"Return codes as strings\". The code for \"Cédula de Ciudadanía\" is \"13\". I will use \"13\". If it expected the name, it would say so. Given the strict rules, \"13\" is safer.\n    *   Check `nit` and `dv`. Box 5 is `1152463870`. Box 6 is `0`. Separated correctly.\n    *   Check `tipo_contribuyente`. The text is \"Persona natural o sucesión líquida\". This falls under \"natural\". Returns \"natural\".\n    *   Check `razon_social`. Box 35 is empty. Returns null.\n    *   Check `actividad_secundaria_codigo`. Box 48 is empty. Returns null.\n    *   Check `nombre_representante_legal`. Boxes 98-107 are empty. Returns null.\n\n5.  **Final JSON Output Generation:**\n    *   Ensure no markdown, no leading/trailing text, just the JSON.\n    *   { \"nit\": \"1152463870\", \"dv\": \"0\", \"tipo_contribuyente\": \"natural\", \"razon_social\": null, \"tipo_documento\": \"13\", \"numero_identificacion\": \"1152463870\", \"primer_apellido\": \"OSPINA\", \"segundo_apellido\": null, \"primer_nombre\": \"VALENTINA\", \"actividad_principal_codigo\": \"7310\", \"actividad_secundaria_codigo\": null, \"departamento\": \"ANTIOQUIA\", \"municipio\": \"ENVIGADO\", \"direccion\": \"CL 37 SUR 43 20\", \"nombre_representante_legal\": null }",
+              "format": "unknown",
+              "index": 0
+            }
+          ]
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1409,
+      "completion_tokens": 1616,
+      "total_tokens": 3025,
+      "cost": 0.0023619,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.0023619,
+        "upstream_inference_prompt_cost": 0.0004227,
+        "upstream_inference_completions_cost": 0.0019392
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 1476,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    }
+  }
+}

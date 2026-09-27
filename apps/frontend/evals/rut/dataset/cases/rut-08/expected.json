@@ -1,0 +1,18 @@
+{
+  "nit": "1088254310",
+  "dv": "1",
+  "tipo_contribuyente": "natural",
+  "razon_social": null,
+  "tipo_documento": "13",
+  "numero_identificacion": "1088254310",
+  "primer_apellido": "ÁLVAREZ",
+  "segundo_apellido": "OCAMPO",
+  "primer_nombre": "JULIÁN",
+  "actividad_principal_codigo": "4520",
+  "actividad_secundaria_codigo": null,
+  "departamento": "RISARALDA",
+  "municipio": "PEREIRA",
+  "direccion": "MZ 12 CS 7 BRR CUBA",
+  "nombre_representante_legal": null,
+  "variant": "clean"
+}

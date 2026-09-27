@@ -1,0 +1,74 @@
+{
+  "case": "rut-01",
+  "requested_model": "deepseek/deepseek-v4.1-flash",
+  "recorded_at": "2026-09-27T21:49:50.254Z",
+  "input": {
+    "file": "document.pdf",
+    "media_type": "application/pdf",
+    "sha256": "2174e0a2b5a9ffac3e069481c4c7ea8a21fe7f5295950c102003b73a21f388f1"
+  },
+  "prompt_sha256": "e4af20497fd02df685cd0cecda49b25f237a14e9e24b4063250ed1276c3dd529",
+  "model": "deepseek/deepseek-v4.1-flash",
+  "latency_ms": 9054,
+  "outcome": "ok",
+  "usage": {
+    "promptTokens": 1409,
+    "completionTokens": 1398,
+    "costUsd": 0.0021003,
+    "costSource": "provider"
+  },
+  "response": {
+    "id": "gen-1790545791-nvB6huqNfIa1KgMnsTNW",
+    "object": "chat.completion",
+    "created": 1790545791,
+    "model": "deepseek/deepseek-v4.1-flash",
+    "provider": "Together",
+    "system_fingerprint": "default",
+    "service_tier": null,
+    "choices": [
+      {
+        "index": 0,
+        "logprobs": null,
+        "finish_reason": "stop",
+        "native_finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "{\"nit\": \"901245781\", \"dv\": \"4\", \"tipo_contribuyente\": \"juridica\", \"razon_social\": \"DROMINC S.A.S.\", \"tipo_documento\": null, \"numero_identificacion\": null, \"primer_apellido\": null, \"segundo_apellido\": null, \"primer_nombre\": null, \"actividad_principal_codigo\": \"6201\", \"actividad_secundaria_codigo\": \"6202\", \"departamento\": \"ANTIOQUIA\", \"municipio\": \"MEDELLÍN\", \"direccion\": \"CR 43A 7 50 OF 1104\", \"nombre_representante_legal\": \"ANA MARÍA RESTREPO GIL\"}",
+          "refusal": null,
+          "reasoning": "1.  **Analyze the Request:**\n    *   Extract specific fields from the provided DIAN RUT document image.\n    *   Return ONLY a valid JSON object.\n    *   No markdown, no explanation.\n    *   Rules:\n        *   Missing/empty fields: `null`.\n        *   `tipo_contribuyente`: \"natural\" or \"juridica\".\n        *   `nit`: Box 5 (every digit exactly as printed).\n        *   `dv`: Box 6 (separate box).\n        *   Return codes as strings.\n        *   `departamento`: Extract department name.\n        *   `municipio`: Extract city/municipality name.\n        *   `direccion`: Full address as written.\n        *   `nombre_representante_legal`: Full name if present (persona jurídica), else `null`.\n\n2.  **Extract Information from the Image:**\n    *   **Box 5 (NIT):** `9 0 1 2 4 5 7 8 1` -> `901245781` (Note: Box 5 says \"9 0 1 2 4 5 7 8 1\", let's re-read carefully: 9, 0, 1, 2, 4, 5, 7, 8, 1. Yes, 901245781).\n    *   **Box 6 (DV):** `4` -> `4`\n    *   **Tipo Contribuyente (Box 24):** \"Persona jurídica\" -> `juridica`\n    *   **Razón Social (Box 35):** \"DROMINC S.A.S.\" -> `DROMINC S.A.S.`\n    *   **Tipo Documento (Box 25):** Empty/Blank -> `null`\n    *   **Número Identificación (Box 26):** Empty/Blank -> `null`\n    *   **Primer Apellido (Box 31):** Empty/Blank -> `null`\n    *   **Segundo Apellido (Box 32):** Empty/Blank -> `null`\n    *   **Primer Nombre (Box 33):** Empty/Blank -> `null`\n    *   **Actividad Principal (Box 46):** `6201` -> `6201`\n    *   **Actividad Secundaria (Box 48):** `6202` -> `6202`\n    *   **Departamento (Box 39):** \"ANTIOQUIA\" -> `ANTIOQUIA`\n    *   **Municipio (Box 40):** \"MEDELLÍN\" -> `MEDELLÍN`\n    *   **Dirección (Box 41):** \"CR 43A 7 50 OF 1104\" -> `CR 43A 7 50 OF 1104`\n    *   **Nombre Representante Legal (Boxes 104, 105, 106, 107):**\n        *   104 Primer apellido: \"RESTREPO\"\n        *   105 Segundo apellido: \"GIL\"\n        *   106 Primer nombre: \"ANA\"\n        *   107 Otros nombres: \"MARÍA\"\n        *   Full name: \"RESTREPO GIL ANA MARÍA\" (Order: Apellidos, Nombres. Let's format as \"ANA MARÍA RESTREPO GIL\" or \"RESTREPO GIL ANA MARÍA\". The document lists it as Apellido1 Apellido2 Nombre1 Nombre2. Let's use \"ANA MARÍA RESTREPO GIL\" for natural Spanish reading, or just concatenate what's in the boxes: \"RESTREPO GIL ANA MARÍA\". Let's use \"ANA MARÍA RESTREPO GIL\" to be safe and natural. Or just strictly follow the boxes: \"RESTREPO GIL ANA MARÍA\". Let's output \"ANA MARÍA RESTREPO GIL\").\n\n3.  **Format as JSON:**\n    *   `nit`: \"901245781\"\n    *   `dv`: \"4\"\n    *   `tipo_contribuyente`: \"juridica\"\n    *   `razon_social`: \"DROMINC S.A.S.\"\n    *   `tipo_documento`: null\n    *   `numero_identificacion`: null\n    *   `primer_apellido`: null\n    *   `segundo_apellido`: null\n    *   `primer_nombre`: null\n    *   `actividad_principal_codigo`: \"6201\"\n    *   `actividad_secundaria_codigo`: \"6202\"\n    *   `departamento`: \"ANTIOQUIA\"\n    *   `municipio`: \"MEDELLÍN\"\n    *   `direccion`: \"CR 43A 7 50 OF 1104\"\n    *   `nombre_representante_legal`: \"ANA MARÍA RESTREPO GIL\" (or \"RESTREPO GIL ANA MARÍA\"). The boxes are: 104 RESTREPO, 105 GIL, 106 ANA, 107 MARÍA. I will provide \"ANA MARÍA RESTREPO GIL\".\n\n4.  **Final JSON check:**\n    *   Double-check NIT: 9 0 1 2 4 5 7 8 1 -> 901245781.\n    *   DV: 4 -> \"4\".\n    *   Persona jurídica -> \"juridica\".\n    *   All conditions met. Format strictly as prompt requires.",
+          "reasoning_details": [
+            {
+              "type": "reasoning.text",
+              "text": "1.  **Analyze the Request:**\n    *   Extract specific fields from the provided DIAN RUT document image.\n    *   Return ONLY a valid JSON object.\n    *   No markdown, no explanation.\n    *   Rules:\n        *   Missing/empty fields: `null`.\n        *   `tipo_contribuyente`: \"natural\" or \"juridica\".\n        *   `nit`: Box 5 (every digit exactly as printed).\n        *   `dv`: Box 6 (separate box).\n        *   Return codes as strings.\n        *   `departamento`: Extract department name.\n        *   `municipio`: Extract city/municipality name.\n        *   `direccion`: Full address as written.\n        *   `nombre_representante_legal`: Full name if present (persona jurídica), else `null`.\n\n2.  **Extract Information from the Image:**\n    *   **Box 5 (NIT):** `9 0 1 2 4 5 7 8 1` -> `901245781` (Note: Box 5 says \"9 0 1 2 4 5 7 8 1\", let's re-read carefully: 9, 0, 1, 2, 4, 5, 7, 8, 1. Yes, 901245781).\n    *   **Box 6 (DV):** `4` -> `4`\n    *   **Tipo Contribuyente (Box 24):** \"Persona jurídica\" -> `juridica`\n    *   **Razón Social (Box 35):** \"DROMINC S.A.S.\" -> `DROMINC S.A.S.`\n    *   **Tipo Documento (Box 25):** Empty/Blank -> `null`\n    *   **Número Identificación (Box 26):** Empty/Blank -> `null`\n    *   **Primer Apellido (Box 31):** Empty/Blank -> `null`\n    *   **Segundo Apellido (Box 32):** Empty/Blank -> `null`\n    *   **Primer Nombre (Box 33):** Empty/Blank -> `null`\n    *   **Actividad Principal (Box 46):** `6201` -> `6201`\n    *   **Actividad Secundaria (Box 48):** `6202` -> `6202`\n    *   **Departamento (Box 39):** \"ANTIOQUIA\" -> `ANTIOQUIA`\n    *   **Municipio (Box 40):** \"MEDELLÍN\" -> `MEDELLÍN`\n    *   **Dirección (Box 41):** \"CR 43A 7 50 OF 1104\" -> `CR 43A 7 50 OF 1104`\n    *   **Nombre Representante Legal (Boxes 104, 105, 106, 107):**\n        *   104 Primer apellido: \"RESTREPO\"\n        *   105 Segundo apellido: \"GIL\"\n        *   106 Primer nombre: \"ANA\"\n        *   107 Otros nombres: \"MARÍA\"\n        *   Full name: \"RESTREPO GIL ANA MARÍA\" (Order: Apellidos, Nombres. Let's format as \"ANA MARÍA RESTREPO GIL\" or \"RESTREPO GIL ANA MARÍA\". The document lists it as Apellido1 Apellido2 Nombre1 Nombre2. Let's use \"ANA MARÍA RESTREPO GIL\" for natural Spanish reading, or just concatenate what's in the boxes: \"RESTREPO GIL ANA MARÍA\". Let's use \"ANA MARÍA RESTREPO GIL\" to be safe and natural. Or just strictly follow the boxes: \"RESTREPO GIL ANA MARÍA\". Let's output \"ANA MARÍA RESTREPO GIL\").\n\n3.  **Format as JSON:**\n    *   `nit`: \"901245781\"\n    *   `dv`: \"4\"\n    *   `tipo_contribuyente`: \"juridica\"\n    *   `razon_social`: \"DROMINC S.A.S.\"\n    *   `tipo_documento`: null\n    *   `numero_identificacion`: null\n    *   `primer_apellido`: null\n    *   `segundo_apellido`: null\n    *   `primer_nombre`: null\n    *   `actividad_principal_codigo`: \"6201\"\n    *   `actividad_secundaria_codigo`: \"6202\"\n    *   `departamento`: \"ANTIOQUIA\"\n    *   `municipio`: \"MEDELLÍN\"\n    *   `direccion`: \"CR 43A 7 50 OF 1104\"\n    *   `nombre_representante_legal`: \"ANA MARÍA RESTREPO GIL\" (or \"RESTREPO GIL ANA MARÍA\"). The boxes are: 104 RESTREPO, 105 GIL, 106 ANA, 107 MARÍA. I will provide \"ANA MARÍA RESTREPO GIL\".\n\n4.  **Final JSON check:**\n    *   Double-check NIT: 9 0 1 2 4 5 7 8 1 -> 901245781.\n    *   DV: 4 -> \"4\".\n    *   Persona jurídica -> \"juridica\".\n    *   All conditions met. Format strictly as prompt requires.",
+              "format": "unknown",
+              "index": 0
+            }
+          ]
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1409,
+      "completion_tokens": 1398,
+      "total_tokens": 2807,
+      "cost": 0.0021003,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.0021003,
+        "upstream_inference_prompt_cost": 0.0004227,
+        "upstream_inference_completions_cost": 0.0016776
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 1222,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    }
+  }
+}

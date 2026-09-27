@@ -1,0 +1,74 @@
+{
+  "case": "rut-04",
+  "requested_model": "deepseek/deepseek-v4.1-flash",
+  "recorded_at": "2026-09-27T21:49:50.383Z",
+  "input": {
+    "file": "document.pdf",
+    "media_type": "application/pdf",
+    "sha256": "e970875197e165c2d0b6c37619d28c01fefe0727b66800d4ec2d654e223f31bf"
+  },
+  "prompt_sha256": "e4af20497fd02df685cd0cecda49b25f237a14e9e24b4063250ed1276c3dd529",
+  "model": "deepseek/deepseek-v4.1-flash",
+  "latency_ms": 10360,
+  "outcome": "ok",
+  "usage": {
+    "promptTokens": 1409,
+    "completionTokens": 1888,
+    "costUsd": 0.0026883,
+    "costSource": "provider"
+  },
+  "response": {
+    "id": "gen-1790545791-8gvLYTkiZGAXev4W8UKl",
+    "object": "chat.completion",
+    "created": 1790545791,
+    "model": "deepseek/deepseek-v4.1-flash",
+    "provider": "Together",
+    "system_fingerprint": "default",
+    "service_tier": null,
+    "choices": [
+      {
+        "index": 0,
+        "logprobs": null,
+        "finish_reason": "stop",
+        "native_finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "{\n  \"nit\": \"1020734589\",\n  \"dv\": \"1\",\n  \"tipo_contribuyente\": \"natural\",\n  \"razon_social\": null,\n  \"tipo_documento\": \"13\",\n  \"numero_identificacion\": \"1020734589\",\n  \"primer_apellido\": \"MARTÍNEZ\",\n  \"segundo_apellido\": \"PÉREZ\",\n  \"primer_nombre\": \"LUISA\",\n  \"actividad_principal_codigo\": \"8621\",\n  \"actividad_secundaria_codigo\": \"8299\",\n  \"departamento\": \"CUNDINAMARCA\",\n  \"municipio\": \"CHÍA\",\n  \"direccion\": \"CR 9 12 45 CS 3\",\n  \"nombre_representante_legal\": null\n}",
+          "refusal": null,
+          "reasoning": "1.  **Analyze the Request:**\n    *   Task: Extract specific fields from the provided DIAN RUT document image.\n    *   Format: ONLY a valid JSON object. No markdown, no explanations.\n    *   Rules:\n        *   Missing/empty fields -> `null`.\n        *   `tipo_contribuyente`: \"natural\" or \"juridica\".\n        *   `nit`: Box 5 (Número de Identificación Tributaria). Copy exactly.\n        *   `dv`: Box 6 (DV). Copy exactly.\n        *   Codes as strings.\n        *   `departamento`: Extract department name.\n        *   `municipio`: Extract city/municipality name.\n        *   `direccion`: Extract full address.\n        *   `nombre_representante_legal`: Full name if present (persona jurídica); null if not found or natural person.\n\n2.  **Extract Data from Image:**\n    *   **Box 5 (NIT):** `1 0 2 0 7 3 4 5 8 9` -> `\"1020734589\"`\n    *   **Box 6 (DV):** `1` -> `\"1\"`\n    *   **Box 24 (Tipo de contribuyente):** \"Persona natural o sucesión líquida\" -> `tipo_contribuyente` = `\"natural\"`\n    *   **Box 35 (Razón social):** Empty -> `null`\n    *   **Box 25 (Tipo de documento):** \"Cédula de Ciudadanía\" -> `null` (Rule says \"Return codes as strings\", but what about document type name? The field says `tipo_documento`. Wait, let's look at the prompt example: \"Cédula de Ciudadanía\" probably should be mapped to its code `13` or the text. The rule says \"Return codes as strings\". Actually, \"tipo_documento\" usually refers to the code, but the text is also present. No specific instruction besides \"codes as strings\". Let's use the exact text or code? The prompt asks for \"tipo_documento\": null. Wait, the field in the JSON is \"tipo_documento\". Looking at the rules: \"Return codes as strings\". If it means the code, then `13`. Let's stick to returning the string value of the text or code. \"Cédula de Ciudadanía\" is the text. The code is 13. Let's output the code \"13\". Wait, the output format has `tipo_documento` as null. Let's see if there's a code. Box 25 has Cód. `13`. I will use `\"13\"` or `\"Cédula de Ciudadanía\"`. Let's use the literal string or the code. Since it says \"Return codes as strings\", I'll use the code `\"13\"`.\n    *   **Box 26 (Número de identificación):** `1020734589` -> `\"1020734589\"`\n    *   **Box 31 (Primer apellido):** `MARTÍNEZ` -> `\"MARTÍNEZ\"`\n    *   **Box 32 (Segundo apellido):** `PÉREZ` -> `\"PÉREZ\"`\n    *   **Box 33 (Primer nombre):** `LUISA` -> `\"LUISA\"`\n    *   **Box 34 (Otros nombres):** `FERNANDA` -> `\"FERNANDA\"`\n    *   **Box 46 (Actividad principal - Código):** `8621` -> `\"8621\"`\n    *   **Box 48 (Actividad secundaria - Código):** `8299` -> `\"8299\"`\n    *   **Box 39 (Departamento):** `CUNDINAMARCA` -> `\"CUNDINAMARCA\"`\n    *   **Box 40 (Ciudad/Municipio):** `CHÍA` -> `\"CHÍA\"`\n    *   **Box 41 (Dirección principal):** `CR 9 12 45 CS 3` -> `\"CR 9 12 45 CS 3\"`\n    *   **Box 98 (Representación):** Empty -> `null`\n\n3.  **Review against rules:**\n    *   `nit`: \"1020734589\" (matches Box 5 exactly).\n    *   `dv`: \"1\" (matches Box 6 exactly).\n    *   `tipo_contribuyente`: \"natural\" (Box 24: Persona natural).\n    *   `razon_social`: null (Box 35 empty).\n    *   `tipo_documento`: \"13\" (Box 25 code. Wait, \"Return codes as strings\". \"13\" is a string).\n    *   `numero_identificacion`: \"1020734589\" (Box 26).\n    *   `primer_apellido`: \"MARTÍNEZ\"\n    *   `segundo_apellido`: \"PÉREZ\"\n    *   `primer_nombre`: \"LUISA\"\n    *   `actividad_principal_codigo`: \"8621\"\n    *   `actividad_secundaria_codigo`: \"8299\"\n    *   `departamento`: \"CUNDINAMARCA\"\n    *   `municipio`: \"CHÍA\"\n    *   `direccion`: \"CR 9 12 45 CS 3\"\n    *   `nombre_representante_legal`: null (Rules state: \"use null if not found or if natural person\". This is a natural person).\n\n4.  **Final JSON construction:**\n    ```json\n    {\n      \"nit\": \"1020734589\",\n      \"dv\": \"1\",\n      \"tipo_contribuyente\": \"natural\",\n      \"razon_social\": null,\n      \"tipo_documento\": \"13\",\n      \"numero_identificacion\": \"1020734589\",\n      \"primer_apellido\": \"MARTÍNEZ\",\n      \"segundo_apellido\": \"PÉREZ\",\n      \"primer_nombre\": \"LUISA\",\n      \"actividad_principal_codigo\": \"8621\",\n      \"actividad_secundaria_codigo\": \"8299\",\n      \"departamento\": \"CUNDINAMARCA\",\n      \"municipio\": \"CHÍA\",\n      \"direccion\": \"CR 9 12 45 CS 3\",\n      \"nombre_representante_legal\": null\n    }\n    ```\n\n5.  **Double check details:**\n    - NIT: `1020734589` (10 digits). Box 5 has 10 boxes. Correct.\n    - DV: `1`. Box 6 has 1 box. Correct.\n    - Box 25 Cód: `13`. `tipo_documento` is \"13\".\n    - Box 26: `1020734589`. Same as NIT. Correct.\n    - Box 31: `MARTÍNEZ`.\n    - Box 32: `PÉREZ`.\n    - Box 33: `LUISA`.\n    - Box 34: `FERNANDA` (not requested, but good to know).\n    - Box 46: `8621`.\n    - Box 48: `8299`.\n    - Box 39: `CUNDINAMARCA`.\n    - Box 40: `CHÍA`.\n    - Box 41: `CR 9 12 45 CS 3`.\n    - Legal rep: `null` (Rule: null if natural person).\n    - JSON format: ensure no trailing commas, valid strings.\n    - All good. Ready to output.",
+          "reasoning_details": [
+            {
+              "type": "reasoning.text",
+              "text": "1.  **Analyze the Request:**\n    *   Task: Extract specific fields from the provided DIAN RUT document image.\n    *   Format: ONLY a valid JSON object. No markdown, no explanations.\n    *   Rules:\n        *   Missing/empty fields -> `null`.\n        *   `tipo_contribuyente`: \"natural\" or \"juridica\".\n        *   `nit`: Box 5 (Número de Identificación Tributaria). Copy exactly.\n        *   `dv`: Box 6 (DV). Copy exactly.\n        *   Codes as strings.\n        *   `departamento`: Extract department name.\n        *   `municipio`: Extract city/municipality name.\n        *   `direccion`: Extract full address.\n        *   `nombre_representante_legal`: Full name if present (persona jurídica); null if not found or natural person.\n\n2.  **Extract Data from Image:**\n    *   **Box 5 (NIT):** `1 0 2 0 7 3 4 5 8 9` -> `\"1020734589\"`\n    *   **Box 6 (DV):** `1` -> `\"1\"`\n    *   **Box 24 (Tipo de contribuyente):** \"Persona natural o sucesión líquida\" -> `tipo_contribuyente` = `\"natural\"`\n    *   **Box 35 (Razón social):** Empty -> `null`\n    *   **Box 25 (Tipo de documento):** \"Cédula de Ciudadanía\" -> `null` (Rule says \"Return codes as strings\", but what about document type name? The field says `tipo_documento`. Wait, let's look at the prompt example: \"Cédula de Ciudadanía\" probably should be mapped to its code `13` or the text. The rule says \"Return codes as strings\". Actually, \"tipo_documento\" usually refers to the code, but the text is also present. No specific instruction besides \"codes as strings\". Let's use the exact text or code? The prompt asks for \"tipo_documento\": null. Wait, the field in the JSON is \"tipo_documento\". Looking at the rules: \"Return codes as strings\". If it means the code, then `13`. Let's stick to returning the string value of the text or code. \"Cédula de Ciudadanía\" is the text. The code is 13. Let's output the code \"13\". Wait, the output format has `tipo_documento` as null. Let's see if there's a code. Box 25 has Cód. `13`. I will use `\"13\"` or `\"Cédula de Ciudadanía\"`. Let's use the literal string or the code. Since it says \"Return codes as strings\", I'll use the code `\"13\"`.\n    *   **Box 26 (Número de identificación):** `1020734589` -> `\"1020734589\"`\n    *   **Box 31 (Primer apellido):** `MARTÍNEZ` -> `\"MARTÍNEZ\"`\n    *   **Box 32 (Segundo apellido):** `PÉREZ` -> `\"PÉREZ\"`\n    *   **Box 33 (Primer nombre):** `LUISA` -> `\"LUISA\"`\n    *   **Box 34 (Otros nombres):** `FERNANDA` -> `\"FERNANDA\"`\n    *   **Box 46 (Actividad principal - Código):** `8621` -> `\"8621\"`\n    *   **Box 48 (Actividad secundaria - Código):** `8299` -> `\"8299\"`\n    *   **Box 39 (Departamento):** `CUNDINAMARCA` -> `\"CUNDINAMARCA\"`\n    *   **Box 40 (Ciudad/Municipio):** `CHÍA` -> `\"CHÍA\"`\n    *   **Box 41 (Dirección principal):** `CR 9 12 45 CS 3` -> `\"CR 9 12 45 CS 3\"`\n    *   **Box 98 (Representación):** Empty -> `null`\n\n3.  **Review against rules:**\n    *   `nit`: \"1020734589\" (matches Box 5 exactly).\n    *   `dv`: \"1\" (matches Box 6 exactly).\n    *   `tipo_contribuyente`: \"natural\" (Box 24: Persona natural).\n    *   `razon_social`: null (Box 35 empty).\n    *   `tipo_documento`: \"13\" (Box 25 code. Wait, \"Return codes as strings\". \"13\" is a string).\n    *   `numero_identificacion`: \"1020734589\" (Box 26).\n    *   `primer_apellido`: \"MARTÍNEZ\"\n    *   `segundo_apellido`: \"PÉREZ\"\n    *   `primer_nombre`: \"LUISA\"\n    *   `actividad_principal_codigo`: \"8621\"\n    *   `actividad_secundaria_codigo`: \"8299\"\n    *   `departamento`: \"CUNDINAMARCA\"\n    *   `municipio`: \"CHÍA\"\n    *   `direccion`: \"CR 9 12 45 CS 3\"\n    *   `nombre_representante_legal`: null (Rules state: \"use null if not found or if natural person\". This is a natural person).\n\n4.  **Final JSON construction:**\n    ```json\n    {\n      \"nit\": \"1020734589\",\n      \"dv\": \"1\",\n      \"tipo_contribuyente\": \"natural\",\n      \"razon_social\": null,\n      \"tipo_documento\": \"13\",\n      \"numero_identificacion\": \"1020734589\",\n      \"primer_apellido\": \"MARTÍNEZ\",\n      \"segundo_apellido\": \"PÉREZ\",\n      \"primer_nombre\": \"LUISA\",\n      \"actividad_principal_codigo\": \"8621\",\n      \"actividad_secundaria_codigo\": \"8299\",\n      \"departamento\": \"CUNDINAMARCA\",\n      \"municipio\": \"CHÍA\",\n      \"direccion\": \"CR 9 12 45 CS 3\",\n      \"nombre_representante_legal\": null\n    }\n    ```\n\n5.  **Double check details:**\n    - NIT: `1020734589` (10 digits). Box 5 has 10 boxes. Correct.\n    - DV: `1`. Box 6 has 1 box. Correct.\n    - Box 25 Cód: `13`. `tipo_documento` is \"13\".\n    - Box 26: `1020734589`. Same as NIT. Correct.\n    - Box 31: `MARTÍNEZ`.\n    - Box 32: `PÉREZ`.\n    - Box 33: `LUISA`.\n    - Box 34: `FERNANDA` (not requested, but good to know).\n    - Box 46: `8621`.\n    - Box 48: `8299`.\n    - Box 39: `CUNDINAMARCA`.\n    - Box 40: `CHÍA`.\n    - Box 41: `CR 9 12 45 CS 3`.\n    - Legal rep: `null` (Rule: null if natural person).\n    - JSON format: ensure no trailing commas, valid strings.\n    - All good. Ready to output.",
+              "format": "unknown",
+              "index": 0
+            }
+          ]
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1409,
+      "completion_tokens": 1888,
+      "total_tokens": 3297,
+      "cost": 0.0026883,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.0026883,
+        "upstream_inference_prompt_cost": 0.0004227,
+        "upstream_inference_completions_cost": 0.0022656
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 1696,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    }
+  }
+}

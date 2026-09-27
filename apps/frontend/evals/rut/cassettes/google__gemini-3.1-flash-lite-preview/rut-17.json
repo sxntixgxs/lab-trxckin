@@ -1,0 +1,74 @@
+{
+  "case": "rut-17",
+  "requested_model": "google/gemini-3.1-flash-lite-preview",
+  "recorded_at": "2026-09-27T21:45:32.071Z",
+  "input": {
+    "file": "document.jpg",
+    "media_type": "image/jpeg",
+    "sha256": "978017f8d6a3ebd1d48a69e59f07a2a94eebabcf800d39bda9103fdb4ac05ee4"
+  },
+  "prompt_sha256": "e4af20497fd02df685cd0cecda49b25f237a14e9e24b4063250ed1276c3dd529",
+  "model": "google/gemini-3.1-flash-lite-preview",
+  "latency_ms": 1634,
+  "outcome": "ok",
+  "usage": {
+    "promptTokens": 1492,
+    "completionTokens": 215,
+    "costUsd": 0.0006955,
+    "costSource": "provider"
+  },
+  "response": {
+    "id": "gen-1790545532-6F10XXuh5MBacUTdtjg6",
+    "object": "chat.completion",
+    "created": 1790545532,
+    "model": "google/gemini-3.1-flash-lite-preview",
+    "provider": "Google AI Studio",
+    "system_fingerprint": null,
+    "service_tier": "default",
+    "choices": [
+      {
+        "index": 0,
+        "logprobs": null,
+        "finish_reason": "stop",
+        "native_finish_reason": "STOP",
+        "message": {
+          "role": "assistant",
+          "content": "{\n  \"nit\": \"901118594\",\n  \"dv\": \"1\",\n  \"tipo_contribuyente\": \"juridica\",\n  \"razon_social\": \"INGENIERÍA Y MANTENIMIENTO NORTE S.A.S.\",\n  \"tipo_documento\": null,\n  \"numero_identificacion\": null,\n  \"primer_apellido\": null,\n  \"segundo_apellido\": null,\n  \"primer_nombre\": null,\n  \"actividad_principal_codigo\": \"3312\",\n  \"actividad_secundaria_codigo\": \"7410\",\n  \"departamento\": \"NORTE DE SANTANDER\",\n  \"municipio\": \"CÚCUTA\",\n  \"direccion\": \"AV 0 11 45 OF 203\",\n  \"nombre_representante_legal\": \"PEDRO NEL VILLAMIZAR ORTIZ\"\n}",
+          "refusal": null,
+          "reasoning": null,
+          "reasoning_details": [
+            {
+              "type": "reasoning.text",
+              "signature": "EnMKcQFpFH0TzCpejVIqKjFy5g19CVLlVLuwt14CIgQ2MJcQ5sn5nUUMOdYiCWGtlGHxE1pivQNnC0BNVr725X3ZajfskJsWAbXsn8MCB5jYUNTKk7HPYXgwL5qD2ZbB7pDlPHkLLp1HqamvCimKCVeVLa6t",
+              "format": "google-gemini-v1",
+              "index": 0
+            }
+          ]
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1492,
+      "completion_tokens": 215,
+      "total_tokens": 1707,
+      "cost": 0.0006955,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.0006955,
+        "upstream_inference_prompt_cost": 0.000373,
+        "upstream_inference_completions_cost": 0.0003225
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    }
+  }
+}
