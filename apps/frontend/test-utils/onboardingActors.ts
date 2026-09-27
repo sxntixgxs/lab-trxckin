@@ -52,6 +52,7 @@ export async function asUser<T extends object>(t: T, user: TestUser): Promise<Ac
     tokenIdentifier,
     workosUserId: user.id,
     email,
+    actorEmail: email,
     name,
     nestUserId: user.id,
     role: user.hasFullAccess ? "admin" : "member",

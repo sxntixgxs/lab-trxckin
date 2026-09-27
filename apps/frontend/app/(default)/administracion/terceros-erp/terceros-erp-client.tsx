@@ -1,6 +1,7 @@
 "use client";
 
 import { Component, useEffect, useRef, useState, type ReactNode } from "react";
+import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
 import { DatabaseZap, Handshake, Loader2, RefreshCw, Search, Truck } from "lucide-react";
 import { toast } from "sonner";
@@ -49,7 +50,16 @@ export function TercerosErpClient() {
 }
 
 function TercerosErpPanel() {
-  const { empresaActiva, empresasDisponibles, initialized } = useEmpresaFilter();
+  const { empresaActiva, empresasDisponibles, initialized, setEmpresaActiva } = useEmpresaFilter();
+  const searchParams = useSearchParams();
+  const linkedCompany = Number(searchParams.get("empresa"));
+  useEffect(() => {
+    if (!initialized || !empresasDisponibles.includes(linkedCompany)) return;
+    setEmpresaActiva(linkedCompany);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("empresa");
+    window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+  }, [initialized, empresasDisponibles, linkedCompany, setEmpresaActiva]);
   // Only used with "Todas las empresas": the catalog is per company, so one is picked here.
   const [empresaElegida, setEmpresaElegida] = useState<number | null>(null);
 
@@ -104,8 +114,20 @@ function TercerosErpEmpresa({
   opcionesEmpresa: number[] | null;
   onEmpresaChange: (empresa: number) => void;
 }) {
+  const searchParams = useSearchParams();
   const [entidad, setEntidad] = useState<EntidadCatalogo>("proveedores");
   const [busqueda, setBusqueda] = useState("");
+  useEffect(() => {
+    const linkedEntity = searchParams.get("entidad");
+    const linkedSearch = searchParams.get("q");
+    if (linkedEntity && esEntidadCatalogo(linkedEntity)) setEntidad(linkedEntity);
+    if (linkedSearch) setBusqueda(linkedSearch.slice(0, 100));
+    if (linkedEntity || linkedSearch) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("entidad"); url.searchParams.delete("q");
+      window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+    }
+  }, [searchParams]);
   const termino = useDebouncedValue(busqueda, 300).trim();
   const q = termino.length >= BUSQUEDA_MINIMA ? termino : "";
   const busquedaCorta = busqueda.trim().length > 0 && busqueda.trim().length < BUSQUEDA_MINIMA;

@@ -48,6 +48,7 @@ export const syncPrivileges = mutation({
     secret: v.string(),
     workosUserId: v.string(),
     nestUserId: v.optional(v.string()),
+    actorEmail: v.optional(v.string()),
     name: v.optional(v.string()),
     role: v.union(v.literal("admin"), v.literal("member")),
     permisos: v.array(v.string()),
@@ -66,6 +67,9 @@ export const syncPrivileges = mutation({
     const { workosUserId, name } = args;
     const privileges = {
       nestUserId: args.nestUserId,
+      // The effective Nest actor may differ from the WorkOS identity during impersonation.
+      // Missing email deliberately clears stale acting identity data on older callers.
+      actorEmail: args.actorEmail?.trim().toLowerCase(),
       role: args.role,
       permisos: args.permisos,
       hasFullAccess: args.hasFullAccess,

@@ -48,6 +48,7 @@ import {
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useEmpresaFilter } from "@/hooks/useEmpresaFilter";
+import { usePettyCashDeepLink } from "@/hooks/use-petty-cash-deep-link";
 import { useUserPermissions } from "@/hooks/useHasAccess";
 import { useSidebarState } from "@/hooks/useSidebarState";
 import { formatCOP } from "@/lib/format";
@@ -245,6 +246,8 @@ export default function ReembolsoCajaMenorPage() {
   const [loadingKey, setLoadingKey] = useState<string | null>(null);
   const [downloadLoadingId, setDownloadLoadingId] = useState<string | null>(null);
   const initialViewApplied = useRef(false);
+
+  usePettyCashDeepLink({ actorUserId, actorRol, onReembolso: setDetailsTarget });
 
   const cajas = useMemo((): BandejaCaja[] => {
     const rows = resumen?.cajas ?? [];

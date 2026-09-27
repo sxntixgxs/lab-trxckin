@@ -1,5 +1,15 @@
-import { FileText, Handshake, LayoutDashboard, Settings, Shield, Truck, UserRound, Wallet } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import {
+  FileText,
+  Handshake,
+  LayoutDashboard,
+  MessageSquare,
+  Settings,
+  Shield,
+  Truck,
+  UserRound,
+  Wallet,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 export type NavItem = {
   id: string;
@@ -16,110 +26,111 @@ export type NavItem = {
 };
 
 export const NAV_ITEMS: NavItem[] = [
+  { id: 'assistant', label: 'Asistente', href: '/assistant', icon: MessageSquare },
   {
-    id: "dashboard",
-    label: "Dashboard",
-    href: "/dashboard",
+    id: 'dashboard',
+    label: 'Dashboard',
+    href: '/dashboard',
     icon: LayoutDashboard,
-    permission: "dashboard",
+    permission: 'dashboard',
   },
   {
-    id: "billing",
-    label: "Billing",
+    id: 'billing',
+    label: 'Billing',
     icon: FileText,
     children: [
-      { id: "billing-dashboard", label: "Dashboard", href: "/billing", permission: "billing/dashboard" },
-      { id: "billing-inbox", label: "Inbox", href: "/billing/inbox", permission: "billing/inbox" },
-      { id: "billing-invoices", label: "Invoices", href: "/billing/invoices", permission: "billing/invoices" },
-      { id: "billing-emails", label: "Emails", href: "/billing/emails", permission: "billing/emails" },
-      { id: "billing-tasks", label: "Tasks", href: "/billing/tasks", permission: "billing/tasks" },
+      { id: 'billing-dashboard', label: 'Dashboard', href: '/billing', permission: 'billing/dashboard' },
+      { id: 'billing-inbox', label: 'Inbox', href: '/billing/inbox', permission: 'billing/inbox' },
+      { id: 'billing-invoices', label: 'Invoices', href: '/billing/invoices', permission: 'billing/invoices' },
+      { id: 'billing-emails', label: 'Emails', href: '/billing/emails', permission: 'billing/emails' },
+      { id: 'billing-tasks', label: 'Tasks', href: '/billing/tasks', permission: 'billing/tasks' },
       {
-        id: "billing-reimbursement",
-        label: "Petty cash reimbursement",
-        href: "/billing/petty-cash-reimbursement",
-        permission: "billing/petty-cash-reimbursement",
+        id: 'billing-reimbursement',
+        label: 'Petty cash reimbursement',
+        href: '/billing/petty-cash-reimbursement',
+        permission: 'billing/petty-cash-reimbursement',
       },
-      { id: "billing-settings", label: "Settings", href: "/billing/settings", permission: "billing/settings" },
+      { id: 'billing-settings', label: 'Settings', href: '/billing/settings', permission: 'billing/settings' },
     ],
   },
   {
-    id: "finance",
-    label: "Finance",
+    id: 'finance',
+    label: 'Finance',
     icon: Wallet,
     children: [
-      { id: "finance-petty-cash", label: "Petty cash", href: "/finance/petty-cash", permission: "finance/petty-cash" },
-      { id: "finance-advances", label: "Advances", href: "/finance/advances", permission: "finance/advances" },
+      { id: 'finance-petty-cash', label: 'Petty cash', href: '/finance/petty-cash', permission: 'finance/petty-cash' },
+      { id: 'finance-advances', label: 'Advances', href: '/finance/advances', permission: 'finance/advances' },
       {
-        id: "finance-advances-request",
-        label: "Request advance",
-        href: "/finance/advances/request",
-        permission: "finance/advances/request",
+        id: 'finance-advances-request',
+        label: 'Request advance',
+        href: '/finance/advances/request',
+        permission: 'finance/advances/request',
       },
     ],
   },
   {
-    id: "suppliers",
-    label: "Suppliers",
+    id: 'suppliers',
+    label: 'Suppliers',
     icon: Truck,
     children: [
       {
-        id: "suppliers-onboarding",
-        label: "Onboarding",
-        href: "/suppliers/onboarding",
-        permission: "suppliers/onboarding",
+        id: 'suppliers-onboarding',
+        label: 'Onboarding',
+        href: '/suppliers/onboarding',
+        permission: 'suppliers/onboarding',
       },
     ],
   },
   {
-    id: "customers",
-    label: "Customers",
+    id: 'customers',
+    label: 'Customers',
     icon: Handshake,
     children: [
       {
-        id: "customers-onboarding",
-        label: "Onboarding",
-        href: "/customers/onboarding",
-        permission: "customers/onboarding",
+        id: 'customers-onboarding',
+        label: 'Onboarding',
+        href: '/customers/onboarding',
+        permission: 'customers/onboarding',
       },
     ],
   },
   {
-    id: "administracion",
-    label: "Administración",
+    id: 'administracion',
+    label: 'Administración',
     icon: Settings,
     children: [
       {
-        id: "usuarios",
-        label: "Usuarios",
-        href: "/administracion/usuarios",
-        permission: "administracion/usuarios",
+        id: 'usuarios',
+        label: 'Usuarios',
+        href: '/administracion/usuarios',
+        permission: 'administracion/usuarios',
       },
       {
-        id: "accesos",
-        label: "Accesos",
-        href: "/administracion/accesos",
-        permission: "administracion/accesos",
+        id: 'accesos',
+        label: 'Accesos',
+        href: '/administracion/accesos',
+        permission: 'administracion/accesos',
       },
       {
-        id: "centro-costo",
-        label: "Centros de costo",
-        href: "/administracion/centro-costo",
-        permission: "administracion/centro-costo",
+        id: 'centro-costo',
+        label: 'Centros de costo',
+        href: '/administracion/centro-costo',
+        permission: 'administracion/centro-costo',
       },
       {
-        id: "terceros-erp",
-        label: "Terceros ERP",
-        href: "/administracion/terceros-erp",
-        permission: "administracion/terceros-erp",
+        id: 'terceros-erp',
+        label: 'Terceros ERP',
+        href: '/administracion/terceros-erp',
+        permission: 'administracion/terceros-erp',
       },
     ],
   },
   {
-    id: "perfil",
-    label: "Perfil",
-    href: "/perfil",
+    id: 'perfil',
+    label: 'Perfil',
+    href: '/perfil',
     icon: UserRound,
-    permission: "perfil",
+    permission: 'perfil',
   },
 ];
 
@@ -160,11 +171,7 @@ export function collectPermissionSections(items: NavItem[] = NAV_ITEMS): NavPerm
         child.permission ? [{ id: child.permission, label: child.label }] : [],
       );
       const rutas =
-        childRutas.length > 0
-          ? childRutas
-          : item.permission
-            ? [{ id: item.permission, label: item.label }]
-            : [];
+        childRutas.length > 0 ? childRutas : item.permission ? [{ id: item.permission, label: item.label }] : [];
       return {
         id: item.id,
         label: item.label,
