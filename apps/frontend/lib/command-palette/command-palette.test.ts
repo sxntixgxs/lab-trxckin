@@ -59,7 +59,7 @@ describe("buildNavCommands", () => {
     const hrefs = commands.map((c) => c.href);
     assert.equal(new Set(hrefs).size, hrefs.length);
     const none = buildNavCommands(NAV_ITEMS, (p) => !p);
-    assert.equal(none.length, 0);
+    assert.deepEqual(none.map((command) => command.href), ["/assistant"]);
   });
 });
 

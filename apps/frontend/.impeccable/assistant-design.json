@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-25T16:24:09Z",
+  "title": "Design System: Lab Trxckin assistant surface",
+  "extensions": {
+    "shadows": [
+      {
+        "name": "header-panel",
+        "value": "-8px 0 36px rgb(8 21 41/0.18)",
+        "purpose": "Fixed assistant panel over the current module."
+      },
+      {
+        "name": "inner-drawer",
+        "value": "0 14px 40px rgb(10 20 40/0.18)",
+        "purpose": "Temporary history or evidence drawer."
+      },
+      {
+        "name": "delete-confirmation",
+        "value": "0 18px 55px rgb(10 20 40/0.2)",
+        "purpose": "Centered conversation-delete confirmation."
+      }
+    ],
+    "motion": [
+      {
+        "name": "button-colour",
+        "value": "background-color 0.16s, color 0.16s",
+        "purpose": "Scoped button state changes."
+      },
+      {
+        "name": "composer-border",
+        "value": "border-color 0.18s",
+        "purpose": "Composer focus-within feedback."
+      },
+      {
+        "name": "record-hover",
+        "value": "background 0.15s",
+        "purpose": "Linked-record hover feedback."
+      },
+      {
+        "name": "activity-pulse",
+        "value": "assistant-pulse 1.4s ease-in-out infinite",
+        "purpose": "Tool progress and thinking dots; opacity 0.45 to 1."
+      },
+      {
+        "name": "recording-pulse",
+        "value": "assistant-pulse 1s ease-in-out infinite",
+        "purpose": "Recording status dot."
+      },
+      {
+        "name": "loading-pulse",
+        "value": "assistant-pulse 1.7s ease-in-out infinite",
+        "purpose": "Loading skeleton."
+      },
+      {
+        "name": "loading-spin",
+        "value": "assistant-spin 0.9s linear infinite",
+        "purpose": "Tool loading icon."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "animation: none !important; transition: none !important; scroll-behavior: auto !important",
+        "purpose": "Applied inside assistant scope for prefers-reduced-motion: reduce. The explicit JavaScript smooth-scroll control remains a limitation, not a normative reduced-motion behavior."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "wide-rails",
+        "value": "(min-width: 1600px)"
+      },
+      {
+        "name": "evidence-drawer",
+        "value": "(max-width: 1350px)"
+      },
+      {
+        "name": "history-drawer",
+        "value": "(max-width: 1000px)"
+      },
+      {
+        "name": "mobile-controls-and-panel",
+        "value": "(max-width: 600px)"
+      },
+      {
+        "name": "short-viewport",
+        "value": "(max-height: 500px)"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary action",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Light-theme action from the scoped assistant source; no unimplemented hover transform.",
+      "html": "<button class=\"ds-primary\">Volver a intentar</button>",
+      "css": ".ds-primary { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; padding: 8px 14px; border: 0; border-radius: 8px; font: 14px/1.5 Ubuntu, sans-serif; color: #fff; background: #1c355b; cursor: pointer; transition: background-color .16s, color .16s; } .ds-primary:focus-visible { outline: 2px solid #5785c3; outline-offset: 3px; } .ds-primary:disabled { opacity: .45; cursor: not-allowed; }"
+    },
+    {
+      "name": "Secondary action",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Quiet modal action using the soft surface.",
+      "html": "<button class=\"ds-secondary\">Cancelar</button>",
+      "css": ".ds-secondary { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; padding: 8px 14px; border: 0; border-radius: 8px; font: 14px/1.5 Ubuntu, sans-serif; color: #16243c; background: #edf2f8; cursor: pointer; transition: background-color .16s, color .16s; } .ds-secondary:focus-visible { outline: 2px solid #5785c3; outline-offset: 3px; } .ds-secondary:disabled { opacity: .45; cursor: not-allowed; }"
+    },
+    {
+      "name": "Send action",
+      "kind": "button",
+      "description": "Icon-only send action. The product replaces it with Stop during a run.",
+      "html": "<button class=\"ds-send\" aria-label=\"Enviar consulta\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m5 12 7-7 7 7\"/><path d=\"M12 19V5\"/></svg></button>",
+      "css": ".ds-send { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border: 0; border-radius: 10px; background: #1c355b; color: #fff; cursor: pointer; transition: background-color .16s, color .16s; } .ds-send:hover:not(:disabled) { filter: brightness(1.16); } .ds-send:focus-visible { outline: 2px solid #5785c3; outline-offset: 3px; } .ds-send:disabled { opacity: .45; cursor: not-allowed; } @media(max-width: 600px) { .ds-send { width: 44px; height: 44px; } } @media(prefers-reduced-motion: reduce) { .ds-send { transition: none; } }"
+    },
+    {
+      "name": "Composer field",
+      "kind": "input",
+      "refersTo": "composer",
+      "description": "Multiline field, inside its full-width rounded composer enclosure. Toolbar is described in the surface record.",
+      "html": "<div class=\"ds-composer\"><textarea class=\"ds-prompt\" aria-label=\"Tu consulta\" rows=\"2\" placeholder=\"Pregunta por una factura, un proveedor, un anticipo…\"></textarea></div>",
+      "css": ".ds-composer { max-width: 780px; border: 1px solid #e2e8f0; border-radius: 14px; background: #fff; transition: border-color .18s; } .ds-composer:focus-within { border-color: #7997bf; } .ds-prompt { box-sizing: border-box; width: 100%; display: block; resize: none; min-height: 68px; max-height: 180px; border: 0; outline: none; box-shadow: none; background: transparent; padding: 16px 17px 5px; font: 14px/1.65 Ubuntu, sans-serif; color: #16243c; caret-color: #1c355b; } .ds-prompt::placeholder { font-size: 13px; color: #5c6c83; opacity: 1; } @media(max-width: 767px) { .ds-prompt { font-size: 16px; } } @media(prefers-reduced-motion: reduce) { .ds-composer { transition: none; } }"
+    },
+    {
+      "name": "Result group",
+      "kind": "card",
+      "refersTo": "result",
+      "description": "Evidence enclosure and its heading; compact metadata is deliberately not made a preview type-scale rule.",
+      "html": "<section class=\"ds-result\" aria-label=\"Facturación\"><div class=\"ds-result-heading\"><strong>Facturación</strong></div></section>",
+      "css": ".ds-result { border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin: 9px 0 15px; background: #fff; color: #16243c; font-family: Ubuntu, sans-serif; } .ds-result-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; background: #f7f9fc; font-size: 12px; line-height: 1.5; border-bottom: 1px solid #e2e8f0; } .ds-result-heading strong { font-weight: 500; }"
+    },
+    {
+      "name": "Persistent demo notice",
+      "kind": "custom",
+      "description": "The fictional-data disclosure remains below the composer in empty and populated states.",
+      "html": "<span class=\"ds-demo-notice\">Datos de demostración; empresas y registros ficticios.</span>",
+      "css": ".ds-demo-notice { display: block; font: 12px/1.45 Ubuntu, sans-serif; margin-bottom: 3px; color: #16243c; text-align: center; text-wrap: balance; }"
+    }
+  ],
+  "narrative": {
+    "overview": "The assistant extends the existing Ubuntu, navy navigation, company accent and light/dark interface. Its direction is a private working conversation beside the records that support it. It is an operational surface: reading, asking, checking sources and returning to authorized module detail views take precedence over decoration.\n\nThis is a scoped implementation record, not a replacement global `DESIGN.md`. The approved workflow was code-led, with no generated or approved image comp and no new visual world. The source is authoritative; retained screenshots document the reviewed result. The three-column composition belongs to this assistant, not to every page in Lab Trxckin.",
+    "keyCharacteristics": [
+      "A readable central answer, with history and evidence as independently collapsible desktop rails.",
+      "Quiet tonal surfaces and thin boundaries; colour indicates company scope, action or state.",
+      "Persistent fictional-data disclosure and visible source scope/completeness.",
+      "One conversation and composer state shared between the full page and header panel."
+    ],
+    "rules": [
+      {
+        "name": "The Company Scope Rule",
+        "body": "Keep the company indicator beside the conversation's scope label; do not infer the frozen scope from an action colour.",
+        "section": "colors"
+      },
+      {
+        "name": "The Composer Continuity Rule",
+        "body": "Moving between panel and page preserves the selected conversation, draft, model, response language and current run; choosing another conversation or actor follows the provider's explicit reset rules.",
+        "section": "layout"
+      },
+      {
+        "name": "The Temporary Depth Rule",
+        "body": "Reuse the existing modal elevation for overlays; use tone and borders for ordinary conversation and evidence content.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do reuse the scoped light/dark colour roles and the incumbent Ubuntu face.",
+      "Do preserve the composer, reachable rail controls and internal table scrolling at narrow widths and short heights.",
+      "Do show source scope, incomplete coverage, accessible state text and the persistent fictional-data label.",
+      "Do use human-readable business labels and evidence-backed links in both displayed and copied answers."
+    ],
+    "donts": [
+      "Don't turn this assistant's three-column composition or local tokens into an unapproved global app system.",
+      "Don't imply that a partial query covers every record or that a fictional demonstration represents a real company.",
+      "Don't add business mutation, attachment content, upload, export, web-search or spoken-answer controls to this read-only surface without a new feature decision.",
+      "Don't promote existing small metadata declarations or the explicit smooth-scroll limitation into rules for future components."
+    ]
+  }
+}

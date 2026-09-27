@@ -1606,7 +1606,7 @@ async function asignarEventosDianReembolsoCajaMenor(
   }
 }
 
-async function usuarioPuedeVerCajaMenor(
+export async function usuarioPuedeVerCajaMenor(
   ctx: QueryCtx | MutationCtx,
   caja: Doc<"cajasMenores">,
   actorUserId?: string,

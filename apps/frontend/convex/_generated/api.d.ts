@@ -9,6 +9,10 @@
  */
 
 import type * as anticiposDashboard from "../anticiposDashboard.js";
+import type * as assistant from "../assistant.js";
+import type * as assistant_access from "../assistant/access.js";
+import type * as assistant_knowledge from "../assistant/knowledge.js";
+import type * as assistant_tools from "../assistant/tools.js";
 import type * as cajaMenorBandejaQueries from "../cajaMenorBandejaQueries.js";
 import type * as cajasMenores from "../cajasMenores.js";
 import type * as centrosCosto from "../centrosCosto.js";
@@ -126,6 +130,10 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   anticiposDashboard: typeof anticiposDashboard;
+  assistant: typeof assistant;
+  "assistant/access": typeof assistant_access;
+  "assistant/knowledge": typeof assistant_knowledge;
+  "assistant/tools": typeof assistant_tools;
   cajaMenorBandejaQueries: typeof cajaMenorBandejaQueries;
   cajasMenores: typeof cajasMenores;
   centrosCosto: typeof centrosCosto;
@@ -263,6 +271,8 @@ export declare const internal: FilterApi<
 >;
 
 export declare const components: {
+  agent: import("@convex-dev/agent/_generated/component.js").ComponentApi<"agent">;
+  rateLimiter: import("@convex-dev/rate-limiter/_generated/component.js").ComponentApi<"rateLimiter">;
   cajaMenorMovimientosDisponibles: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"cajaMenorMovimientosDisponibles">;
   cajaMenorReembolsosActivosCaja: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"cajaMenorReembolsosActivosCaja">;
   cajaMenorReembolsosActivosResponsable: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"cajaMenorReembolsosActivosResponsable">;

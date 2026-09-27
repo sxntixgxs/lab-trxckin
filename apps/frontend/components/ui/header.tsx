@@ -1,10 +1,11 @@
-"use client";
+'use client';
 
-import { useAuth } from "@workos-inc/authkit-nextjs/components";
-import { CommandPaletteTrigger } from "@/components/command-palette/command-palette-trigger";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useSessionActions } from "@/hooks/useSessionActions";
-import { useAppProvider } from "@/providers/app-provider";
+import { useAuth } from '@workos-inc/authkit-nextjs/components';
+import { AssistantTrigger } from '@/components/assistant/assistant-panel';
+import { CommandPaletteTrigger } from '@/components/command-palette/command-palette-trigger';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useSessionActions } from '@/hooks/useSessionActions';
+import { useAppProvider } from '@/providers/app-provider';
 
 export default function Header() {
   const { sidebarOpen, setSidebarOpen } = useAppProvider();
@@ -34,6 +35,7 @@ export default function Header() {
             <CommandPaletteTrigger />
           </div>
           <div className="flex items-center space-x-3">
+            <AssistantTrigger />
             {isImpersonating && (
               <>
                 <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-800">
@@ -45,13 +47,13 @@ export default function Header() {
                   disabled={restaurando}
                   className="rounded-xl bg-sky-600 px-3 py-1.5 text-sm text-white hover:bg-sky-700 disabled:opacity-50"
                 >
-                  {restaurando ? "Restaurando..." : "Volver a mi cuenta"}
+                  {restaurando ? 'Restaurando...' : 'Volver a mi cuenta'}
                 </button>
               </>
             )}
             {displayEmail && (
               <span className="hidden text-sm text-slate-600 md:inline dark:text-slate-300">
-                {isImpersonating ? backendUser?.nombre ?? displayEmail : displayEmail}
+                {isImpersonating ? (backendUser?.nombre ?? displayEmail) : displayEmail}
               </span>
             )}
             <hr className="w-px h-6 bg-slate-200 dark:bg-slate-700 border-none" />

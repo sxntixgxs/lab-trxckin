@@ -24,6 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { useEmpresaFilter } from "@/hooks/useEmpresaFilter";
+import { usePettyCashDeepLink } from "@/hooks/use-petty-cash-deep-link";
 import { useHasAccess } from "@/hooks/useHasAccess";
 import {
   getMutationErrorMessage,
@@ -193,6 +194,8 @@ export default function CajasMenoresPage() {
     activating: boolean;
   } | null>(null);
   const [configIds, setConfigIds] = useState<string[]>([]);
+
+  usePettyCashDeepLink({ actorUserId: actor.actorUserId, actorRol: actor.actorRol, onCaja: setDetailFor, onReembolso: setDetailsTarget });
 
   const detail = useQuery(
     api.cajasMenores.obtenerDetalleCaja,

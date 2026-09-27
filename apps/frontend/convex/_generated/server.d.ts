@@ -39,6 +39,7 @@ type Env = {
   readonly FRONTEND_URL: string | undefined;
   readonly NEXT_PUBLIC_BASE_URL: string | undefined;
   readonly NOTIFICATIONS_INTERNAL_KEY: string | undefined;
+  readonly OPENROUTER_API_KEY: string | undefined;
 };
 
 /**

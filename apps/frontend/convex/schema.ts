@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { assistantConversations, assistantEvidence, assistantRuns } from "./assistant/schema";
 import { workforceTables } from "./workforce/schema";
 import {
   cajasMenores,
@@ -44,11 +45,15 @@ import {
 } from "./lib/peajesCentroCosto";
 
 export default defineSchema({
+  assistantConversations,
+  assistantEvidence,
+  assistantRuns,
   ...workforceTables,
   users: defineTable({
     tokenIdentifier: v.string(),
     workosUserId: v.string(),
     email: v.string(),
+    actorEmail: v.optional(v.string()),
     name: v.string(),
     nestUserId: v.optional(v.string()),
     role: v.union(v.literal("admin"), v.literal("member")),

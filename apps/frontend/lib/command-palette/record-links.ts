@@ -1,33 +1,39 @@
-export type RecordKind = "factura" | "anticipo" | "proveedor" | "cliente" | "centroCosto";
+export type RecordKind = 'factura' | 'anticipo' | 'proveedor' | 'cliente' | 'centroCosto';
 
 /** Query params the target pages read once to open a record, then remove. */
 export const DEEP_LINK_PARAMS = {
-  anticipo: "anticipo",
-  inscripcion: "inscripcion",
-  empresa: "empresa",
-  q: "q",
+  anticipo: 'anticipo',
+  inscripcion: 'inscripcion',
+  empresa: 'empresa',
+  q: 'q',
+  caja: 'caja',
+  reembolso: 'reembolso',
 } as const;
 
 export function recordHref(
-  kind: RecordKind,
+  kind: RecordKind | 'cajaMenor' | 'reembolsoCajaMenor',
   row: { id: string; empresa?: number; codigo?: string },
 ): string {
   const id = encodeURIComponent(row.id);
   switch (kind) {
-    case "factura":
+    case 'factura':
       return `/billing/invoices/${id}`;
-    case "anticipo":
+    case 'anticipo':
       return `/finance/advances?${DEEP_LINK_PARAMS.anticipo}=${id}`;
-    case "proveedor":
+    case 'proveedor':
       return `/suppliers/onboarding?${DEEP_LINK_PARAMS.inscripcion}=${id}`;
-    case "cliente":
+    case 'cliente':
       return `/customers/onboarding?${DEEP_LINK_PARAMS.inscripcion}=${id}`;
-    case "centroCosto": {
+    case 'cajaMenor':
+      return `/finance/petty-cash?${DEEP_LINK_PARAMS.caja}=${id}`;
+    case 'reembolsoCajaMenor':
+      return `/billing/petty-cash-reimbursement?${DEEP_LINK_PARAMS.reembolso}=${id}`;
+    case 'centroCosto': {
       const params = new URLSearchParams();
       if (row.empresa !== undefined) params.set(DEEP_LINK_PARAMS.empresa, String(row.empresa));
       if (row.codigo) params.set(DEEP_LINK_PARAMS.q, row.codigo);
       const qs = params.toString();
-      return `/administracion/centro-costo${qs ? `?${qs}` : ""}`;
+      return `/administracion/centro-costo${qs ? `?${qs}` : ''}`;
     }
   }
 }

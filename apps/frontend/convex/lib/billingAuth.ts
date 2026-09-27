@@ -27,7 +27,9 @@ function toActor(user: Doc<"users">): BillingActor {
     usuarioId: nestUserId,
     nestUserId,
     nombre: user.name,
-    email: user.email,
+    // The identity email belongs to the real user, not necessarily the effective actor.
+    // Legacy rows keep ID-based access until a trusted privilege sync supplies this field.
+    email: user.actorEmail ?? "",
     hasFullAccess: user.hasFullAccess === true || user.role === "admin",
     permisos: user.permisos ?? [],
     procesoId: user.procesoId,

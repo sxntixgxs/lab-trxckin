@@ -468,7 +468,7 @@ const PERMISOS_ANTICIPOS = [
  * company's role holders (Gerencia, Tesorería, Contabilidad) and the current phase owner.
  * Full-access users can act on any phase, so they can read any advance.
  */
-async function actorPuedeVerAnticipo(
+export async function actorPuedeVerAnticipo(
   ctx: QueryCtx,
   anticipo: Doc<"anticipos">
 ): Promise<boolean> {
