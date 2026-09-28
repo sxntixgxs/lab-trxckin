@@ -44,6 +44,28 @@ Every tool is annotated `readOnlyHint: true`, `destructiveHint: false`, `idempot
 
 `list_pending_approvals` scans at most 500 active invoices per company (it says so with `escaneoTruncado`), which is plenty for the demo; at real volume it would read an index ordered by phase start instead.
 
+A call goes like this:
+
+1. The client (for example Claude Desktop) starts `apps/mcp-server` as a child process and speaks JSON-RPC over stdin/stdout. `stdout` carries only the protocol; logs go to `stderr`.
+2. The model picks a tool from the list and its descriptions. The SDK validates the arguments against the tool's zod schema *before* the handler runs, so a malformed call costs no network round trip.
+3. The handler maps English tool arguments to the Spanish domain API (`invoiceNumber` → `numeroFactura`, `companyId` → `empresa`) and calls one Convex query through `ConvexHttpClient`, adding the secret. `search_suppliers` instead calls `GET /api/v1/mcp/proveedores/search` with `x-mcp-key`.
+4. The Convex query checks the secret, intersects the requested company with `MCP_EMPRESAS`, reads the dashboard projection, computes the SLA in business days *now*, and returns a compact JSON object.
+5. The server returns that JSON as text content. On failure it returns `isError: true` with one sentence, so the model can recover (for example "Pass invoiceId or invoiceNumber.") without seeing a stack trace.
+
+## Why it is built this way
+
+- **MCP instead of a bespoke API for agents.** One server works in every MCP client, with no plugin per client. The protocol also gives the model typed input schemas and tool annotations. The data layer (`lab-data.ts`) is a plain interface, so the tools are tested with a real MCP client and a fake backend, without Convex.
+- **stdio first.** The operator runs the server next to the client and holds its secrets. No port is opened and there is no new internet-facing surface. Streamable HTTP with OAuth is the next step once per-user identity is needed (see below).
+- **Queries, not mutations.** Convex queries cannot write, so read-only is guaranteed by the runtime rather than by the reviewer. The annotations let a client skip confirmation prompts safely, because they are true.
+- **Dedicated credentials.** If a laptop running the MCP server leaks its config, the attacker gets read access to the demo scope and nothing else. The secrets cannot call the app's server functions or Nest's internal routes, and rotating them does not affect the app.
+- **Scope set by the server.** An agent's client config is the easiest thing to tamper with, so it carries no authority. `MCP_EMPRESAS` lives in the Convex and API environments, and an unset or empty value means no access. Out-of-scope invoices read as *not found*, so the server does not confirm that an invoice number exists in another company.
+- **Read from the projection.** `facturacionDashboardItems` is the precomputed row the billing dashboard already maintains: one row per invoice, with owners and phase start denormalized. The tools do not add indexes or joins, and they read the same numbers a person sees in the app.
+- **SLA computed at call time, in business days.** A stored "days late" goes stale. The tool calls the dashboard's `computeSlaState` with the Colombian holiday calendar, so "past its 3-day SLA" means the same thing in the chat and on the dashboard.
+- **English interface, Spanish domain.** Tool names and descriptions are in English, the language models follow best and the one the MCP ecosystem uses. The data keeps the Spanish vocabulary of the business (`fase`, `anticipo`, `legalizado`), and the model translates it in its answer.
+- **Small, flat outputs.** About a dozen fields per invoice keep a 10-invoice answer to a few thousand tokens. They also leave the model less to misread than a full document.
+
+For the same data inside the app, with the user's own identity, see the [Asistente](assistant.md#asistente-or-mcp-server).
+
 ## Run it
 
 1. **Secrets and scope.** Generate two random strings (`openssl rand -hex 32`), then:
@@ -98,6 +120,16 @@ Then ask: *"¿Qué facturas de Drominc llevan más tiempo pendientes de aprobaci
 - `apps/frontend/convex/mcpLectura.test.ts` (convex-test): secret required and fail-closed when unset, scope enforced (list, lookup by number and by id), oldest-first ordering, SLA states, NIT with check digit, advance balances and overdue flag, idempotent seed and exact cleanup.
 - `apps/mcp-server/src/server.test.ts`: a real MCP client over an in-memory transport: tool list and annotations, argument mapping, input validation before any call, one-line errors, the resource, and the supplier API client.
 - `apps/backend/src/mcp/mcp-scope.spec.ts`: scope parsing fails closed.
+
+**Live check (2026-09-28).** A stdio MCP client was run against the dev deployment (`MCP_EMPRESAS=2`) and the local API, using the current `main`:
+
+- `lab://companies` returned only Cordillera Minería.
+- `list_pending_approvals` with `supplier: "Drominc"` returned DRM-1041 first (5.7 business days in Líder against a 3-day threshold, `breached`).
+- `get_invoice_status` found DRM-1063 when given NIT `9015552227` (the NIT with its check digit).
+- `get_advance_balance` for Mateo Castaño returned advance #4 overdue ($1,200,000 pending) and advance #3 partly settled ($3,200,000 of $5,000,000).
+- `search_suppliers` found Drominc in the synced ERP catalog.
+- Company 3 was refused on `list_pending_approvals` and `get_invoice_status`, and company 1 was refused on `search_suppliers` (by the API, with a 403).
+- Missing arguments returned a one-line error.
 
 ## What would come next
 
