@@ -51,7 +51,20 @@ export async function assistantSession(signal?: AbortSignal) {
 
 export function assertSameOrigin(request: Request): void {
   const origin = request.headers.get('origin');
-  if (origin && origin !== new URL(request.url).origin) {
+  if (!origin) return;
+  // Behind Coolify, request.url can contain the container's bind address.
+  // Use the configured public URL, never client-supplied forwarding headers.
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  let expectedUrl: URL;
+  try {
+    expectedUrl = new URL(appUrl || request.url);
+  } catch {
+    throw new AssistantHttpError(503, 'La URL del asistente no está configurada correctamente.');
+  }
+  if (expectedUrl.protocol !== 'https:' && expectedUrl.protocol !== 'http:') {
+    throw new AssistantHttpError(503, 'La URL del asistente no está configurada correctamente.');
+  }
+  if (origin !== expectedUrl.origin) {
     throw new AssistantHttpError(403, 'Origen no autorizado.');
   }
 }
