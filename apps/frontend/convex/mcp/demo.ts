@@ -8,7 +8,7 @@ import { normalizePeajesDocumentNumber, normalizePeajesProviderNit } from "../li
 
 /**
  * Demo data for the MCP server (dev deployments only): invoices from the fictional supplier
- * Drominc and two others at different approval phases and SLA states, plus employee
+ * ACME Logistics and two others at different approval phases and SLA states, plus employee
  * advances with partial settlements. Every person uses an example.com address and every
  * NIT is fictional.
  *
@@ -31,7 +31,7 @@ type Rol = Doc<"facturacionAsignaciones">["rol"];
 
 const PERSONAS = {
   recepcion: { nombre: "Diego Salas", email: "diego.salas@example.com", rol: "recepcion" },
-  lider: { nombre: "Laura Méndez", email: "laura.mendez@example.com", rol: "lider" },
+  lider: { nombre: "Santiago Sandoval", email: "santiago.sandoval@example.com", rol: "lider" },
   causacion: { nombre: "Andrés Ruiz", email: "andres.ruiz@example.com", rol: "analista_causacion" },
   impuestos: { nombre: "Paula Ortega", email: "paula.ortega@example.com", rol: "contador_impuestos" },
   gerencia: { nombre: "Julián Herrera", email: "julian.herrera@example.com", rol: "gerencia" },
@@ -48,7 +48,7 @@ const RESPONSABLE_POR_FASE: Partial<Record<Fase, keyof typeof PERSONAS>> = {
 };
 
 const PROVEEDORES = {
-  drominc: { nit: "901555222", nombre: "Drominc S.A.S." },
+  acme: { nit: "901555222", nombre: "ACME Logistics S.A.S." },
   quebradaHonda: { nit: "900777111", nombre: "Transportes Quebrada Honda S.A.S." },
   nevado: { nit: "900888333", nombre: "Suministros El Nevado S.A.S." },
 } as const;
@@ -79,17 +79,18 @@ type FacturaDemo = {
 };
 
 const FACTURAS: FacturaDemo[] = [
-  { numero: "DRM-1041", proveedor: "drominc", total: 18_450_000, descripcion: "Mantenimiento de bandas transportadoras", fase: "revision_lider", diasEnFase: 6 },
-  { numero: "DRM-1052", proveedor: "drominc", total: 7_980_000, descripcion: "Repuestos hidráulicos", fase: "causacion", diasEnFase: 1.7 },
-  { numero: "DRM-1063", proveedor: "drominc", total: 32_600_000, descripcion: "Alquiler de montacargas, agosto", fase: "revision_tesoreria", diasEnFase: 4 },
-  { numero: "DRM-1060", proveedor: "drominc", total: 4_250_000, descripcion: "Inspección de seguridad industrial", fase: "gerencia", diasEnFase: 0.5 },
-  { numero: "DRM-1070", proveedor: "drominc", total: 3_200_000, descripcion: "Viáticos de montaje en planta", fase: "cerrada", diasEnFase: 0 },
-  { numero: "DRM-1072", proveedor: "drominc", total: 2_500_000, descripcion: "Hospedaje del equipo de montaje", fase: "cerrada", diasEnFase: 0 },
+  { numero: "DRM-1041", proveedor: "acme", total: 18_450_000, descripcion: "Mantenimiento de bandas transportadoras", fase: "revision_lider", diasEnFase: 6 },
+  { numero: "DRM-1066", proveedor: "acme", total: 6_730_000, descripcion: "Calibración de básculas de despacho", fase: "revision_lider", diasEnFase: 2.6 },
+  { numero: "DRM-1052", proveedor: "acme", total: 7_980_000, descripcion: "Repuestos hidráulicos", fase: "causacion", diasEnFase: 1.7 },
+  { numero: "DRM-1063", proveedor: "acme", total: 32_600_000, descripcion: "Alquiler de montacargas, agosto", fase: "revision_tesoreria", diasEnFase: 4 },
+  { numero: "DRM-1060", proveedor: "acme", total: 4_250_000, descripcion: "Inspección de seguridad industrial", fase: "gerencia", diasEnFase: 0.5 },
+  { numero: "DRM-1070", proveedor: "acme", total: 3_200_000, descripcion: "Viáticos de montaje en planta", fase: "cerrada", diasEnFase: 0 },
+  { numero: "DRM-1072", proveedor: "acme", total: 2_500_000, descripcion: "Hospedaje del equipo de montaje", fase: "cerrada", diasEnFase: 0 },
   { numero: "QH-551", proveedor: "quebradaHonda", total: 12_300_000, descripcion: "Transporte de material, semana 36", fase: "revision_impuestos", diasEnFase: 1 },
   { numero: "NEV-88", proveedor: "nevado", total: 2_140_000, descripcion: "Elementos de protección personal", fase: "recepcion", diasEnFase: 3 },
   { numero: "NEV-90", proveedor: "nevado", total: 5_870_000, descripcion: "Papelería y consumibles", fase: "revision_lider", diasEnFase: 1 },
   // Outside the MCP scope when MCP_EMPRESAS lists only the seeded company.
-  { numero: "DRM-2001", proveedor: "drominc", total: 9_900_000, descripcion: "Mantenimiento preventivo", fase: "revision_lider", diasEnFase: 5, empresa: 3 },
+  { numero: "DRM-2001", proveedor: "acme", total: 9_900_000, descripcion: "Mantenimiento preventivo", fase: "revision_lider", diasEnFase: 5, empresa: 3 },
 ];
 
 const SOLICITANTES = {
@@ -225,8 +226,8 @@ async function crearAnticipo(
     empresa: args.empresa,
     empresa_id: args.empresa,
     consecutivo: args.consecutivo,
-    razonSocial: PROVEEDORES.drominc.nombre,
-    nit: PROVEEDORES.drominc.nit,
+    razonSocial: PROVEEDORES.acme.nombre,
+    nit: PROVEEDORES.acme.nit,
     formaPago: "TRANSFERENCIA BANCARIA",
     valorNumerico: args.valor,
     valorContable: args.valor,

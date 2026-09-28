@@ -21,7 +21,7 @@ export const NITS_DEMO = {
   /** Customer stored zero-padded by the ERP, in empresa 3 (NIT normalization). */
   nitConCeros: "0890123456",
   /** Suppliers of the MCP server demo invoices in empresa 2 (apps/frontend/convex/mcp/demo.ts). */
-  drominc: "901555222",
+  acme: "901555222",
   quebradaHonda: "900777111",
   suministrosNevado: "900888333",
 } as const;
@@ -202,18 +202,18 @@ export function tercerosDemo(): TerceroSimulado[] {
       ],
     }),
     juridica(empresa2, {
-      nit: NITS_DEMO.drominc,
-      razonSocial: "Drominc S.A.S.",
+      nit: NITS_DEMO.acme,
+      razonSocial: "ACME Logistics S.A.S.",
       ciiu: "3312",
       proveedor: [
         sucursal({
           id: "001",
-          descripcion: "Drominc S.A.S.",
+          descripcion: "ACME Logistics S.A.S.",
           ciudad: "Medellín",
           departamento: "Antioquia",
           tipoProveedor: "001",
           condicionPago: "C30",
-          email: "facturacion@drominc.example.com",
+          email: "facturacion@acme-logistics.example.com",
           telefono: "3046612200",
           direccion: "Carrera 48 # 10-45",
         }),
