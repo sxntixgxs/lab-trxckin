@@ -54,15 +54,15 @@ describe("MCP read queries", () => {
     const { facturas, empresa, hayMas } = await t.query(api.mcp.lectura.aprobacionesPendientes, {
       secret: SECRET,
       nowMs: Date.now(),
-      proveedor: "drominc",
+      proveedor: "acme",
     });
 
     expect(empresa).toBe(EMPRESA);
     expect(hayMas).toBe(false);
-    expect(facturas.map((f) => f.numeroFactura)).toEqual(["DRM-1041", "DRM-1063", "DRM-1052", "DRM-1060"]);
+    expect(facturas.map((f) => f.numeroFactura)).toEqual(["DRM-1041", "DRM-1063", "DRM-1066", "DRM-1052", "DRM-1060"]);
     expect(facturas[0]).toMatchObject({
       fase: "revision_lider",
-      responsables: [{ nombre: "Laura Méndez", email: "laura.mendez@example.com", rol: "lider" }],
+      responsables: [{ nombre: "Santiago Sandoval", email: "santiago.sandoval@example.com", rol: "lider" }],
       sla: { estado: "breached", umbralDiasLaborales: 3 },
     });
     expect(facturas[0].sla!.diasLaboralesRestantes).toBeLessThan(0);
@@ -94,7 +94,7 @@ describe("MCP read queries", () => {
     expect(facturas).toHaveLength(1);
     expect(facturas[0]).toMatchObject({
       numeroFactura: "DRM-1063",
-      proveedor: { nit: "901555222", nombre: "Drominc S.A.S." },
+      proveedor: { nit: "901555222", nombre: "ACME Logistics S.A.S." },
       faseEtiqueta: "Tesorería",
       activa: true,
     });
@@ -163,7 +163,7 @@ describe("MCP read queries", () => {
     expect(await t.mutation(internal.mcp.demo.sembrar, { empresa: EMPRESA })).toMatchObject({ sembrada: false });
 
     const borrado = await t.mutation(internal.mcp.demo.limpiar, {});
-    expect(borrado).toEqual({ facturas: 10, anticipos: 3, umbrales: 16 });
+    expect(borrado).toEqual({ facturas: 11, anticipos: 3, umbrales: 16 });
     const restantes = await t.run(async (ctx) => ({
       facturas: (await ctx.db.query("facturacionFacturas").take(1)).length,
       items: (await ctx.db.query("facturacionDashboardItems").take(1)).length,

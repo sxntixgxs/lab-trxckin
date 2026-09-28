@@ -91,7 +91,7 @@ The app's companies map to SIESA partitions the same way as the cost-center cata
 | 1 | 800666777 | Ferretería El Nevado S.A.S. — cliente and proveedor | ACTUALIZACIÓN in both modules |
 | 1 | 52123456 (C.C.) | María Fernanda Ruiz Castaño — natural person, proveedor | Document without check digit |
 | 2 | 901777888 | Suministros Mineros del Norte S.A.S. — proveedor only in empresa 2 | Per-company scope (INSCRIPCIÓN in empresa 1) |
-| 2 | 901555222, 900777111, 900888333 | Drominc S.A.S., Transportes Quebrada Honda S.A.S., Suministros El Nevado S.A.S. — proveedores | The suppliers of the MCP server's demo invoices (`search_suppliers`, [docs/mcp-server.md](mcp-server.md)) |
+| 2 | 901555222, 900777111, 900888333 | ACME Logistics S.A.S., Transportes Quebrada Honda S.A.S., Suministros El Nevado S.A.S. — proveedores | The suppliers of the MCP server's demo invoices (`search_suppliers`, [docs/mcp-server.md](mcp-server.md)) |
 | 3 | 0890123456 | Servicios Técnicos del Valle S.A.S. — cliente, zero-padded in the ERP | NIT normalization (type 890123456) |
 
 **ACME (900123456) is not seeded on purpose:** its first process is an INSCRIPCIÓN; after "Crear en ERP" in the last phase, the next ACME process is detected as an ACTUALIZACIÓN.

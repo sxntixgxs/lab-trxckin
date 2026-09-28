@@ -100,7 +100,7 @@ export function crearServidor(data: LabData, ahora: () => number = Date.now): Mc
       inputSchema: {
         companyId,
         assignee: z.string().min(2).max(120).optional().describe("Owner email, or part of the owner's name."),
-        supplier: z.string().min(2).max(120).optional().describe('Part of the supplier name or NIT, e.g. "Drominc".'),
+        supplier: z.string().min(2).max(120).optional().describe('Part of the supplier name or NIT, e.g. "ACME".'),
         limit: z.number().int().min(1).max(25).optional().describe("Maximum invoices to return (default 10)."),
       },
       annotations: { title: "Pending approvals", ...READ_ONLY },

@@ -52,13 +52,13 @@ describe("lab-trxckin MCP server", () => {
     const client = await conectar(data);
     await client.callTool({
       name: "list_pending_approvals",
-      arguments: { supplier: "Drominc", assignee: "laura", limit: 5 },
+      arguments: { supplier: "ACME", assignee: "santiago", limit: 5 },
     });
     expect(data.aprobacionesPendientes).toHaveBeenCalledWith({
       nowMs: NOW,
       empresa: undefined,
-      responsable: "laura",
-      proveedor: "Drominc",
+      responsable: "santiago",
+      proveedor: "ACME",
       limit: 5,
     });
   });
@@ -110,8 +110,8 @@ describe("lab-trxckin MCP server", () => {
   it("search_suppliers defaults to the only company in scope", async () => {
     const buscarProveedores = vi.fn(async () => ({ proveedores: [] }));
     const client = await conectar(fakeData({ buscarProveedores }));
-    await client.callTool({ name: "search_suppliers", arguments: { query: "  drominc " } });
-    expect(buscarProveedores).toHaveBeenCalledWith({ empresa: 2, q: "drominc", limit: 10 });
+    await client.callTool({ name: "search_suppliers", arguments: { query: "  acme " } });
+    expect(buscarProveedores).toHaveBeenCalledWith({ empresa: 2, q: "acme", limit: 10 });
   });
 
   it("exposes the companies in scope as a resource", async () => {
@@ -143,9 +143,9 @@ describe("supplier catalog client", () => {
       }),
       fetchMock as unknown as typeof fetch
     );
-    await data.buscarProveedores!({ empresa: 2, q: "drominc", limit: 10 });
+    await data.buscarProveedores!({ empresa: 2, q: "acme", limit: 10 });
     const [url, init] = fetchMock.mock.calls[0] as unknown as [URL, RequestInit];
-    expect(url.toString()).toBe("http://localhost:8000/api/v1/mcp/proveedores/search?empresa=2&q=drominc&limit=10");
+    expect(url.toString()).toBe("http://localhost:8000/api/v1/mcp/proveedores/search?empresa=2&q=acme&limit=10");
     expect(init.headers).toEqual({ "x-mcp-key": "k" });
   });
 

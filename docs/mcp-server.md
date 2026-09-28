@@ -113,7 +113,7 @@ For the same data inside the app, with the user's own identity, see the [Asisten
 
    The server also reads `apps/mcp-server/.env` when it exists, so `env` can stay empty for local runs.
 
-Then ask: *"¿Qué facturas de Drominc llevan más tiempo pendientes de aprobación?"* The agent calls `list_pending_approvals` with `supplier: "Drominc"` and gets DRM-1041 first (in Líder with Laura Méndez, past its 3-day SLA), then DRM-1063 in Tesorería, DRM-1052 in Causación and DRM-1060 in Gerencia. DRM-2001, a Drominc invoice in another company, never appears.
+Then ask: *"¿Qué facturas de ACME Logistics llevan más tiempo pendientes de aprobación?"* The agent calls `list_pending_approvals` with `supplier: "ACME"` and gets DRM-1041 first (in Líder with Santiago Sandoval, past its 3-day SLA), then DRM-1063 in Tesorería, DRM-1066 in Líder (close to its threshold), DRM-1052 in Causación and DRM-1060 in Gerencia. DRM-2001, an ACME invoice in another company, never appears.
 
 ## Tests
 
@@ -124,10 +124,10 @@ Then ask: *"¿Qué facturas de Drominc llevan más tiempo pendientes de aprobaci
 **Live check (2026-09-28).** A stdio MCP client was run against the dev deployment (`MCP_EMPRESAS=2`) and the local API, using the current `main`:
 
 - `lab://companies` returned only Cordillera Minería.
-- `list_pending_approvals` with `supplier: "Drominc"` returned DRM-1041 first (5.7 business days in Líder against a 3-day threshold, `breached`).
+- `list_pending_approvals` with `supplier: "ACME"` returned DRM-1041 first (5.7 business days in Líder against a 3-day threshold, `breached`).
 - `get_invoice_status` found DRM-1063 when given NIT `9015552227` (the NIT with its check digit).
 - `get_advance_balance` for Mateo Castaño returned advance #4 overdue ($1,200,000 pending) and advance #3 partly settled ($3,200,000 of $5,000,000).
-- `search_suppliers` found Drominc in the synced ERP catalog.
+- `search_suppliers` found the demo supplier (then named Drominc, now ACME Logistics) in the synced ERP catalog.
 - Company 3 was refused on `list_pending_approvals` and `get_invoice_status`, and company 1 was refused on `search_suppliers` (by the API, with a 403).
 - Missing arguments returned a one-line error.
 
