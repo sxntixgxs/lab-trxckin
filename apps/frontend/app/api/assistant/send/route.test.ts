@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({ session: vi.fn(), mutation: vi.fn(), action: vi.fn(), erp: vi.fn() }));
 vi.mock('@/lib/assistant/server-session', async (original) => {
@@ -44,13 +44,42 @@ const request = (body: unknown = payload, signal?: AbortSignal) =>
   });
 beforeEach(() => {
   vi.resetAllMocks();
+  vi.stubEnv('NEXT_PUBLIC_APP_URL', '');
   mocks.session.mockResolvedValue(session);
   mocks.mutation.mockImplementation(async (ref) =>
     getFunctionName(ref) === 'assistant:begin' ? begun : { status: 'running' },
   );
   mocks.action.mockResolvedValue({ status: 'completed' });
 });
+afterEach(() => vi.unstubAllEnvs());
 describe('assistant send coordinator', () => {
+  it('streams a public-origin request received at the internal container URL', async () => {
+    vi.stubEnv('NEXT_PUBLIC_APP_URL', 'https://app.sxntixgxs.dev');
+    const response = await POST(
+      new Request('http://0.0.0.0:3000/api/assistant/send', {
+        method: 'POST',
+        headers: { 'origin': 'https://app.sxntixgxs.dev', 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(await response.text()).toContain('"completed"');
+    expect(mocks.session).toHaveBeenCalled();
+  });
+  it('rejects a cross-origin request before authentication or generation', async () => {
+    vi.stubEnv('NEXT_PUBLIC_APP_URL', 'https://app.sxntixgxs.dev');
+    const response = await POST(
+      new Request('http://0.0.0.0:3000/api/assistant/send', {
+        method: 'POST',
+        headers: { 'origin': 'https://untrusted.example', 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      }),
+    );
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({ error: 'Origen no autorizado.' });
+    expect(mocks.session).not.toHaveBeenCalled();
+    expect(mocks.mutation).not.toHaveBeenCalled();
+  });
   it('streams start and completion while keeping identity server-derived', async () => {
     const response = await POST(request());
     const events = (await response.text())
